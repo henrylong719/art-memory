@@ -1,11 +1,11 @@
 {
-  "name": "art_memory",
+  "name": "art_memory_frontend",
   "version": "9.0.0",
   "private": true,
   "packageManager": "pnpm@10.12.3",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/obytes/react-native-template-obytes.git"
+    "url": ""
   },
   "main": "expo-router/entry",
   "scripts": {
