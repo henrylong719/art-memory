@@ -31,7 +31,7 @@ model User {
 
   // Preference
   preferredLanguage String  @default("en")
-  notinicationsOn   Boolean @default(true)
+  notificationsOn   Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -77,7 +77,7 @@ model Artist {
   imageUrl    String?
   wikiUrl     String?
 
-  // Date origin & verification
+  // Data origin & verification
   source     ArtworkSource @default(AI_GENERATED)
   externalId String? // ID from source API
   verified   Boolean       @default(false)
@@ -116,13 +116,16 @@ model Artwork {
   museumId String?
   museum   Museum? @relation(fields: [museumId], references: [id])
 
-  // Date origin @verification
+  // Data origin & verification
   source          ArtworkSource @default(AI_GENERATED)
   externalId      String? // ID from source API (e.g. Met Museum object ID)
   verified        Boolean       @default(false)
   verifiedAt      DateTime?
   verifiedBy      String? // admin user ID who verified
   correctionCount Int           @default(0) // how many users corrected this — high = needs review
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations 
   scans         Scan[]
@@ -175,7 +178,7 @@ model Scan {
 
   // Location context
   latitude  Float?
-  longitude Float
+  longitude Float?
 
   createdAt DateTime @default(now())
 
@@ -276,7 +279,7 @@ model Museum {
   openingHours  Json? // e.g. { "mon": "9:00-17:00", ... }
   admissionInfo String?
 
-  createAt  DateTime @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations

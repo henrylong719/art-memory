@@ -4,7 +4,8 @@
 		"module": "ESNext",
 		"baseUrl": "./src",
 		"paths": {
-			"@/*": ["*"]
+			"@/*": ["*"],
+			"@generated/*": ["../generated/*"]
 		},
 		"moduleResolution": "bundler",
 		"outDir": "dist",

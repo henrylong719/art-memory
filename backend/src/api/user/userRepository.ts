@@ -1,30 +1,56 @@
-import type { User } from "@/api/user/userModel";
+// Fields to select (exclude passwordHash from all queries)
 
-export const users: User[] = [
-	{
-		id: 1,
-		name: "Alice",
-		email: "alice@example.com",
-		age: 42,
-		createdAt: new Date(),
-		updatedAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days later
-	},
-	{
-		id: 2,
-		name: "Robert",
-		email: "Robert@example.com",
-		age: 21,
-		createdAt: new Date(),
-		updatedAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days later
-	},
-];
+import { prisma } from '@/common/db/prisma';
+import { User } from './userModel';
+
+const userPublicSelect = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  avatarUrl: true,
+  plan: true,
+  planExpiresAt: true,
+  preferredLanguage: true,
+  notificationsOn: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 export class UserRepository {
-	async findAllAsync(): Promise<User[]> {
-		return users;
-	}
+  async findAllAsync(): Promise<User[]> {
+    return prisma.user.findMany({
+      select: userPublicSelect,
+    });
+  }
 
-	async findByIdAsync(id: number): Promise<User | null> {
-		return users.find((user) => user.id === id) || null;
-	}
+  async findByIdAsync(id: string): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { id },
+      select: userPublicSelect,
+    });
+  }
+
+  async findByEmailAsync(email: string): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { email },
+    });
+  }
+
+  async updateAsync(
+    id: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+      preferredLanguage?: string;
+      notificationsOn?: boolean;
+    },
+  ) {
+    return prisma.user.update({
+      where: { id },
+      data,
+      select: userPublicSelect,
+    });
+  }
 }

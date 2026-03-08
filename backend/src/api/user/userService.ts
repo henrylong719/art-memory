@@ -25,7 +25,7 @@ export class UserService {
       }
       return ServiceResponse.success<User[]>('Users found', users);
     } catch (ex) {
-      const errorMessage = `Error finding all users: $${(ex as Error).message}`;
+      const errorMessage = `Error finding all users: ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
         'An error occurred while retrieving users.',
@@ -36,7 +36,7 @@ export class UserService {
   }
 
   // Retrieves a single user by their ID
-  async findById(id: number): Promise<ServiceResponse<User | null>> {
+  async findById(id: string): Promise<ServiceResponse<User | null>> {
     try {
       const user = await this.userRepository.findByIdAsync(id);
       if (!user) {
@@ -48,10 +48,43 @@ export class UserService {
       }
       return ServiceResponse.success<User>('User found', user);
     } catch (ex) {
-      const errorMessage = `Error finding user with id ${id}:, ${(ex as Error).message}`;
+      const errorMessage = `Error finding user with id ${id}: ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure(
         'An error occurred while finding user.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Updates a user by their ID
+  async update(
+    id: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+      preferredLanguage?: string;
+      notificationsOn?: boolean;
+    },
+  ): Promise<ServiceResponse<User | null>> {
+    try {
+      const existing = await this.userRepository.findByIdAsync(id);
+      if (!existing) {
+        return ServiceResponse.failure(
+          'User not found',
+          null,
+          StatusCodes.NOT_FOUND,
+        );
+      }
+      const user = await this.userRepository.updateAsync(id, data);
+      return ServiceResponse.success<User>('User updated', user);
+    } catch (ex) {
+      const errorMessage = `Error updating user with id ${id}: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while updating user.',
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );
