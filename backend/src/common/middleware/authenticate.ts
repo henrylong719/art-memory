@@ -18,7 +18,11 @@ declare global {
  * Attaches `req.user` with { userId, email } on success.
  */
 
-export const authticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

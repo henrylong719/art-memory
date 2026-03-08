@@ -5,8 +5,10 @@ import { pino } from 'pino';
 import { healthCheckRouter } from '@/api/healthCheck/healthCheckRouter';
 import { authRouter } from '@/api/auth/authRouter';
 import { userRouter } from '@/api/user/userRouter';
+import { artistRouter } from '@/api/artist/artistRouter';
 import { openAPIRouter } from '@/api-docs/openAPIRouter';
 import errorHandler from '@/common/middleware/errorHandler';
+import { authenticate } from '@/common/middleware/authenticate';
 import rateLimiter from '@/common/middleware/rateLimiter';
 import requestLogger from '@/common/middleware/requestLogger';
 import { env } from '@/common/utils/envConfig';
@@ -32,7 +34,8 @@ app.use('/health-check', healthCheckRouter);
 app.use('/auth', authRouter);
 
 // Protected routes
-app.use('/users', userRouter);
+app.use('/users', authenticate, userRouter);
+app.use('/artists', authenticate, artistRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
