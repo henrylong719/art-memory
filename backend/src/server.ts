@@ -7,6 +7,7 @@ import { authRouter } from '@/api/auth/authRouter';
 import { userRouter } from '@/api/user/userRouter';
 import { artistRouter } from '@/api/artist/artistRouter';
 import { artworkRouter } from '@/api/artwork/artworkRouter';
+import { collectionRouter } from '@/api/collection/collectionRouter';
 import { openAPIRouter } from '@/api-docs/openAPIRouter';
 import errorHandler from '@/common/middleware/errorHandler';
 import { authenticate } from '@/common/middleware/authenticate';
@@ -38,6 +39,7 @@ app.use('/auth', authRouter);
 app.use('/users', authenticate, userRouter);
 app.use('/artists', authenticate, artistRouter);
 app.use('/artworks', authenticate, artworkRouter);
+app.use('/collections', authenticate, collectionRouter);
 
 // Swagger UI
 app.use(openAPIRouter);

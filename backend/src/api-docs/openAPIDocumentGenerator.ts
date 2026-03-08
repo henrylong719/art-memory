@@ -8,6 +8,7 @@ import { authRegistry } from '@/api/auth/authRouter';
 import { userRegistry } from '@/api/user/userRouter';
 import { artistRegistry } from '@/api/artist/artistRouter';
 import { artworkRegistry } from '@/api/artwork/artworkRouter';
+import { collectionRegistry } from '@/api/collection/collectionRouter';
 
 export type OpenAPIDocument = ReturnType<
   OpenApiGeneratorV3['generateDocument']
@@ -20,6 +21,7 @@ export function generateOpenAPIDocument(): OpenAPIDocument {
     userRegistry,
     artistRegistry,
     artworkRegistry,
+    collectionRegistry,
   ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
