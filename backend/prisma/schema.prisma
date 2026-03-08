@@ -12,3 +12,301 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ============================================================
+// AUTH & USER
+// ============================================================
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  firstName    String?
+  lastName     String?
+  avatarUrl    String?
+
+  // Subscription / plan
+  plan          Plan      @default(FREE)
+  planExpiresAt DateTime?
+
+  // Preference
+  preferredLanguage String  @default("en")
+  notinicationsOn   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  collections   Collection[]
+  scans         Scan[]
+  savedArtWorks SavedArtwork[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+enum Plan {
+  FREE
+  MONTHLY
+  YEARLY
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// ARTISTS
+// ============================================================
+
+model Artist {
+  id          String  @id @default(cuid())
+  name        String
+  birthYear   Int?
+  deathYear   Int?
+  nationality String?
+  biography   String? @db.Text
+  imageUrl    String?
+  wikiUrl     String?
+
+  // Date origin & verification
+  source     ArtworkSource @default(AI_GENERATED)
+  externalId String? // ID from source API
+  verified   Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  artworks Artwork[]
+
+  @@index([name])
+  @@index([externalId])
+  @@map("artists")
+}
+
+// ============================================================
+// ARTWORKS
+// ============================================================
+
+model Artwork {
+  id          String  @id @default(cuid())
+  title       String
+  year        Int?
+  medium      String? // e.g. "Oil on canvas"
+  dimensions  String? // e.g. "73.7 cm × 92.1 cm"
+  style       String? // e.g. "Post-Impressionism"
+  description String? @db.Text
+  imageUrl    String? // S3 reference image URL
+  wikiUrl     String?
+
+  // Artist relation
+  artistId String?
+  artist   Artist? @relation(fields: [artistId], references: [id])
+
+  // Museum where artwork is housed
+  museumId String?
+  museum   Museum? @relation(fields: [museumId], references: [id])
+
+  // Date origin @verification
+  source          ArtworkSource @default(AI_GENERATED)
+  externalId      String? // ID from source API (e.g. Met Museum object ID)
+  verified        Boolean       @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String? // admin user ID who verified
+  correctionCount Int           @default(0) // how many users corrected this — high = needs review
+
+  // Relations 
+  scans         Scan[]
+  savedArtworks SavedArtwork[]
+
+  @@index([title])
+  @@index([artistId])
+  @@index([museumId])
+  @@index([source])
+  @@index([verified])
+  @@index([externalId])
+  @@map("artworks")
+}
+
+enum ArtworkSource {
+  AI_GENERATED // Created from an AI scan result
+  SEED_MET // Seeded from Met Museum API
+  SEED_AIC // Seeded from Art Institute of Chicago API
+  SEED_WIKI // Seeded from Wikidata/Wikipedia
+  MANUAL // Manually added by admin
+}
+
+// ============================================================
+// SCANS (every time a user scans an artwork or label)
+// ============================================================
+
+model Scan {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // What was scanned
+  scanType ScanType
+
+  // The image the user captured (stored in S3)
+  imageUrl String
+
+  // AI identification results
+  artworkId   String?
+  artwork     Artwork? @relation(fields: [artworkId], references: [id])
+  confidence  Float? // 0.0 – 1.0 confidence score
+  rawAiResult Json? // full OpenAI response for debugging
+
+  // OCR label extraction (when scanType = LABEL)
+  extractedText String? @db.Text
+
+  // user corrections
+  userCorrectedTitle  String?
+  userCorrectedArtist String?
+
+  // Location context
+  latitude  Float?
+  longitude Float
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([artworkId])
+  @@index([createdAt])
+  @@map("scans")
+}
+
+enum ScanType {
+  ARTWORK // User scanned the artwork itself
+  LABEL // User scanned the museum label
+}
+
+// ============================================================
+// COLLECTIONS & SAVED ARTWORKS
+// ============================================================
+
+model Collection {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String // e.g. "Paris Trip 2025", "Impressionists"
+  description String?
+  coverUrl    String? // optional cover image
+  isDefault   Boolean @default(false) // every user gets one default collection
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  savedArtworks SavedArtwork[]
+
+  @@index([userId])
+  @@map("collections")
+}
+
+model SavedArtwork {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The artwork (can be null if manually added with just notes/photos)
+  artworkId String?
+  artwork   Artwork? @relation(fields: [artworkId], references: [id])
+
+  // Which collection it belongs to
+  collectionId String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  // User-provided date
+  personalNote String? @db.Text
+  userPhotoUrl String? // user's own photo of the artwork (S3)
+  rating       Int? // 1–5 star rating
+
+  // Manual overrides (if AI got it wrong or artwork doesn't exist in DB)
+  customTitle  String?
+  customArtist String?
+  customYear   Int?
+  customMedium String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([collectionId, artworkId]) // no duplicate artwork in same collection
+  @@index([userId])
+  @@index([collectionId])
+  @@map("saved_artworks")
+}
+
+// ============================================================
+// MUSEUMS & GALLERIES (for Discover feature)
+// ============================================================
+
+model Museum {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+  imageUrl    String?
+  websiteUrl  String?
+  phone       String?
+
+  // Address
+  address    String?
+  city       String?
+  state      String?
+  country    String?
+  postalCode String?
+
+  // Geolocation (for nearby search)
+  latitude  Float
+  longitude Float
+
+  // Google Places integration
+  googlePlaceId String? @unique
+
+  // Operating info
+  openingHours  Json? // e.g. { "mon": "9:00-17:00", ... }
+  admissionInfo String?
+
+  createAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  artworks Artwork[]
+
+  @@index([latitude, longitude])
+  @@index([city])
+  @@index([country])
+  @@map("museums")
+}
+
+// ============================================================
+// AI USAGE TRACKING (rate-limiting & cost monitoring)
+// ============================================================
+
+model AiUsageLog {
+  id         String  @id @default(cuid())
+  userId     String
+  endpoint   String // e.g. "openai/vision", "openai/ocr"
+  model      String
+  tokensIn   Int?
+  tokensOut  Int?
+  costUsd    Float?
+  durationMs Int?
+  success    Boolean
+  errorMsg   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
+}
