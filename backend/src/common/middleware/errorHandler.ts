@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import { ZodError } from 'zod';
 import { ServiceResponse } from '@/common/models/serviceResponse';
 import { logger } from '@/server';
-import { Prisma } from '@generated/prisma/client';
 
 const notFoundHandler: RequestHandler = (_req, res) => {
   const response = ServiceResponse.failure(
@@ -27,7 +26,12 @@ const globalErrorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return;
   }
 
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'name' in err &&
+    err.name === 'PrismaClientKnownRequestError'
+  ) {
     const response = ServiceResponse.failure(
       'Database request failed',
       null,

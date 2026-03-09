@@ -2,6 +2,12 @@ import express, { type Express } from "express";
 import { StatusCodes } from "http-status-codes";
 import request from "supertest";
 
+vi.mock("@/server", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
 import errorHandler from "@/common/middleware/errorHandler";
 
 describe("Error Handler Middleware", () => {
