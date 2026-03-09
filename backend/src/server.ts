@@ -10,6 +10,7 @@ import { artworkRouter } from '@/api/artwork/artworkRouter';
 import { collectionRouter } from '@/api/collection/collectionRouter';
 import { savedArtworkRouter } from '@/api/savedArtwork/savedArtworkRouter';
 import { scanRouter } from '@/api/scan/scanRouter';
+import { museumRouter } from '@/api/museum/museumRouter';
 import { openAPIRouter } from '@/api-docs/openAPIRouter';
 import errorHandler from '@/common/middleware/errorHandler';
 import { authenticate } from '@/common/middleware/authenticate';
@@ -44,6 +45,7 @@ app.use('/artworks', authenticate, artworkRouter);
 app.use('/collections', authenticate, collectionRouter);
 app.use('/saved-artworks', authenticate, savedArtworkRouter);
 app.use('/scans', authenticate, scanRouter);
+app.use('/museums', authenticate, museumRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
