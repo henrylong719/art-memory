@@ -35,6 +35,7 @@ vi.mock('@/api/user/userController', () => ({
 }));
 
 import { userRouter } from '@/api/user/userRouter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('userRouter', () => {
   const app = express();

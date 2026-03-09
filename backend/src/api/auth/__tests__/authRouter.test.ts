@@ -9,10 +9,14 @@ const { mockRegister, mockLogin, mockRefresh, mockLogout } = vi.hoisted(() => ({
       .send({ success: true, message: 'Registration successful' }),
   ),
   mockLogin: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Login successful' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Login successful' }),
   ),
   mockRefresh: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Token refreshed' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Token refreshed' }),
   ),
   mockLogout: vi.fn((_req, res) =>
     res.status(StatusCodes.OK).send({ success: true, message: 'Logged out' }),
@@ -29,6 +33,7 @@ vi.mock('@/api/auth/authController', () => ({
 }));
 
 import { authRouter } from '@/api/auth/authRouter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('authRouter', () => {
   const app = express();

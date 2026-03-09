@@ -4,6 +4,7 @@ import request from 'supertest';
 
 import type { ServiceResponse } from '@/common/models/serviceResponse';
 import { healthCheckRouter } from '@/api/healthCheck/healthCheckRouter';
+import { describe, expect, it } from 'vitest';
 
 describe('healthCheckRouter', () => {
   it('GET /health-check returns service health payload', async () => {

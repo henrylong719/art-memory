@@ -13,28 +13,44 @@ const {
   mockGenerateStory,
 } = vi.hoisted(() => ({
   mockGetArtworks: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artworks found' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artworks found' }),
   ),
   mockSearchArtworks: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artworks found' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artworks found' }),
   ),
   mockGetArtworksByArtist: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artworks found' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artworks found' }),
   ),
   mockGetArtwork: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artwork found' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artwork found' }),
   ),
   mockCreateArtwork: vi.fn((_req, res) =>
-    res.status(StatusCodes.CREATED).send({ success: true, message: 'Artwork created' }),
+    res
+      .status(StatusCodes.CREATED)
+      .send({ success: true, message: 'Artwork created' }),
   ),
   mockUpdateArtwork: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artwork updated' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artwork updated' }),
   ),
   mockDeleteArtwork: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artwork deleted' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artwork deleted' }),
   ),
   mockGenerateStory: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Story generated' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Story generated' }),
   ),
 }));
 
@@ -52,6 +68,7 @@ vi.mock('@/api/artwork/artworkController', () => ({
 }));
 
 import { artworkRouter } from '@/api/artwork/artworkRouter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('artworkRouter', () => {
   const app = express();
@@ -70,7 +87,9 @@ describe('artworkRouter', () => {
   });
 
   it('GET /artworks/search validates query before controller', async () => {
-    const response = await request(app).get('/artworks/search').query({ q: '' });
+    const response = await request(app)
+      .get('/artworks/search')
+      .query({ q: '' });
 
     expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST);
     expect(response.body.message).toContain('Invalid input');
