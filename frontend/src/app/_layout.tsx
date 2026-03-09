@@ -1,5 +1,4 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-
 import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,12 +7,11 @@ import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { hydrateAuth } from '@/features/auth/use-auth-store';
-
 import { APIProvider } from '@/lib/api';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
-// Import  global CSS file
 import '../global.css';
 
 export { ErrorBoundary } from 'expo-router';
@@ -25,21 +23,66 @@ export const unstable_settings = {
 
 hydrateAuth();
 loadSelectedTheme();
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-// Set the animation options. This is optional.
-SplashScreen.setOptions({
-  duration: 500,
-  fade: true,
-});
+SplashScreen.setOptions({ duration: 500, fade: true });
 
 export default function RootLayout() {
   return (
     <Providers>
       <Stack>
+        {/* Authenticated tab group */}
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
+
+        {/* Auth screens */}
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-up" options={{ headerShown: false }} />
+
+        {/* Artwork detail (shown above tabs) */}
+        <Stack.Screen
+          name="artworks/[id]"
+          options={{ headerShown: false, animation: 'slide_from_bottom' }}
+        />
+
+        {/* Collection detail (shown above tabs) */}
+        <Stack.Screen
+          name="collections/[id]"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+
+        {/* Discover flow (accessed from Home) */}
+        <Stack.Screen
+          name="discover/index"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="discover/[id]"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+
+        {/* Scan flow (full-screen, no tab bar) */}
+        <Stack.Screen
+          name="scan/camera"
+          options={{ headerShown: false, animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="scan/result"
+          options={{ headerShown: false, animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="scan/fallback"
+          options={{ headerShown: false, animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="scan/manual-entry"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+
+        {/* Profile sub-screens */}
+        <Stack.Screen
+          name="profile/history"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
       </Stack>
     </Providers>
   );
@@ -51,7 +94,7 @@ function Providers({ children }: { children: React.ReactNode }) {
     <GestureHandlerRootView
       style={styles.container}
       // eslint-disable-next-line better-tailwindcss/no-unknown-classes
-      className={theme.dark ? `dark` : undefined}
+      className={theme.dark ? 'dark' : undefined}
     >
       <KeyboardProvider>
         <ThemeProvider value={theme}>

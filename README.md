@@ -1,138 +1,284 @@
-<p align="center">
-    <img alt="React Native Template Obytes" src="https://github.com/obytes/react-native-template-obytes/assets/11137944/a8163d23-897a-4efe-91ce-b9bf7348c18f" width="200" />
-</p>
+# ArtMemory
 
-<h1 align="center">
-  React Native Template Obytes
-</h1>
+> Your personal AI-powered museum companion. Scan artworks, extract label details, and build a curated archive of the art that moves you.
 
-![expo](https://img.shields.io/github/package-json/dependency-version/obytes/react-native-template-obytes/expo?label=expo) ![react-native](https://img.shields.io/github/package-json/dependency-version/obytes/react-native-template-obytes/react-native?label=react-native) ![GitHub Repo stars](https://img.shields.io/github/stars/obytes/react-native-template-obytes) ![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/m/obytes/react-native-template-obytes) ![GitHub issues](https://img.shields.io/github/issues/obytes/react-native-template-obytes) ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/obytes/react-native-template-obytes)
+ArtMemory is a full-stack mobile application inspired by apps like [ArtScan AI](https://www.artscanai.com/). It helps museum visitors and art lovers identify artworks with AI, save them into personal collections, and discover nearby museums — all in one elegant, minimal app.
 
-📱 A template for your next React Native project 🚀, Made with developer experience and performance first: Expo, TypeScript, TailwindCSS, Husky, Lint-Staged, expo-router, react-query, TanStack Form, I18n.
+---
 
-> Welcome to the Obytes Mobile Tribe's Expo / React Native Starter Kit!
+## Features
 
-## 🚀 Motivation
+### AI Scanning — two modes
+- **Artwork + Details** — photograph the artwork *and* the museum label. AI extracts the title, artist, year, and medium directly from the label text (no inference, just OCR), then builds a complete record.
+- **Artwork Only** — photograph the artwork alone. OpenAI Vision identifies the piece and returns structured metadata with a confidence score.
 
-Our goal with this starter kit was to streamline the process of building React Native apps, both for our own team and for our clients. We wanted to create a resource that would allow us to create high-quality apps faster and with less effort, while ensuring that all of our projects adhere to the same code standards and architectural principles.
+### Collections & Archive
+- Save any artwork into named personal collections
+- Add personal notes, ratings, and custom metadata to saved pieces
+- Browse all artworks stored in the system database
 
-The benefits of using this starter kit are numerous. It helps our team easily switch between projects, as we can rely on a consistent foundation of code. It also allows us to focus on the business logic of each project rather than getting bogged down in boilerplate code. And, because it promotes consistency across projects, it makes it easier to maintain and scale our apps, as well as share code between teams.
+### Scan History
+- Full chronological history of every scan
+- Tap any scan to view the result or correct the AI's output
 
-Overall, our starter kit is designed to facilitate efficient and effective app development, helping us to bring the best possible products to our clients
+### Discover
+- Find museums and galleries near you using Google Places
+- View museum details, opening hours, and featured artworks
 
-## ✍️ Philosophy
+### Auth
+- JWT-based authentication with access + refresh token rotation
+- Secure token storage with react-native-mmkv
 
-When creating this starter kit, we had several guiding principles in mind::
+---
 
-- **🚀 Production-ready**: We wanted to ensure that this starter was ready for real-world use, providing a solid foundation for building production-grade apps.
-- **🥷 Developer experience and productivity**: Our focus was on creating a starter that would enhance the developer experience and increase productivity.
-- **🧩 Minimal code and dependencies**: We aimed to keep the codebase and dependencies as small as possible.
-- **💪 Well-maintained third-party libraries**: We included only well-maintained and reliable third-party libraries, to provide stability and support for our projects.
+## Tech Stack
 
-## ⭐ Key Features
+### Backend (`/backend`)
 
-- ✅ Latest Expo SDK with Custom Dev Client: Leverage the best of the Expo ecosystem while maintaining full control over your app.
-- 🎉 [TypeScript](https://www.typescriptlang.org/) for enhanced code quality and bug prevention through static type checking.
-- 💅 Minimal UI kit built with [TailwindCSS](https://www.nativewind.dev/), featuring common components essential for your app.
-- ⚙️ Multi-environment build support (Production, Staging, Development) using Expo configuration.
-- 🦊 Husky for Git Hooks: Automate your git hooks and enforce code standards.
-- 💡 Clean project structure with Absolute Imports for easier code navigation and management.
-- 🚫 Lint-staged: Run Eslint and TypeScript checks on Git staged files to maintain code quality.
-- 🗂 VSCode recommended extensions, settings, and snippets for an enhanced developer experience.
-- ☂️ Pre-installed [Expo Router](https://docs.expo.dev/router/introduction/) with examples for comprehensive app navigation.
-- 💫 Auth flow implementation using [Zustand](https://github.com/pmndrs/zustand) for state management and [react-native-mmkv](https://github.com/mrousavy/react-native-mmkv) for secure data storage.
-- 🛠 10+ [Github Actions](https://github.com/features/actions) workflows for building, releasing, testing, and distributing your app.
-- 🔥 [React Query](https://react-query.tanstack.com/) and [axios](https://github.com/axios/axios) for efficient data fetching and state management.
-- 🧵 Robust form handling with [TanStack Form](https://tanstack.com/form/latest) and [zod](https://github.com/colinhacks/zod) for validation, plus keyboard handling.
-- 🎯 Localization support with [i18next](https://www.i18next.com/), including Eslint for validation.
-- 🧪 Unit testing setup with [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
-- 🔍 E2E testing capabilities with [Maestro](https://maestro.mobile.dev/) for comprehensive app testing.
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js (ESM) |
+| Framework | Express 5 |
+| Language | TypeScript 5 + `tsup` |
+| ORM | Prisma 7 + `@prisma/adapter-pg` (PostgreSQL) |
+| AI | OpenAI SDK — Vision + Chat Completions (`gpt-4o`) |
+| Storage | AWS S3 (artwork & label image uploads) |
+| Auth | JWT (`jsonwebtoken`) + bcrypt |
+| Validation | Zod + `@asteasolutions/zod-to-openapi` |
+| API Docs | Swagger UI (auto-generated from Zod schemas) |
+| Logging | Pino + pino-http |
+| Maps | Google Places API |
+| Testing | Vitest + Supertest |
+| Linting | Biome 2 |
 
-## Is this starter for me?
+### Frontend (`/frontend`)
 
-Yes 😀
+| Layer | Technology |
+|-------|-----------|
+| Framework | Expo SDK 54 / React Native 0.81 / React 19 |
+| Navigation | Expo Router 6 (file-system routing) |
+| Language | TypeScript 5 |
+| Styling | NativeWind (TailwindCSS for React Native) |
+| State | Zustand 5 |
+| Data Fetching | TanStack Query v5 + Axios |
+| Storage | react-native-mmkv |
+| Animations | Moti + React Native Reanimated 4 |
+| Images | expo-image |
+| Location | expo-location |
+| Camera | expo-camera |
+| Testing | Jest + React Testing Library / Maestro (E2E) |
 
-This starter kit is designed to benefit a wide range of React Native developers, from beginners to experienced professionals. Here's why it might be a good fit for you:
+---
 
-1. **For beginners:** It provides a solid foundation with best practices and common solutions, helping you learn industry-standard approaches to React Native development.
+## Project Structure
 
-2. **For experienced developers:** It offers a well-structured, production-ready setup that can save you time and effort in project initialization and configuration.
+```
+ArtMemory/
+├── backend/               # Express API
+│   ├── prisma/            # Schema + migrations
+│   ├── src/
+│   │   ├── api/           # Feature modules (auth, artwork, scan, collection, museum…)
+│   │   │   └── <feature>/
+│   │   │       ├── *Router.ts
+│   │   │       ├── *Controller.ts
+│   │   │       ├── *Service.ts
+│   │   │       └── *Repository.ts
+│   │   ├── common/
+│   │   │   ├── db/        # Prisma client singleton
+│   │   │   ├── middleware/ # Auth, error handler, rate limiter, upload
+│   │   │   └── services/  # OpenAI, S3, Google Places
+│   │   └── api-docs/      # OpenAPI / Swagger
+│   └── generated/prisma/  # Auto-generated Prisma client
+│
+└── frontend/              # Expo app
+    └── src/
+        ├── app/           # Expo Router file-based routes
+        │   ├── (app)/     # Authenticated tab group (Home, Scan, Artworks, Collections, Profile)
+        │   ├── artworks/  # Artwork detail
+        │   ├── collections/
+        │   ├── discover/  # Museum list + detail (accessed from Home)
+        │   ├── scan/      # Camera, result, fallback, manual entry
+        │   ├── profile/   # Scan history
+        │   ├── login.tsx  # Sign In
+        │   ├── sign-up.tsx
+        │   └── onboarding.tsx # Splash
+        ├── features/      # Feature modules (auth, home, scan, artworks, collections, discover, profile)
+        ├── lib/
+        │   ├── api/       # Axios client, services, types
+        │   └── hooks/     # TanStack Query hooks for every endpoint
+        └── components/ui/ # Shared UI components + icons
+```
 
-3. **For teams:** It ensures consistency across projects and team members, making it easier to onboard new developers and maintain code quality.
+---
 
-4. **For explorers:** Even if you prefer not to use starter kits, this project can serve as a valuable reference. You can explore the codebase, documentation, and architectural decisions to gain insights and potentially adopt specific solutions for your projects.
+## API Endpoints
 
-5. **For learners:** The starter kit incorporates up-to-date libraries and patterns, allowing you to familiarize yourself with current best practices in the React Native ecosystem.
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/auth/register` | Create account |
+| POST | `/auth/login` | Get access + refresh tokens |
+| POST | `/auth/refresh` | Rotate tokens |
+| POST | `/auth/logout` | Invalidate refresh token |
+| GET / PATCH | `/users/me` | Current user profile |
+| GET | `/artworks` | All artworks |
+| GET | `/artworks/:id` | Artwork detail |
+| GET | `/artworks/search` | Search artworks |
+| POST | `/artworks/:id/generate-story` | Generate AI story for artwork |
+| GET | `/artists`, `/artists/:id`, `/artists/search` | Artist browsing |
+| POST | `/scans/artwork` | Scan artwork only (AI Vision) |
+| POST | `/scans/combined` | Scan artwork + label (OCR) |
+| GET | `/scans`, `/scans/:id` | Scan history |
+| PUT | `/scans/:id/correct` | Correct AI result |
+| GET / POST / PUT / DELETE | `/collections/*` | Manage collections |
+| GET / POST / PUT / DELETE | `/saved-artworks/*` | Save artworks into collections |
+| GET | `/museums/nearby` | Nearby museums (Google Places) |
+| GET | `/museums/search` | Search museums |
+| GET | `/museums/place/:placeId` | Museum detail by Google Place ID |
+| GET | `/museums/:id` | Museum detail by database ID |
 
-6. **For AI-assisted development:** This starter kit works well with AI coding tools. It provides a solid structure and best practices that can guide AI-generated code. This helps ensure that AI assistance leads to high-quality, maintainable code that fits well within your project.
+Interactive API docs are available at `http://localhost:8080/swagger` when the backend is running.
 
-Remember, you don't have to use the entire starter kit as-is. Feel free to cherry-pick ideas, configurations, or code snippets that align with your project needs. Whether you're building a new app from scratch or looking to improve your existing development process, this starter kit can provide valuable insights and practical solutions.
+---
 
-## Why Expo and not React Native CLI?
+## Getting Started
 
-We have been using Expo as our main framework since the introduction of [Continuous Native Generation (CNG)](https://docs.expo.dev/workflow/continuous-native-generation/) concept and we are happy with the experience.
+### Prerequisites
 
-I think this question is not valid anymore, especially after the last React conference when the core React native team recommended using Expo for new projects.
+- Node.js 22+
+- pnpm
+- PostgreSQL database
+- AWS S3 bucket
+- OpenAI API key (`gpt-4o` recommended)
+- Google Places API key
 
-> "As of today, the only recommended community framework for React Native is Expo. Folks at Expo have been investing in the React Native ecosystem since the early days of React Native and as of today, we believe the developer experience offered by Expo is best in class." React native core team
+### Backend
 
-Still hesitating? Check out this [article](https://reactnative.dev/blog/2024/06/25/use-a-framework-to-build-react-native-apps) or this [video](https://www.youtube.com/watch?v=lifGTznLBcw), maybe this one [video](https://www.youtube.com/watch?v=ek_IdGC0G80) too.
+```bash
+cd backend
 
-## 🧑‍💻 Stay up to date
+# Install dependencies
+pnpm install
 
-We are committed to continually improving our starter kit and providing the best possible resources for building React Native apps. To that end, we regularly add new features and fix any bugs that are discovered.
+# Copy env template and fill in your values
+cp .env.template .env
 
-If you want to stay up to date with the latest developments in our starter kit, you can either watch the repository or hit the "star" button. This will allow you to receive notifications whenever new updates are available.
+# Generate Prisma client
+pnpm prisma generate
 
-We value the feedback and contributions of our users, and we encourage you to let us know if you have any suggestions for improving our starter kit. We are always looking for ways to make it even more effective and useful for our community. So, please do not hesitate to reach out and share your thoughts with us.
+# Run migrations
+pnpm prisma migrate dev
 
-<!-- add a gif image here  -->
+# Start dev server (with file watching)
+pnpm run start:dev
+```
 
-## 💎 Libraries used
+The API will be available at `http://localhost:8080`.
 
-- [Expo](https://docs.expo.io/)
-- [Expo Router](https://docs.expo.dev/router/introduction/)
-- [Nativewind](https://www.nativewind.dev/v4/overview)
-- [Flash list](https://github.com/Shopify/flash-list)
-- [React Query](https://tanstack.com/query/v4)
-- [Axios](https://axios-http.com/docs/intro)
-- [TanStack Form](https://tanstack.com/form/latest)
-- [i18next](https://www.i18next.com/)
-- [zustand](https://github.com/pmndrs/zustand)
-- [React Native MMKV](https://github.com/mrousavy/react-native-mmkv)
-- [React Native Gesture Handler](https://docs.swmansion.com/react-native-gesture-handler/docs/)
-- [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/docs/)
-- [React Native Svg](https://github.com/software-mansion/react-native-svg)
-- [React Error Boundaries](https://github.com/bvaughn/react-error-boundary)
-- [Expo Image](https://docs.expo.dev/versions/unversioned/sdk/image/)
-- [React Native Keyboard Controller](https://github.com/kirillzyusko/react-native-keyboard-controller)
-- [Moti](https://moti.fyi/)
-- [React Native Safe Area Context](https://github.com/th3rdwave/react-native-safe-area-context)
-- [React Native Screens](https://github.com/software-mansion/react-native-screens)
-- [Tailwind Variants](https://www.tailwind-variants.org/)
-- [Zod](https://zod.dev/)
+### Frontend
 
-## Contributors
+```bash
+cd frontend
 
-This starter is maintained by [Obytes mobile tribe team](https://www.obytes.com/team) and we welcome new contributors to join us in improving it. If you are interested in getting involved in the project, please don't hesitate to open an issue or submit a pull request.
+# Install dependencies
+pnpm install
 
-In addition to maintaining this starter kit, we are also available to work on custom projects and help you build your dream app. If you are looking for experienced and reliable developers to bring your app vision to life, please visit our website at [obytes.com/contact](https://www.obytes.com/contact) to get in touch with us. We would be happy to discuss your project in more detail and explore how we can help you achieve your goals.
+# Copy env file
+cp .env.development .env
 
-## 🔥 How to contribute?
+# Set EXPO_PUBLIC_API_URL to your backend URL, e.g.:
+# EXPO_PUBLIC_API_URL=http://localhost:8080
 
-Thank you for your interest in contributing to our project. Your involvement is greatly appreciated and we welcome your contributions. Here are some ways you can help us improve this project:
+# Start Expo dev server
+pnpm start
+```
 
-1. Show your support for the project by giving it a 🌟 on Github. This helps us increase visibility and attract more contributors.
-2. Share your thoughts and ideas with us by opening an issue. If you have any suggestions or feedback about any aspect of the project, we are always eager to hear from you and have a discussion.
-3. If you have any questions about the project, please don't hesitate to ask. Simply open an issue and our team will do our best to provide a helpful and informative response.
-4. If you encounter a bug or typo while using the starter kit or reading the documentation, we would be grateful if you could bring it to our attention. You can open an issue to report the issue, or even better, submit a pull request with a fix.
+---
 
-We value the input and contributions of our community and look forward to working with you to improve this project.
+## Environment Variables
 
-## ❓ FAQ
+### Backend (`.env`)
 
-If you have any questions about the starter and want answers, please check out the [Discussions](https://github.com/obytes/react-native-template-obytes/discussions) page.
+```env
+NODE_ENV=development
+PORT=8080
+HOST=localhost
 
-## 🔖 License
+# CORS — comma-separated list of allowed origins
+CORS_ORIGIN=http://localhost:8080,http://localhost:8081
 
-This project is MIT licensed.
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/artmemory
+
+# JWT
+JWT_SECRET=your-secret-key-at-least-32-characters-long
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# AWS S3
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+S3_BUCKET_NAME=artmemory-uploads
+
+# OpenAI
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o
+
+# Google Places
+GOOGLE_PLACES_API_KEY=your-google-places-key
+```
+
+### Frontend (`.env.development`)
+
+```env
+EXPO_PUBLIC_APP_ENV=development
+EXPO_PUBLIC_API_URL=http://localhost:8080
+```
+
+---
+
+## Database Schema
+
+The data model is defined in `backend/prisma/schema.prisma`. Key entities:
+
+- **User** — account with plan (FREE / MONTHLY / YEARLY)
+- **Artwork** — title, artist, year, medium, style, image, AI source tracking
+- **Artist** — biography, nationality, wiki link
+- **Scan** — scan type (ARTWORK / COMBINED), raw AI result, confidence, corrections
+- **Collection** — user-named groups of saved artworks
+- **SavedArtwork** — artwork saved to a collection with personal notes, rating, custom metadata
+- **Museum** — location, opening hours, admission, Google Place ID
+- **AiUsageLog** — per-request OpenAI cost and token tracking
+- **RefreshToken** — JWT refresh token store with expiry
+
+An ER diagram is available at [`er-diagram.mermaid`](./er-diagram.mermaid).
+
+---
+
+## App Screens
+
+| Screen | Route |
+|--------|-------|
+| Splash | `/onboarding` |
+| Sign In | `/login` |
+| Sign Up | `/sign-up` |
+| Home | `/(app)/` |
+| Scan Entry | `/(app)/scan` |
+| Camera Capture | `/scan/camera` |
+| Scan Result | `/scan/result` |
+| Scan Fallback | `/scan/fallback` |
+| Manual Entry | `/scan/manual-entry` |
+| Artworks List | `/(app)/artworks` |
+| Artwork Detail | `/artworks/[id]` |
+| Collections List | `/(app)/collections` |
+| Collection Detail | `/collections/[id]` |
+| Discover | `/discover` |
+| Museum Detail | `/discover/[id]` |
+| Profile | `/(app)/profile` |
+| Scan History | `/profile/history` |
+
+---
+
+## License
+
+MIT

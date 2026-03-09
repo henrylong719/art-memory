@@ -1,6 +1,7 @@
 import type { LoginInput, RegisterInput } from '@/lib/api/types';
 import { useMutation } from '@tanstack/react-query';
 import { signIn, signOut } from '@/features/auth/use-auth-store';
+import { setUser } from '@/features/auth/use-user-store';
 import { authApi } from '@/lib/api/services';
 import { getToken, removeToken } from '@/lib/auth/utils';
 
@@ -11,11 +12,8 @@ export function useRegister() {
       return data.responseObject;
     },
     onSuccess: (result) => {
-      const tokens = {
-        access: result.tokens.accessToken,
-        refresh: result.tokens.refreshToken,
-      };
-      signIn(tokens);
+      signIn({ access: result.tokens.accessToken, refresh: result.tokens.refreshToken });
+      setUser(result.user);
     },
   });
 }
@@ -27,11 +25,8 @@ export function useLogin() {
       return data.responseObject;
     },
     onSuccess: (result) => {
-      const tokens = {
-        access: result.tokens.accessToken,
-        refresh: result.tokens.refreshToken,
-      };
-      signIn(tokens);
+      signIn({ access: result.tokens.accessToken, refresh: result.tokens.refreshToken });
+      setUser(result.user);
     },
   });
 }

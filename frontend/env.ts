@@ -36,12 +36,12 @@ const PACKAGES = {
 } as const;
 
 const SCHEMES = {
-  development: 'obytesApp',
-  preview: 'obytesApp.preview',
-  production: 'obytesApp',
+  development: 'art_memory',
+  preview: 'art_memory.preview',
+  production: 'art_memory',
 } as const;
 
-const NAME = 'ObytesApp';
+const NAME = 'art_memory';
 
 // Check if strict validation is required (before prebuild)
 const STRICT_ENV_VALIDATION = process.env.STRICT_ENV_VALIDATION === '1';

@@ -1,77 +1,97 @@
-import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Redirect, SplashScreen, Tabs } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect } from 'react';
 
-import { Pressable, Text } from '@/components/ui';
 import {
-  Feed as FeedIcon,
-  Settings as SettingsIcon,
-  Style as StyleIcon,
+  Artworks as ArtworksIcon,
+  Collections as CollectionsIcon,
+  Home as HomeIcon,
+  Profile as ProfileIcon,
+  Scan as ScanIcon,
 } from '@/components/ui/icons';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
-import { useIsFirstTime } from '@/lib/hooks/use-is-first-time';
 
 export default function TabLayout() {
   const status = useAuth.use.status();
-  const [isFirstTime] = useIsFirstTime();
+
   const hideSplash = useCallback(async () => {
     await SplashScreen.hideAsync();
   }, []);
+
   useEffect(() => {
     if (status !== 'idle') {
       const timer = setTimeout(() => {
         hideSplash();
-      }, 1000);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [hideSplash, status]);
 
-  if (isFirstTime) {
+  if (status === 'signOut') {
     return <Redirect href="/onboarding" />;
   }
-  if (status === 'signOut') {
-    return <Redirect href="/login" />;
-  }
+
   return (
-    <Tabs>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#1c1917',
+        tabBarInactiveTintColor: '#a8a29e',
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopColor: '#e7e5e4',
+          borderTopWidth: 1,
+          height: 80,
+          paddingBottom: 16,
+          paddingTop: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '500',
+          letterSpacing: 0.5,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Feed',
-          tabBarIcon: ({ color }) => <FeedIcon color={color} />,
-          headerRight: () => <CreateNewPostLink />,
-          tabBarButtonTestID: 'feed-tab',
-        }}
-      />
-
-      <Tabs.Screen
-        name="style"
-        options={{
-          title: 'Style',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <StyleIcon color={color} />,
-          tabBarButtonTestID: 'style-tab',
+          title: 'Home',
+          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+          tabBarButtonTestID: 'home-tab',
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="scan"
         options={{
-          title: 'Settings',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <SettingsIcon color={color} />,
-          tabBarButtonTestID: 'settings-tab',
+          title: 'Scan',
+          tabBarIcon: ({ color }) => <ScanIcon color={color} />,
+          tabBarButtonTestID: 'scan-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="artworks"
+        options={{
+          title: 'Artworks',
+          tabBarIcon: ({ color }) => <ArtworksIcon color={color} />,
+          tabBarButtonTestID: 'artworks-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="collections"
+        options={{
+          title: 'Collections',
+          tabBarIcon: ({ color }) => <CollectionsIcon color={color} />,
+          tabBarButtonTestID: 'collections-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <ProfileIcon color={color} />,
+          tabBarButtonTestID: 'profile-tab',
         }}
       />
     </Tabs>
-  );
-}
-
-function CreateNewPostLink() {
-  return (
-    <Link href="/feed/add-post" asChild>
-      <Pressable>
-        <Text className="px-3 text-primary-300">Create</Text>
-      </Pressable>
-    </Link>
   );
 }
