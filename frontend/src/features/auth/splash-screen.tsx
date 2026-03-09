@@ -1,11 +1,11 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { Motion } from '@legendapp/motion';
 import { Image as NImage } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, StatusBar, StyleSheet, View as RNView } from 'react-native';
+import { Pressable, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { Text, View } from '@/components/ui';
+import { Text } from '@/components/ui';
 
 // Warm autumnal painting — matches Figma moodboard
 const HERO_IMAGE =
@@ -15,118 +15,71 @@ export function SplashScreen() {
   const router = useRouter();
 
   return (
-    <RNView className="flex flex-col h-full bg-stone-900 text-white relative overflow-hidden">
+    <View className="flex flex-col h-full bg-stone-900 text-white relative overflow-hidden">
       <StatusBar barStyle="light-content" />
 
-      {/* Hero image — use NImage directly to avoid withUniwind wrapper issues on web */}
-      <NImage
-        source={{ uri: HERO_IMAGE }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        transition={1000}
-      />
+      <View className="absolute inset-0 z-0">
+        <Motion.View
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.5, ease: 'easeOut' }}
+          className="w-full h-full object-cover opacity-60"
+        >
+          <NImage
+            source={{ uri: HERO_IMAGE }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={1000}
+          />
 
-      {/* Dark overlay */}
-      <RNView style={[StyleSheet.absoluteFill, styles.overlay]} />
+          <View className="absolute inset-0 bg-linear-to-b from-stone-900/60 via-stone-900/40 to-stone-900" />
+        </Motion.View>
+      </View>
 
-      <SafeAreaView style={styles.safeArea}>
-        {/* Branding — sits in upper third, matching Figma */}
-        <RNView style={styles.brandingBlock}>
-          {/* Logo mark: thin circle with centered dot */}
-          <RNView style={styles.logoCircle}>
-            <RNView style={styles.logoDot} />
-          </RNView>
-
-          <RNView style={styles.textBlock}>
-            <Text className="font-serif text-[52px] font-semibold text-white text-center leading-[58px]">
+      <SafeAreaView className="flex-1 px-6 pb-6 pt-[18%]">
+        <View className="relative z-10 flex-1 flex flex-col justify-between px-8 pt-24 pb-12">
+          <Motion.View
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center w-full"
+          >
+            <View className="w-11 h-11 border border-white/40 rounded-full mx-auto mb-6 flex items-center justify-center">
+              <View className="w-1.75 h-1.75 bg-white rounded-full" />
+            </View>
+            <Text className="font-serif text-[46px] font-medium tracking-wide mb-4 text-white drop-shadow-md text-center">
               Art Memory
             </Text>
-            <Text
-              className="text-[16px] text-center leading-[24px]"
-              style={{ color: 'rgba(255,255,255,0.7)' }}
-            >
+            <Text className="text-white/70 text-base font-medium max-w-65 mx-auto leading-relaxed drop-shadow-sm text-center">
               Discover and remember the art{'\n'}that moves you.
             </Text>
-          </RNView>
-        </RNView>
+          </Motion.View>
+        </View>
 
-        {/* Flexible spacer — pushes buttons to bottom */}
-        <RNView style={{ flex: 1 }} />
-
-        {/* CTA buttons — pill-shaped, flush to bottom */}
-        <RNView style={styles.buttons}>
+        <Motion.View
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full flex flex-col gap-4 mt-auto px-6 pb-15"
+        >
           <Pressable
-            style={[styles.btn, styles.btnPrimary]}
+            className="rounded-2xl py-4.5 items-center bg-white"
             onPress={() => router.push('/login')}
           >
-            <Text className="text-charcoal-900 text-[17px] font-semibold">
+            <Text className="text-stone-900 text-[15px] font-semibold">
               Sign In
             </Text>
           </Pressable>
           <Pressable
-            style={[styles.btn, styles.btnSecondary]}
+            className="rounded-2xl py-4.5 items-center bg-[rgba(71,71,71,0.85)]"
             onPress={() => router.push('/sign-up')}
           >
-            <Text className="text-white text-[17px] font-medium">
+            <Text className="text-white text-[15px] font-medium">
               Create Account
             </Text>
           </Pressable>
-        </RNView>
+        </Motion.View>
       </SafeAreaView>
-    </RNView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#1E1E1E',
-  },
-  overlay: {
-    backgroundColor: 'rgba(30, 30, 30, 0.62)',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    // Branding starts ~18% from top — matches Figma upper-third placement
-    paddingTop: '18%',
-  },
-  brandingBlock: {
-    alignItems: 'center',
-    gap: 20,
-  },
-  logoCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#fff',
-  },
-  textBlock: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  buttons: {
-    gap: 12,
-  },
-  btn: {
-    borderRadius: 999,
-    paddingVertical: 18,
-    alignItems: 'center',
-  },
-  btnPrimary: {
-    backgroundColor: '#ffffff',
-  },
-  btnSecondary: {
-    backgroundColor: 'rgba(71, 71, 71, 0.85)',
-  },
-});
