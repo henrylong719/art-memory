@@ -5,7 +5,12 @@ import { ActivityIndicator, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScrollView, Text, View } from '@/components/ui';
-import { useArtworks, useMe, useNearbyMuseums, useScanHistory } from '@/lib/hooks';
+import {
+  useArtworks,
+  useMe,
+  useNearbyMuseums,
+  useScanHistory,
+} from '@/lib/hooks';
 
 import { ArtworkCard, MuseumCard, ScanCard } from './components/cards';
 import { ScanCtaRow } from './components/scan-cta-row';
@@ -33,12 +38,15 @@ export function HomeScreen() {
   const greeting = getGreeting();
   const firstName = me?.firstName ?? me?.email?.split('@')[0] ?? 'there';
   const initials =
-    [me?.firstName?.[0], me?.lastName?.[0]].filter(Boolean).join('').toUpperCase() ||
+    [me?.firstName?.[0], me?.lastName?.[0]]
+      .filter(Boolean)
+      .join('')
+      .toUpperCase() ||
     me?.email?.[0]?.toUpperCase() ||
     '?';
 
   return (
-    <SafeAreaView className="flex-1 bg-stone-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
       <ScrollView
         className="flex-1"
         contentContainerClassName="pb-8"
@@ -47,16 +55,18 @@ export function HomeScreen() {
         {/* Header */}
         <View className="flex-row justify-between items-center px-6 pt-4 pb-7">
           <View>
-            <Text className="text-xs font-semibold text-stone-500 tracking-widest uppercase mb-1">
+            <Text className="text-xs font-semibold text-charcoal-500 tracking-widest uppercase mb-1">
               {greeting}
             </Text>
-            <Text className="font-serif text-[32px] font-semibold text-stone-900 leading-[38px]">
+            <Text className="font-serif text-[32px] font-semibold text-charcoal-900 leading-9.5">
               {firstName}
             </Text>
           </View>
           <Pressable onPress={() => router.push('/(app)/profile')} hitSlop={8}>
-            <View className="w-12 h-12 rounded-full bg-stone-200 items-center justify-center border-2 border-white">
-              <Text className="text-[15px] font-semibold text-stone-600">{initials}</Text>
+            <View className="w-12 h-12 rounded-full bg-charcoal-100 items-center justify-center border-2 border-white">
+              <Text className="text-[15px] font-semibold text-charcoal-600">
+                {initials}
+              </Text>
             </View>
           </Pressable>
         </View>
@@ -74,7 +84,7 @@ export function HomeScreen() {
             <SkeletonRow count={3} width={128} height={160} />
           ) : recentScans.length === 0 ? (
             <View className="px-6 py-5 items-center">
-              <Text className="text-[13px] text-stone-400 text-center leading-5">
+              <Text className="text-[13px] text-charcoal-300 text-center leading-5">
                 No scans yet. Go scan your first artwork!
               </Text>
             </View>
@@ -84,12 +94,14 @@ export function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerClassName="px-6 gap-3.5"
             >
-              {recentScans.map(scan => (
+              {recentScans.map((scan) => (
                 <ScanCard
                   key={scan.id}
                   scan={scan}
                   onPress={() =>
-                    scan.artwork ? router.push(`/artworks/${scan.artwork.id}`) : undefined
+                    scan.artwork
+                      ? router.push(`/artworks/${scan.artwork.id}`)
+                      : undefined
                   }
                 />
               ))}
@@ -106,20 +118,22 @@ export function HomeScreen() {
           />
           {nearby.locationStatus === 'requesting' || nearby.isLoading ? (
             <View className="px-6 py-5 items-center">
-              <ActivityIndicator size="small" color="#a8a29e" />
-              <Text className="text-[13px] text-stone-400 text-center leading-5 mt-2">
+              <ActivityIndicator size="small" color="#B0B0B0" />
+              <Text className="text-[13px] text-charcoal-300 text-center leading-5 mt-2">
                 Discovering nearby museums…
               </Text>
             </View>
           ) : nearby.locationStatus === 'denied' ? (
             <Pressable
-              className="mx-6 bg-stone-100 rounded-2xl p-[18px] gap-1.5"
+              className="mx-6 bg-neutral-100 rounded-2xl p-4.5 gap-1.5"
               onPress={() => router.push('/discover')}
             >
-              <Text className="text-sm text-stone-600 leading-5">
+              <Text className="text-sm text-charcoal-600 leading-5">
                 Enable location to see museums near you
               </Text>
-              <Text className="text-[13px] font-semibold text-stone-900">Browse manually →</Text>
+              <Text className="text-[13px] font-semibold text-charcoal-900">
+                Browse manually →
+              </Text>
             </Pressable>
           ) : nearbyMuseum ? (
             <View className="px-6">
@@ -134,7 +148,7 @@ export function HomeScreen() {
             </View>
           ) : (
             <View className="px-6 py-5 items-center">
-              <Text className="text-[13px] text-stone-400 text-center leading-5">
+              <Text className="text-[13px] text-charcoal-300 text-center leading-5">
                 No museums found nearby.
               </Text>
             </View>
@@ -152,7 +166,7 @@ export function HomeScreen() {
             <SkeletonRow count={3} width={140} height={180} />
           ) : featuredArtworks.length === 0 ? (
             <View className="px-6 py-5 items-center">
-              <Text className="text-[13px] text-stone-400 text-center leading-5">
+              <Text className="text-[13px] text-charcoal-300 text-center leading-5">
                 No artworks in the database yet.
               </Text>
             </View>
@@ -162,7 +176,7 @@ export function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerClassName="px-6 gap-3.5"
             >
-              {featuredArtworks.map(artwork => (
+              {featuredArtworks.map((artwork) => (
                 <ArtworkCard
                   key={artwork.id}
                   artwork={artwork}

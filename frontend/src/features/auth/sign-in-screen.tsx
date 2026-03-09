@@ -17,9 +17,6 @@ export function SignInScreen() {
 
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [focused, setFocused] = React.useState<'email' | 'password' | null>(
-    null,
-  );
 
   const axiosError = login.error as AxiosError<{ message: string }> | null;
   const errorMessage =
@@ -40,21 +37,22 @@ export function SignInScreen() {
       {/* Fixed back button header */}
       <View className="px-4 pt-12 pb-4">
         <Pressable
-          className="h-10 w-10 items-center justify-center rounded-full active:bg-stone-900/6"
+          className="p-2 -ml-2 rounded-full hover:bg-stone-200/50 transition-colors text-stone-900"
+          style={{ backgroundColor: 'transparent' }}
           onPress={() => router.back()}
           hitSlop={8}
         >
-          <ChevronLeft size={24} color="#1c1917" />
+          <ChevronLeft size={24} color="#1E1E1E" />
         </Pressable>
       </View>
 
       <KeyboardAvoidingView
-        className="flex-1"
+        className="flex-1 px-8 pt-8 pb-8 flex flex-col"
         behavior="padding"
         keyboardVerticalOffset={0}
       >
         <ScrollView
-          className="flex-1"
+          className="mb-10"
           contentContainerClassName="grow px-8 pt-8 pb-8"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -66,53 +64,45 @@ export function SignInScreen() {
             transition={{ duration: 300 }}
             className="mb-10"
           >
-            <Text className="font-serif text-[32px] font-medium leading-[38px] text-stone-900 mb-3">
+            <Text className="font-serif text-[32px] leading-tight font-medium text-stone-900 mb-3">
               Welcome back
             </Text>
-            <Text className="text-[15px] leading-[22px] text-stone-500">
+            <Text className="text-stone-500 text-[15px] leading-relaxed">
               Sign in to access your saved art.
             </Text>
           </Motion.View>
 
           {/* Fields */}
-          <View className="gap-5 mb-6">
-            <View>
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                EMAIL
-              </Text>
-              <TextInput
-                className={`bg-white border rounded-2xl py-[15px] px-4 text-[15px] text-stone-900 ${
-                  focused === 'email' ? 'border-stone-400' : 'border-stone-200'
-                }`}
-                placeholder="name@example.com"
-                placeholderTextColor="#a8a29e"
-                value={email}
-                onChangeText={setEmail}
-                onFocus={() => setFocused('email')}
-                onBlur={() => setFocused(null)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="next"
-              />
+          <View className="flex flex-col flex-1">
+            <View className="space-y-5 mb-6">
+              <View>
+                <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                  Email
+                </Text>
+                <TextInput
+                  className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                  placeholder="name@example.com"
+                  placeholderTextColor="#B0B0B0"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                />
+              </View>
             </View>
 
             <View>
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                PASSWORD
+              <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                Password
               </Text>
               <TextInput
-                className={`bg-white border rounded-2xl py-[15px] px-4 text-[15px] text-stone-900 ${
-                  focused === 'password'
-                    ? 'border-stone-400'
-                    : 'border-stone-200'
-                }`}
+                className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
                 placeholder="••••••••"
-                placeholderTextColor="#a8a29e"
+                placeholderTextColor="#B0B0B0"
                 value={password}
                 onChangeText={setPassword}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused(null)}
                 secureTextEntry
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit}
@@ -123,7 +113,7 @@ export function SignInScreen() {
           {/* Forgot password */}
           <View className="items-end mb-8">
             <Pressable hitSlop={8}>
-              <Text className="text-[13px] font-medium text-stone-500">
+              <Text className="text-[13px] font-medium text-stone-500 hover:text-stone-900 transition-colors">
                 Forgot password?
               </Text>
             </Pressable>
@@ -139,14 +129,14 @@ export function SignInScreen() {
           ) : null}
 
           {/* Spacer */}
-          <View className="flex-1 min-h-[20px]" />
+          <View className="flex-1 min-h-5" />
 
           {/* CTA */}
-          <View className="gap-6 pb-2">
+          <View className="space-y-6 pb-2">
             <Pressable
-              className={`rounded-full py-[15px] items-center shadow-lg ${
+              className={`rounded-2xl py-4.25 items-center ${
                 isDisabled
-                  ? 'bg-stone-300 shadow-none'
+                  ? 'bg-stone-200 shadow-none'
                   : 'bg-stone-900 active:bg-stone-800'
               }`}
               onPress={handleSubmit}
@@ -157,7 +147,7 @@ export function SignInScreen() {
               ) : (
                 <Text
                   className={`text-[15px] font-semibold tracking-wide ${
-                    isDisabled ? 'text-stone-400' : 'text-white'
+                    isDisabled ? 'text-stone-300' : 'text-white'
                   }`}
                 >
                   Sign In
@@ -166,7 +156,7 @@ export function SignInScreen() {
             </Pressable>
 
             <View className="pt-1">
-              <Text className="text-center text-sm text-stone-500 leading-[22px]">
+              <Text className="text-center text-[14px] text-stone-500 leading-relaxed">
                 Don't have an account?{' '}
                 <Text
                   className="font-semibold text-stone-900 hover:text-stone-600 transition-colors"

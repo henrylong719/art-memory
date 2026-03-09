@@ -13,7 +13,7 @@ export function ScanCtaRow() {
     <View className="flex-row items-stretch gap-3 px-6 mb-9">
       <View className="flex-1">
         <Pressable
-          className="flex-1 bg-stone-900 rounded-[20px] p-[18px] gap-2.5 justify-start active:bg-stone-800"
+          className="flex-1 bg-charcoal-900 rounded-[20px] p-4.5 gap-2.5 justify-start active:bg-charcoal-800"
           onPress={() =>
             router.push({
               pathname: '/scan/camera',
@@ -25,7 +25,7 @@ export function ScanCtaRow() {
             <ScanLine size={22} color="#fff" />
           </View>
           <View className="gap-1">
-            <Text className="text-sm font-bold text-white leading-[19px]">
+            <Text className="text-sm font-bold text-white leading-4.75">
               Artwork + Details
             </Text>
             <Text className="text-[11px] text-white/55 leading-4">
@@ -37,7 +37,7 @@ export function ScanCtaRow() {
 
       <View className="flex-1">
         <Pressable
-          className="flex-1 bg-white rounded-[20px] p-[18px] gap-2.5 border border-stone-200 justify-start active:bg-stone-50"
+          className="flex-1 bg-white rounded-[20px] p-4.5 gap-2.5 border border-charcoal-100 justify-start active:bg-neutral-50"
           onPress={() =>
             router.push({
               pathname: '/scan/camera',
@@ -45,14 +45,14 @@ export function ScanCtaRow() {
             })
           }
         >
-          <View className="w-11 h-11 rounded-xl bg-stone-100 items-center justify-center mb-0.5">
-            <Image size={22} color="#44403c" />
+          <View className="w-11 h-11 rounded-xl bg-neutral-100 items-center justify-center mb-0.5">
+            <Image size={22} color="#474747" />
           </View>
           <View className="gap-1">
-            <Text className="text-sm font-bold text-stone-900 leading-[19px]">
+            <Text className="text-sm font-bold text-charcoal-900 leading-4.75">
               Artwork Only
             </Text>
-            <Text className="text-[11px] text-stone-500 leading-4">
+            <Text className="text-[11px] text-charcoal-500 leading-4">
               Quickly identify without scanning the label
             </Text>
           </View>
