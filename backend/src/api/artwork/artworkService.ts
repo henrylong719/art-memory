@@ -2,19 +2,27 @@ import { StatusCodes } from 'http-status-codes';
 
 import { ArtworkRepository } from '@/api/artwork/artworkRepository';
 import { ArtistRepository } from '@/api/artist/artistRepository';
+import { AiUsageLogRepository } from '@/api/scan/aiUsageLogRepository';
 import { ServiceResponse } from '@/common/models/serviceResponse';
+import {
+  generateArtworkStory,
+  extractUsageInfo,
+} from '@/common/services/openai';
 import { logger } from '@/server';
 
 export class ArtworkService {
   private artworkRepository: ArtworkRepository;
   private artistRepository: ArtistRepository;
+  private aiUsageLogRepository: AiUsageLogRepository;
 
   constructor(
     artworkRepository: ArtworkRepository = new ArtworkRepository(),
     artistRepository: ArtistRepository = new ArtistRepository(),
+    aiUsageLogRepository: AiUsageLogRepository = new AiUsageLogRepository(),
   ) {
     this.artworkRepository = artworkRepository;
     this.artistRepository = artistRepository;
+    this.aiUsageLogRepository = aiUsageLogRepository;
   }
 
   async findAll() {
@@ -158,7 +166,6 @@ export class ArtworkService {
        * otice it returns a success response,
        * not a failure — the caller still gets the artwork they need.
        */
-
       // Check for duplicate (same title + same artist)
       if (resolvedArtistId) {
         const existing = await this.artworkRepository.findByTitleAndArtist(
@@ -264,6 +271,64 @@ export class ArtworkService {
       );
       return ServiceResponse.failure(
         'An error occurred while deleting artwork.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async generateStory(id: string, userId: string) {
+    try {
+      const artwork = await this.artworkRepository.findById(id);
+      if (!artwork) {
+        return ServiceResponse.failure(
+          'Artwork not found',
+          null,
+          StatusCodes.NOT_FOUND,
+        );
+      }
+
+      // If artwork already has a rich description, return it
+      if (artwork.description && artwork.description.length > 200) {
+        return ServiceResponse.success('Story already exists', artwork);
+      }
+
+      // Need artist name for the story
+      const artistName = artwork.artist?.name || 'Unknown Artist';
+
+      // Generate story via OpenAI
+      const { story, rawResponse } = await generateArtworkStory({
+        title: artwork.title,
+        artistName,
+        year: artwork.year,
+        medium: artwork.medium,
+        style: artwork.style,
+      });
+
+      // Log AI usage
+      const usageInfo = extractUsageInfo(rawResponse);
+      await this.aiUsageLogRepository.create({
+        userId,
+        endpoint: 'openai/text/story',
+        model: usageInfo.model,
+        tokensIn: usageInfo.tokensIn,
+        tokensOut: usageInfo.tokensOut,
+        durationMs: usageInfo.durationMs,
+        success: true,
+      });
+
+      // Update artwork with the generated story
+      const updated = await this.artworkRepository.update(id, {
+        description: story,
+      });
+
+      return ServiceResponse.success('Story generated', updated);
+    } catch (ex) {
+      logger.error(
+        `Error generating story for artwork ${id}: ${(ex as Error).message}`,
+      );
+      return ServiceResponse.failure(
+        'An error occurred while generating story.',
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );

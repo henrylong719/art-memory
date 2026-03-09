@@ -185,6 +185,70 @@ export async function extractLabel(
   }
 }
 
+// ─── Artwork Story Generation ────────────────────────────
+// Called after scan to generate a rich description
+
+const STORY_GENERATION_PROMPT = `You are an expert art historian and storyteller.
+Given the following artwork details, write a rich, engaging description that covers:
+- The historical context and significance of the artwork
+- The artist's life and circumstances when creating this piece
+- The artistic techniques, style, and what makes this work notable
+- Any interesting stories or facts about the artwork
+
+Write in a warm, accessible tone that would engage a museum visitor.
+The description should be 2-3 paragraphs (150-250 words).
+
+Do NOT invent specific quotes or fabricate historical events.
+Stick to well-established art historical facts.
+
+Respond with ONLY the description text — no JSON, no markdown, no headers.`;
+
+export async function generateArtworkStory(artwork: {
+  title: string;
+  artistName: string;
+  year?: number | null;
+  medium?: string | null;
+  style?: string | null;
+}): Promise<{ story: string; rawResponse: object }> {
+  const startTime = Date.now();
+
+  const artworkInfo = [
+    `Title: ${artwork.title}`,
+    `Artist: ${artwork.artistName}`,
+    artwork.year ? `Year: ${artwork.year}` : null,
+    artwork.medium ? `Medium: ${artwork.medium}` : null,
+    artwork.style ? `Style: ${artwork.style}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const response = await openai.chat.completions.create({
+    model: env.OPENAI_MODEL,
+    max_tokens: 800,
+    messages: [
+      {
+        role: 'user',
+        content: `${STORY_GENERATION_PROMPT}\n\nArtwork details:\n${artworkInfo}`,
+      },
+    ],
+  });
+
+  const durationMs = Date.now() - startTime;
+  const story = response.choices[0]?.message?.content?.trim() || '';
+
+  logger.info(`OpenAI story generation completed in ${durationMs}ms`);
+
+  return {
+    story,
+    rawResponse: {
+      model: response.model,
+      usage: response.usage,
+      durationMs,
+      content: story,
+    },
+  };
+}
+
 // ─── Usage tracking helper ───────────────────────────────
 
 export function extractUsageInfo(rawResponse: any) {

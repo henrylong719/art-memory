@@ -129,3 +129,20 @@ artworkRouter.delete(
   validateRequest(GetArtworkSchema),
   artworkController.deleteArtwork,
 );
+
+// POST /artworks/:id/generate-story
+artworkRegistry.registerPath({
+  method: 'post',
+  path: '/artworks/{id}/generate-story',
+  tags: ['Artwork'],
+  description:
+    'Generate a rich art-historical description for an artwork using AI. Returns cached story if one already exists.',
+  request: { params: GetArtworkSchema.shape.params },
+  responses: createApiResponse(ArtworkDetailSchema, 'Story generated'),
+});
+
+artworkRouter.post(
+  '/:id/generate-story',
+  validateRequest(GetArtworkSchema),
+  artworkController.generateStory,
+);

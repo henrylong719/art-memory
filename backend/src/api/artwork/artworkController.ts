@@ -58,6 +58,16 @@ class ArtworkController {
     const serviceResponse = await artworkService.delete(id);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
+
+  public generateStory: RequestHandler = async (
+    req: Request,
+    res: Response,
+  ) => {
+    const userId = req.user!.userId;
+    const id = req.params.id as string;
+    const serviceResponse = await artworkService.generateStory(id, userId);
+    res.status(serviceResponse.statusCode).send(serviceResponse);
+  };
 }
 
 export const artworkController = new ArtworkController();
