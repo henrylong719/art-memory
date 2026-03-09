@@ -25,7 +25,11 @@ export class AuthService {
   }): Promise<ServiceResponse<AuthResponse | null>> {
     try {
       // Check if user already exists
-      const existing = await this.authRepository.findUserByEmail(data.email);
+      const normalizedEmail = this.normalizeEmail(data.email);
+
+      const existing =
+        await this.authRepository.findUserByEmail(normalizedEmail);
+
       if (existing) {
         return ServiceResponse.failure(
           'Email is already registered',
@@ -39,7 +43,7 @@ export class AuthService {
 
       // Create user (with default collection)
       const user = await this.authRepository.createUser({
-        email: data.email,
+        email: normalizedEmail,
         passwordHash,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -70,7 +74,9 @@ export class AuthService {
   }): Promise<ServiceResponse<AuthResponse | null>> {
     try {
       // Find user by email
-      const user = await this.authRepository.findUserByEmail(data.email);
+      const normalizedEmail = this.normalizeEmail(data.email);
+      const user = await this.authRepository.findUserByEmail(normalizedEmail);
+
       if (!user) {
         return ServiceResponse.failure(
           'Invalid email or password',
@@ -194,6 +200,10 @@ export class AuthService {
       accessToken,
       refreshToken: refreshTokenRecord.token,
     };
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 }
 

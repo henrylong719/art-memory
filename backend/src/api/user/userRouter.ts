@@ -1,11 +1,6 @@
 import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import express, { type Router } from 'express';
-import { z } from 'zod';
-import {
-  GetUserSchema,
-  UpdateUserSchema,
-  UserSchema,
-} from '@/api/user/userModel';
+import { UserSchema, UpdateMeSchema } from '@/api/user/userModel';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import { validateRequest } from '@/common/utils/httpHandlers';
 import { userController } from './userController';
@@ -15,43 +10,31 @@ export const userRouter: Router = express.Router();
 
 userRegistry.register('User', UserSchema);
 
-// GET /users
+// GET /users/me
 userRegistry.registerPath({
   method: 'get',
-  path: '/users',
+  path: '/users/me',
   tags: ['User'],
-  responses: createApiResponse(z.array(UserSchema), 'Success'),
-});
-
-userRouter.get('/', userController.getUsers);
-
-// GET /users/:id
-userRegistry.registerPath({
-  method: 'get',
-  path: '/users/{id}',
-  tags: ['User'],
-  request: { params: GetUserSchema.shape.params },
   responses: createApiResponse(UserSchema, 'Success'),
 });
 
-userRouter.get('/:id', validateRequest(GetUserSchema), userController.getUser);
+userRouter.get('/me', userController.getMe);
 
-// PUT /users/:id
+// PATCH /users/me
 userRegistry.registerPath({
-  method: 'put',
-  path: '/users/{id}',
+  method: 'patch',
+  path: '/users/me',
   tags: ['User'],
   request: {
-    params: UpdateUserSchema.shape.params,
     body: {
-      content: { 'application/json': { schema: UpdateUserSchema.shape.body } },
+      content: { 'application/json': { schema: UpdateMeSchema.shape.body } },
     },
   },
   responses: createApiResponse(UserSchema, 'Success'),
 });
 
-userRouter.put(
-  '/:id',
-  validateRequest(UpdateUserSchema),
-  userController.updateUser,
+userRouter.patch(
+  '/me',
+  validateRequest(UpdateMeSchema),
+  userController.updateMe,
 );

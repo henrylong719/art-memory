@@ -26,8 +26,7 @@ export const GetUserSchema = z.object({
 });
 
 // Input Validation for 'PUT users/:id' endpoint
-export const UpdateUserSchema = z.object({
-  params: z.object({ id: z.string().min(1, 'ID is required') }),
+export const UpdateMeSchema = z.object({
   body: z.object({
     firstName: z.string().optional(),
     lastName: z.string().optional(),

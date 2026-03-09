@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { z } from 'zod';
 import { env } from '@/common/utils/envConfig';
 import { logger } from '@/server';
 
@@ -26,6 +27,25 @@ export interface LabelExtractionResult {
   medium: string | null;
   museum: string | null;
 }
+
+const ArtworkIdentificationResultSchema = z.object({
+  title: z.string().min(1),
+  artistName: z.string().min(1),
+  year: z.number().int().nullable(),
+  medium: z.string().nullable(),
+  style: z.string().nullable(),
+  description: z.string().nullable(),
+  confidence: z.number().min(0).max(1),
+});
+
+const LabelExtractionResultSchema = z.object({
+  extractedText: z.string(),
+  title: z.string().nullable(),
+  artistName: z.string().nullable(),
+  year: z.number().int().nullable(),
+  medium: z.string().nullable(),
+  museum: z.string().nullable(),
+});
 
 // ─── Mode 2: Artwork-Only Identification ─────────────────
 // Used when user only has a photo of the artwork (no label)
@@ -84,7 +104,8 @@ export async function identifyArtwork(
 
   try {
     const cleaned = content.replace(/```json\n?|```\n?/g, '').trim();
-    const result = JSON.parse(cleaned) as ArtworkIdentificationResult;
+    const parsed = JSON.parse(cleaned);
+    const result = ArtworkIdentificationResultSchema.parse(parsed);
 
     return {
       result,
@@ -96,7 +117,7 @@ export async function identifyArtwork(
       },
     };
   } catch (parseError) {
-    logger.error(`Failed to parse OpenAI response: ${content}`);
+    logger.error(`Failed to parse or validate OpenAI response: ${content}`);
     throw new Error(
       `Failed to parse artwork identification response: ${(parseError as Error).message}`,
     );
@@ -166,7 +187,8 @@ export async function extractLabel(
 
   try {
     const cleaned = content.replace(/```json\n?|```\n?/g, '').trim();
-    const result = JSON.parse(cleaned) as LabelExtractionResult;
+    const parsed = JSON.parse(cleaned);
+    const result = LabelExtractionResultSchema.parse(parsed);
 
     return {
       result,
@@ -178,7 +200,7 @@ export async function extractLabel(
       },
     };
   } catch (parseError) {
-    logger.error(`Failed to parse OpenAI label response: ${content}`);
+    logger.error(`Failed to parse or validate OpenAI response: ${content}`);
     throw new Error(
       `Failed to parse label extraction response: ${(parseError as Error).message}`,
     );

@@ -1,22 +1,16 @@
 import type { Request, RequestHandler, Response } from 'express';
-
 import { userService } from '@/api/user/userService';
 
 class UserController {
-  public getUsers: RequestHandler = async (_req: Request, res: Response) => {
-    const serviceResponse = await userService.findAll();
+  public getMe: RequestHandler = async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const serviceResponse = await userService.findMe(userId);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
 
-  public getUser: RequestHandler = async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-    const serviceResponse = await userService.findById(id);
-    res.status(serviceResponse.statusCode).send(serviceResponse);
-  };
-
-  public updateUser: RequestHandler = async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-    const serviceResponse = await userService.update(id, req.body);
+  public updateMe: RequestHandler = async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const serviceResponse = await userService.updateMe(userId, req.body);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
 }

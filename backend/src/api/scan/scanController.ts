@@ -4,6 +4,8 @@ import { StatusCodes } from 'http-status-codes';
 import { scanService } from '@/api/scan/scanService';
 import { ServiceResponse } from '@/common/models/serviceResponse';
 
+import { ScanArtworkSchema, ScanCombinedSchema } from '@/api/scan/scanModel';
+
 class ScanController {
   public getScans: RequestHandler = async (req: Request, res: Response) => {
     const userId = req.user!.userId;
@@ -33,9 +35,22 @@ class ScanController {
       return;
     }
 
+    const parsed = ScanArtworkSchema.safeParse({ body: req.body });
+    if (!parsed.success) {
+      const response = ServiceResponse.failure(
+        parsed.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join('; '),
+        null,
+        StatusCodes.BAD_REQUEST,
+      );
+      res.status(response.statusCode).send(response);
+      return;
+    }
+
     const serviceResponse = await scanService.scanArtwork(userId, file, {
-      latitude: req.body.latitude ? Number(req.body.latitude) : undefined,
-      longitude: req.body.longitude ? Number(req.body.longitude) : undefined,
+      latitude: parsed.data.body.latitude,
+      longitude: parsed.data.body.longitude,
     });
 
     res.status(serviceResponse.statusCode).send(serviceResponse);
@@ -71,13 +86,26 @@ class ScanController {
       return;
     }
 
+    const parsed = ScanCombinedSchema.safeParse({ body: req.body });
+    if (!parsed.success) {
+      const response = ServiceResponse.failure(
+        parsed.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join('; '),
+        null,
+        StatusCodes.BAD_REQUEST,
+      );
+      res.status(response.statusCode).send(response);
+      return;
+    }
+
     const serviceResponse = await scanService.scanCombined(
       userId,
       artworkFile,
       labelFile,
       {
-        latitude: req.body.latitude ? Number(req.body.latitude) : undefined,
-        longitude: req.body.longitude ? Number(req.body.longitude) : undefined,
+        latitude: parsed.data.body.latitude,
+        longitude: parsed.data.body.longitude,
       },
     );
 
