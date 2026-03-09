@@ -8,6 +8,12 @@ vi.mock('@/common/utils/envConfig', () => ({
   },
 }));
 
+vi.mock('@/server', () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
+
 import errorHandler from '@/common/middleware/errorHandler';
 import requestLogger from '@/common/middleware/requestLogger';
 

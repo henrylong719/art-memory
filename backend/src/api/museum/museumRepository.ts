@@ -1,5 +1,5 @@
 import { prisma } from '@/common/db/prisma';
-import { Prisma } from '@generated/prisma/client';
+import type { Prisma } from '@prisma/client';
 
 export class MuseumRepository {
   async findAll(limit = 50, offset = 0) {
