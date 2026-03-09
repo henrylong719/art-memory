@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import type { User } from '@/api/user/userModel';
 import { UserRepository } from '@/api/user/userRepository';
@@ -93,7 +93,9 @@ describe('userService', () => {
 
       expect(result.statusCode).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
       expect(result.success).toBeFalsy();
-      expect(result.message).equals('An error occurred while retrieving users.');
+      expect(result.message).equals(
+        'An error occurred while retrieving users.',
+      );
       expect(result.responseObject).toBeNull();
     });
   });

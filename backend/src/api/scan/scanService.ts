@@ -115,7 +115,10 @@ export class ScanService {
       });
 
       // Step 4: Find or create artwork + artist
-      const artworkId = await this.resolveArtwork(aiResult);
+      const artworkId = await this.resolveArtwork({
+        ...aiResult,
+        imageUrl: imageUrl,
+      });
 
       // Step 5: Create scan record
       const scan = await this.scanRepository.create({
@@ -218,6 +221,7 @@ export class ScanService {
             year: labelResult.year ?? undefined,
             medium: labelResult.medium ?? undefined,
             artistId: artist.id,
+            imageUrl: imageUrl,
             source: 'AI_GENERATED',
           });
           artworkId = newArtwork.id;
@@ -316,6 +320,7 @@ export class ScanService {
     medium?: string | null;
     style?: string | null;
     description?: string | null;
+    imageUrl?: string | null;
     confidence: number;
   }): Promise<string | undefined> {
     if (aiResult.confidence < 0.3 || !aiResult.title || !aiResult.artistName) {
@@ -347,6 +352,7 @@ export class ScanService {
       medium: aiResult.medium ?? undefined,
       style: aiResult.style ?? undefined,
       description: aiResult.description ?? undefined,
+      imageUrl: aiResult.imageUrl ?? undefined,
       artistId: artist.id,
       source: 'AI_GENERATED',
     });

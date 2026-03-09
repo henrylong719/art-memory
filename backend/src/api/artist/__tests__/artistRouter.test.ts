@@ -11,22 +11,32 @@ const {
   mockDeleteArtist,
 } = vi.hoisted(() => ({
   mockGetArtists: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artists found' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artists found' }),
   ),
   mockSearchArtists: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artists found' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artists found' }),
   ),
   mockGetArtist: vi.fn((_req, res) =>
     res.status(StatusCodes.OK).send({ success: true, message: 'Artist found' }),
   ),
   mockCreateArtist: vi.fn((_req, res) =>
-    res.status(StatusCodes.CREATED).send({ success: true, message: 'Artist created' }),
+    res
+      .status(StatusCodes.CREATED)
+      .send({ success: true, message: 'Artist created' }),
   ),
   mockUpdateArtist: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artist updated' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artist updated' }),
   ),
   mockDeleteArtist: vi.fn((_req, res) =>
-    res.status(StatusCodes.OK).send({ success: true, message: 'Artist deleted' }),
+    res
+      .status(StatusCodes.OK)
+      .send({ success: true, message: 'Artist deleted' }),
   ),
 }));
 
@@ -42,6 +52,7 @@ vi.mock('@/api/artist/artistController', () => ({
 }));
 
 import { artistRouter } from '@/api/artist/artistRouter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('artistRouter', () => {
   const app = express();
