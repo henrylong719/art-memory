@@ -16,6 +16,7 @@ vi.mock('@/server', () => ({
 
 import errorHandler from '@/common/middleware/errorHandler';
 import requestLogger from '@/common/middleware/requestLogger';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 describe('Request Logger Middleware', () => {
   const app = express();

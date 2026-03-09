@@ -20,12 +20,6 @@ export const UserSchema = z.object({
 
 export type User = z.infer<typeof UserSchema>;
 
-// Input Validation for 'GET users/:id' endpoint
-export const GetUserSchema = z.object({
-  params: z.object({ id: z.string().min(1, 'ID is required') }),
-});
-
-// Input Validation for 'PUT users/:id' endpoint
 export const UpdateMeSchema = z.object({
   body: z.object({
     firstName: z.string().optional(),

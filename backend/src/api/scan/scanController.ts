@@ -1,10 +1,9 @@
 import type { Request, RequestHandler, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
+import { ScanArtworkSchema, ScanCombinedSchema } from '@/api/scan/scanModel';
 import { scanService } from '@/api/scan/scanService';
 import { ServiceResponse } from '@/common/models/serviceResponse';
-
-import { ScanArtworkSchema, ScanCombinedSchema } from '@/api/scan/scanModel';
 
 class ScanController {
   public getScans: RequestHandler = async (req: Request, res: Response) => {
@@ -36,10 +35,14 @@ class ScanController {
     }
 
     const parsed = ScanArtworkSchema.safeParse({ body: req.body });
+
     if (!parsed.success) {
       const response = ServiceResponse.failure(
         parsed.error.issues
-          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .map((issue) => {
+            const field = issue.path.join('.') || 'body';
+            return `${field}: ${issue.message}`;
+          })
           .join('; '),
         null,
         StatusCodes.BAD_REQUEST,
@@ -87,10 +90,14 @@ class ScanController {
     }
 
     const parsed = ScanCombinedSchema.safeParse({ body: req.body });
+
     if (!parsed.success) {
       const response = ServiceResponse.failure(
         parsed.error.issues
-          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .map((issue) => {
+            const field = issue.path.join('.') || 'body';
+            return `${field}: ${issue.message}`;
+          })
           .join('; '),
         null,
         StatusCodes.BAD_REQUEST,
