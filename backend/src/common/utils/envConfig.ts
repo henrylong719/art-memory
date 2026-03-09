@@ -24,6 +24,16 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+
+  // AWS S3
+  AWS_REGION: z.string().default('us-east-1'),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1),
+  S3_BUCKET_NAME: z.string().min(1),
+
+  // OpenAI
+  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_MODEL: z.string().default('gpt-4o'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
