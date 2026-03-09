@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from '@/components/ui';
-import { Github, Rate, Share, Support, Website } from '@/components/ui/icons';
+import { Github, Globe, LifeBuoy, Share2, Star } from 'lucide-react-native';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 import { translate } from '@/lib/i18n';
 import { LanguageItem } from './components/language-item';
@@ -49,7 +49,7 @@ export function SettingsScreen() {
           <SettingsContainer title="settings.support_us">
             <SettingsItem
               text="settings.share"
-              icon={<Share color={iconColor} />}
+              icon={<Share2 size={20} color={iconColor} />}
               onPress={() => {}}
             />
             <SettingsItem
@@ -59,7 +59,7 @@ export function SettingsScreen() {
             />
             <SettingsItem
               text="settings.support"
-              icon={<Support color={iconColor} />}
+              icon={<LifeBuoy size={20} color={iconColor} />}
               onPress={() => {}}
             />
           </SettingsContainer>
@@ -74,7 +74,7 @@ export function SettingsScreen() {
             />
             <SettingsItem
               text="settings.website"
-              icon={<Website color={iconColor} />}
+              icon={<Globe size={20} color={iconColor} />}
               onPress={() => {}}
             />
           </SettingsContainer>

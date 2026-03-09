@@ -1,20 +1,15 @@
+/* eslint-disable better-tailwindcss/no-unknown-classes */
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScrollView, Text, View } from '@/components/ui';
 import { useRegister } from '@/lib/hooks/use-auth';
+
+import { ChevronLeft } from 'lucide-react-native';
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -24,12 +19,10 @@ export function SignUpScreen() {
   const [lastName, setLastName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-
   const [focused, setFocused] = React.useState<string | null>(null);
 
   const axiosError = register.error as AxiosError<{ message: string }> | null;
-  const errorMessage =
-    axiosError?.response?.data?.message ?? axiosError?.message ?? null;
+  const errorMessage = axiosError?.response?.data?.message ?? axiosError?.message ?? null;
 
   const handleSubmit = () => {
     if (!email.trim() || !password) return;
@@ -45,48 +38,50 @@ export function SignUpScreen() {
   };
 
   const isDisabled = !email.trim() || !password || register.isPending;
-
-  const inputStyle = (name: string) => [
-    styles.input,
-    focused === name && styles.inputFocused,
-  ];
+  const inputCls = (name: string) =>
+    `bg-white border rounded-2xl py-[15px] px-4 text-[15px] text-stone-900 ${
+      focused === name ? 'border-stone-400' : 'border-stone-200'
+    }`;
 
   return (
-    <SafeAreaView style={styles.root}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior="padding"
-        keyboardVerticalOffset={0}
-      >
+    <SafeAreaView className="flex-1 bg-stone-50">
+      <View className="px-4 pb-4">
+        <Pressable
+          className="h-10 w-10 items-center justify-center rounded-full active:bg-stone-900/6"
+          onPress={() => router.back()}
+          hitSlop={8}
+        >
+          <ChevronLeft size={24} color="#1c1917" />
+        </Pressable>
+      </View>
+
+      <KeyboardAvoidingView className="flex-1" behavior="padding" keyboardVerticalOffset={0}>
         <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
+          className="flex-1"
+          contentContainerClassName="grow px-8 pt-8 pb-8"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Back button */}
-          <Pressable
-            style={styles.backBtn}
-            onPress={() => router.back()}
-            hitSlop={12}
-          >
-            <Text style={styles.backIcon}>‹</Text>
-          </Pressable>
-
           {/* Title */}
-          <View style={styles.titleBlock}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join to start saving and discovering art.</Text>
+          <View className="mb-10">
+            <Text className="font-serif text-[32px] font-medium leading-[38px] text-stone-900 mb-3">
+              Create Account
+            </Text>
+            <Text className="text-[15px] leading-[22px] text-stone-500">
+              Join to start saving and discovering art.
+            </Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            {/* First + Last name row */}
-            <View style={styles.nameRow}>
-              <View style={[styles.field, styles.nameField]}>
-                <Text style={styles.label}>FIRST NAME</Text>
+          {/* Fields */}
+          <View className="gap-5 mb-6">
+            {/* Name row */}
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2 pl-1">
+                  FIRST NAME
+                </Text>
                 <TextInput
-                  style={inputStyle('firstName')}
+                  className={inputCls('firstName')}
                   value={firstName}
                   onChangeText={setFirstName}
                   onFocus={() => setFocused('firstName')}
@@ -96,10 +91,12 @@ export function SignUpScreen() {
                   placeholderTextColor="#a8a29e"
                 />
               </View>
-              <View style={[styles.field, styles.nameField]}>
-                <Text style={styles.label}>LAST NAME</Text>
+              <View className="flex-1">
+                <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2 pl-1">
+                  LAST NAME
+                </Text>
                 <TextInput
-                  style={inputStyle('lastName')}
+                  className={inputCls('lastName')}
                   value={lastName}
                   onChangeText={setLastName}
                   onFocus={() => setFocused('lastName')}
@@ -111,10 +108,12 @@ export function SignUpScreen() {
               </View>
             </View>
 
-            <View style={styles.field}>
-              <Text style={styles.label}>EMAIL</Text>
+            <View>
+              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2 pl-1">
+                EMAIL
+              </Text>
               <TextInput
-                style={inputStyle('email')}
+                className={inputCls('email')}
                 placeholder="name@example.com"
                 placeholderTextColor="#a8a29e"
                 value={email}
@@ -128,10 +127,12 @@ export function SignUpScreen() {
               />
             </View>
 
-            <View style={styles.field}>
-              <Text style={styles.label}>PASSWORD</Text>
+            <View>
+              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2 pl-1">
+                PASSWORD
+              </Text>
               <TextInput
-                style={inputStyle('password')}
+                className={inputCls('password')}
                 placeholder="••••••••"
                 placeholderTextColor="#a8a29e"
                 value={password}
@@ -142,178 +143,58 @@ export function SignUpScreen() {
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit}
               />
-              <Text style={styles.passwordHint}>Minimum 6 characters</Text>
+              <Text className="text-[11px] text-stone-400 mt-1.5 pl-1">
+                Minimum 6 characters
+              </Text>
             </View>
           </View>
 
-          {/* API error */}
+          {/* Error */}
           {errorMessage ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+            <View className="bg-red-50 rounded-xl p-3.5 mb-4 border border-red-200">
+              <Text className="text-red-600 text-[13px] leading-5">{errorMessage}</Text>
             </View>
           ) : null}
 
-          {/* Submit */}
-          <View style={styles.submitArea}>
+          {/* Spacer */}
+          <View className="flex-1 min-h-[20px]" />
+
+          {/* CTA */}
+          <View className="gap-6 pb-2">
             <Pressable
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                isDisabled && styles.primaryBtnDisabled,
-                pressed && !isDisabled && styles.primaryBtnPressed,
-              ]}
+              className={`rounded-full py-[15px] items-center shadow-lg ${
+                isDisabled ? 'bg-stone-300 shadow-none' : 'bg-stone-900 active:bg-stone-800'
+              }`}
               onPress={handleSubmit}
               disabled={isDisabled}
             >
               {register.isPending ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={[styles.primaryBtnText, isDisabled && styles.primaryBtnTextDisabled]}>
+                <Text
+                  className={`text-[15px] font-semibold tracking-wide ${
+                    isDisabled ? 'text-stone-400' : 'text-white'
+                  }`}
+                >
                   Create Account
                 </Text>
               )}
             </Pressable>
 
-            <Text style={styles.switchText}>
-              Already have an account?{' '}
-              <Text style={styles.switchLink} onPress={() => router.push('/login')}>
-                Sign in
+            <View className="pt-1">
+              <Text className="text-center text-sm text-stone-500 leading-[22px]">
+                Already have an account?{' '}
+                <Text
+                  className="font-semibold text-stone-900"
+                  onPress={() => router.push('/login')}
+                >
+                  Sign in
+                </Text>
               </Text>
-            </Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' });
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#fafaf9',
-  },
-  flex: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 28,
-    paddingTop: 12,
-    paddingBottom: 40,
-  },
-  backBtn: {
-    marginBottom: 20,
-    alignSelf: 'flex-start',
-    padding: 4,
-  },
-  backIcon: {
-    fontSize: 36,
-    color: '#1c1917',
-    lineHeight: 40,
-  },
-  titleBlock: {
-    marginBottom: 36,
-  },
-  title: {
-    fontFamily: SERIF,
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#1c1917',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#78716c',
-    lineHeight: 22,
-  },
-  form: {
-    marginBottom: 8,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 4,
-  },
-  nameField: {
-    flex: 1,
-  },
-  field: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#57534e',
-    letterSpacing: 1.2,
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e7e5e4',
-    borderRadius: 16,
-    paddingVertical: Platform.OS === 'ios' ? 15 : 12,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: '#1c1917',
-  },
-  inputFocused: {
-    borderColor: '#a8a29e',
-  },
-  passwordHint: {
-    fontSize: 11,
-    color: '#a8a29e',
-    marginTop: 6,
-    marginLeft: 4,
-  },
-  errorBox: {
-    backgroundColor: '#fef2f2',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  errorText: {
-    color: '#dc2626',
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  submitArea: {
-    marginTop: 'auto',
-    paddingTop: 16,
-  },
-  primaryBtn: {
-    backgroundColor: '#1c1917',
-    borderRadius: 999,
-    paddingVertical: 17,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  primaryBtnPressed: {
-    backgroundColor: '#292524',
-  },
-  primaryBtnDisabled: {
-    backgroundColor: '#d6d3d1',
-  },
-  primaryBtnText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-  },
-  primaryBtnTextDisabled: {
-    color: '#a8a29e',
-  },
-  switchText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#78716c',
-    lineHeight: 22,
-  },
-  switchLink: {
-    fontWeight: '600',
-    color: '#1c1917',
-  },
-});

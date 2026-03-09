@@ -2,17 +2,21 @@ import { Redirect, SplashScreen, Tabs } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect } from 'react';
 
-import {
-  Artworks as ArtworksIcon,
-  Collections as CollectionsIcon,
-  Home as HomeIcon,
-  Profile as ProfileIcon,
-  Scan as ScanIcon,
-} from '@/components/ui/icons';
+import { BookOpen, Home as HomeIcon, Palette, ScanLine, User } from 'lucide-react-native';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
+import { setUser } from '@/features/auth/use-user-store';
+import { useMe } from '@/lib/hooks';
 
 export default function TabLayout() {
   const status = useAuth.use.status();
+
+  // Re-hydrate user profile on every app start (token persists but user store doesn't)
+  const { data: me } = useMe();
+  useEffect(() => {
+    if (me) {
+      setUser({ id: me.id, email: me.email, firstName: me.firstName, lastName: me.lastName, plan: me.plan });
+    }
+  }, [me]);
 
   const hideSplash = useCallback(async () => {
     await SplashScreen.hideAsync();
@@ -56,7 +60,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+          tabBarIcon: ({ color }) => <HomeIcon size={22} color={color} />,
           tabBarButtonTestID: 'home-tab',
         }}
       />
@@ -72,7 +76,7 @@ export default function TabLayout() {
         name="artworks"
         options={{
           title: 'Artworks',
-          tabBarIcon: ({ color }) => <ArtworksIcon color={color} />,
+          tabBarIcon: ({ color }) => <Palette size={22} color={color} />,
           tabBarButtonTestID: 'artworks-tab',
         }}
       />
@@ -88,7 +92,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => <ProfileIcon color={color} />,
+          tabBarIcon: ({ color }) => <User size={22} color={color} />,
           tabBarButtonTestID: 'profile-tab',
         }}
       />

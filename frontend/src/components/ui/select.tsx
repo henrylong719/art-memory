@@ -1,21 +1,18 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { PressableProps } from 'react-native';
-import type { SvgProps } from 'react-native-svg';
 import {
   BottomSheetFlatList,
 
 } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
+import { Check, ChevronDown } from 'lucide-react-native';
 import * as React from 'react';
 import { Platform, Pressable, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { tv } from 'tailwind-variants';
 
 import { useUniwind } from 'uniwind';
 import colors from '@/components/ui/colors';
-
-import { CaretDown } from '@/components/ui/icons';
 import { Modal, useModal } from './modal';
 import { Text } from './text';
 
@@ -116,13 +113,15 @@ const Option = React.memo(
     selected?: boolean;
     label: string;
   }) => {
+    const { theme } = useUniwind();
+    const checkColor = theme === 'dark' ? colors.white : colors.neutral[900];
     return (
       <Pressable
         className="flex-row items-center border-b border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
         {...props}
       >
         <Text className="flex-1 dark:text-neutral-100">{label}</Text>
-        {selected && <Check />}
+        {selected && <Check size={20} color={checkColor} />}
       </Pressable>
     );
   },
@@ -197,7 +196,7 @@ export function Select(props: SelectProps) {
           <View className="flex-1">
             <Text className={styles.inputValue()}>{textValue}</Text>
           </View>
-          <CaretDown />
+          <ChevronDown size={18} color={colors.neutral[500]} />
         </Pressable>
         {error && (
           <Text
@@ -218,22 +217,3 @@ export function Select(props: SelectProps) {
   );
 }
 
-function Check({ ...props }: SvgProps) {
-  return (
-    <Svg
-      width={25}
-      height={24}
-      fill="none"
-      viewBox="0 0 25 24"
-      {...props}
-      className="stroke-black dark:stroke-white"
-    >
-      <Path
-        d="m20.256 6.75-10.5 10.5L4.506 12"
-        strokeWidth={2.438}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}

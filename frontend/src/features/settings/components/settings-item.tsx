@@ -2,7 +2,7 @@ import type { TxKeyPath } from '@/lib/i18n';
 
 import * as React from 'react';
 import { Pressable, Text, View } from '@/components/ui';
-import { ArrowRight } from '@/components/ui/icons';
+import { ChevronRight } from 'lucide-react-native';
 
 type ItemProps = {
   text: TxKeyPath;
@@ -27,7 +27,7 @@ export function SettingsItem({ text, value, icon, onPress }: ItemProps) {
         <Text className="text-neutral-600 dark:text-white">{value}</Text>
         {isPressable && (
           <View className="pl-2">
-            <ArrowRight />
+            <ChevronRight size={16} color="#a8a29e" />
           </View>
         )}
       </View>
