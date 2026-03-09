@@ -2,10 +2,50 @@ import { Redirect, SplashScreen, Tabs } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useEffect } from 'react';
 
-import { BookOpen, Home as HomeIcon, Palette, ScanLine, User } from 'lucide-react-native';
+import {
+  ScanLine,
+  Home,
+  LibraryBig,
+  LayoutGrid,
+  User,
+} from 'lucide-react-native';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 import { setUser } from '@/features/auth/use-user-store';
 import { useMe } from '@/lib/hooks';
+
+const tabs = [
+  {
+    name: 'index',
+    title: 'Home',
+    icon: Home,
+    tabBarButtonTestID: 'home-tab',
+  },
+  {
+    name: 'scan',
+    title: 'Scan',
+    path: '/scan',
+    icon: ScanLine,
+    tabBarButtonTestID: 'scan-tab',
+  },
+  {
+    name: 'artworks',
+    title: 'Artworks',
+    icon: LayoutGrid,
+    tabBarButtonTestID: 'artworks-tab',
+  },
+  {
+    name: 'collections',
+    title: 'Collections',
+    icon: LibraryBig,
+    tabBarButtonTestID: 'Collections-tab',
+  },
+  {
+    name: 'profile',
+    title: 'Profile',
+    icon: User,
+    tabBarButtonTestID: 'profile-tab',
+  },
+] as const;
 
 export default function TabLayout() {
   const status = useAuth.use.status();
@@ -14,7 +54,13 @@ export default function TabLayout() {
   const { data: me } = useMe();
   useEffect(() => {
     if (me) {
-      setUser({ id: me.id, email: me.email, firstName: me.firstName, lastName: me.lastName, plan: me.plan });
+      setUser({
+        id: me.id,
+        email: me.email,
+        firstName: me.firstName,
+        lastName: me.lastName,
+        plan: me.plan,
+      });
     }
   }, [me]);
 
@@ -56,46 +102,16 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <HomeIcon size={22} color={color} />,
-          tabBarButtonTestID: 'home-tab',
-        }}
-      />
-      <Tabs.Screen
-        name="scan"
-        options={{
-          title: 'Scan',
-          tabBarIcon: ({ color }) => <ScanIcon color={color} />,
-          tabBarButtonTestID: 'scan-tab',
-        }}
-      />
-      <Tabs.Screen
-        name="artworks"
-        options={{
-          title: 'Artworks',
-          tabBarIcon: ({ color }) => <Palette size={22} color={color} />,
-          tabBarButtonTestID: 'artworks-tab',
-        }}
-      />
-      <Tabs.Screen
-        name="collections"
-        options={{
-          title: 'Collections',
-          tabBarIcon: ({ color }) => <CollectionsIcon color={color} />,
-          tabBarButtonTestID: 'collections-tab',
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <User size={22} color={color} />,
-          tabBarButtonTestID: 'profile-tab',
-        }}
-      />
+      {tabs.map((tab) => (
+        <Tabs.Screen
+          name={tab.name}
+          options={{
+            title: tab.title,
+            tabBarIcon: ({ color }) => <tab.icon size={22} color={color} />,
+            tabBarButtonTestID: tab.tabBarButtonTestID,
+          }}
+        />
+      ))}
     </Tabs>
   );
 }
