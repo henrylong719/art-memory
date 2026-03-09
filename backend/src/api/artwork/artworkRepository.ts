@@ -50,6 +50,7 @@ export class ArtworkRepository {
       orderBy: { title: 'asc' },
     });
   }
+
   async findByTitleAndArtist(title: string, artistId: string) {
     return prisma.artwork.findFirst({
       where: {

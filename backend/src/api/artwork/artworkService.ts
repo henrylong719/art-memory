@@ -113,7 +113,6 @@ export class ArtworkService {
    * We get a title and an artist name — not an artist ID from our database.
    * So the method needs to be flexible about how it receives artist information.
    */
-
   async create(data: {
     title: string;
     year?: number;
@@ -139,7 +138,6 @@ export class ArtworkService {
        * If found, it returns the existing record. If not found,
        * it creates a new artist entry. Either way, we end up with an artistId we can use.
        */
-
       // If artistName is provided instead of artistId, find or create the artist
       let resolvedArtistId = data.artistId;
 
@@ -180,7 +178,6 @@ export class ArtworkService {
        * Prisma would throw an error if we tried to pass an unknown field.
        * We then override artistId with the resolved one.
        */
-
       const { artistName, ...createData } = data;
       const artwork = await this.artworkRepository.create({
         ...createData,

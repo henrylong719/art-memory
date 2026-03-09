@@ -2,7 +2,7 @@ import { prisma } from '@/common/db/prisma';
 import crypto from 'node:crypto';
 
 export class AuthRepository {
-  async createUesr(data: {
+  async createUser(data: {
     email: string;
     passwordHash: string;
     firstName?: string;

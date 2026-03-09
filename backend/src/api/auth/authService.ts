@@ -8,7 +8,7 @@ import { signAccessToken, parseDurationToMs } from '@/common/utils/jwt';
 import { env } from '@/common/utils/envConfig';
 import { logger } from '@/server';
 
-const SALT_ROUND = 12;
+const SALT_ROUNDS = 12;
 
 export class AuthService {
   private authRepository: AuthRepository;
@@ -22,11 +22,10 @@ export class AuthService {
     password: string;
     firstName?: string;
     lastName?: string;
-  }) {
+  }): Promise<ServiceResponse<AuthResponse | null>> {
     try {
       // Check if user already exists
       const existing = await this.authRepository.findUserByEmail(data.email);
-
       if (existing) {
         return ServiceResponse.failure(
           'Email is already registered',
@@ -35,11 +34,11 @@ export class AuthService {
         );
       }
 
-      // Hash passwrod
-      const passwordHash = await bcrypt.hash(data.password, SALT_ROUND);
+      // Hash password
+      const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
 
       // Create user (with default collection)
-      const user = await this.authRepository.createUesr({
+      const user = await this.authRepository.createUser({
         email: data.email,
         passwordHash,
         firstName: data.firstName,
@@ -65,7 +64,10 @@ export class AuthService {
     }
   }
 
-  async login(data: { email: string; password: string }) {
+  async login(data: {
+    email: string;
+    password: string;
+  }): Promise<ServiceResponse<AuthResponse | null>> {
     try {
       // Find user by email
       const user = await this.authRepository.findUserByEmail(data.email);
@@ -77,12 +79,11 @@ export class AuthService {
         );
       }
 
-      // Veirfy password
+      // Verify password
       const isValidPassword = await bcrypt.compare(
         data.password,
         user.passwordHash,
       );
-
       if (!isValidPassword) {
         return ServiceResponse.failure(
           'Invalid email or password',

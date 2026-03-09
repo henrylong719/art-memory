@@ -160,8 +160,11 @@ model Scan {
   // What was scanned
   scanType ScanType
 
-  // The image the user captured (stored in S3)
+  // The artwork image (always present, stored in S3)
   imageUrl String
+
+  // The label image (only present in COMBINED mode, stored in S3)
+  labelImageUrl String?
 
   // AI identification results
   artworkId   String?
@@ -169,7 +172,7 @@ model Scan {
   confidence  Float? // 0.0 – 1.0 confidence score
   rawAiResult Json? // full OpenAI response for debugging
 
-  // OCR label extraction (when scanType = LABEL)
+  // OCR label extraction (when scanType = COMBINED)
   extractedText String? @db.Text
 
   // user corrections
@@ -189,8 +192,8 @@ model Scan {
 }
 
 enum ScanType {
-  ARTWORK // User scanned the artwork itself
-  LABEL // User scanned the museum label
+  ARTWORK // User scanned just the artwork
+  COMBINED // User scanned both artwork + museum label
 }
 
 // ============================================================

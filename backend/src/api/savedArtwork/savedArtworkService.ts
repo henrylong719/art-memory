@@ -2,8 +2,8 @@ import { StatusCodes } from 'http-status-codes';
 
 import { SavedArtworkRepository } from '@/api/savedArtwork/savedArtworkRepository';
 import { CollectionRepository } from '@/api/collection/collectionRepository';
-import { ServiceResponse } from '@/common/models/serviceResponse';
 import { ArtworkRepository } from '@/api/artwork/artworkRepository';
+import { ServiceResponse } from '@/common/models/serviceResponse';
 import { logger } from '@/server';
 
 export class SavedArtworkService {
@@ -188,6 +188,7 @@ export class SavedArtworkService {
       );
     }
   }
+
   async update(
     id: string,
     userId: string,

@@ -40,6 +40,7 @@ userRouter.get('/:id', validateRequest(GetUserSchema), userController.getUser);
 userRegistry.registerPath({
   method: 'put',
   path: '/users/{id}',
+  tags: ['User'],
   request: {
     params: UpdateUserSchema.shape.params,
     body: {

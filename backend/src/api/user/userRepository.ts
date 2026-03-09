@@ -1,8 +1,6 @@
-// Fields to select (exclude passwordHash from all queries)
-
 import { prisma } from '@/common/db/prisma';
-import { User } from './userModel';
 
+// Fields to select (exclude passwordHash from all queries)
 const userPublicSelect = {
   id: true,
   email: true,
@@ -18,20 +16,20 @@ const userPublicSelect = {
 } as const;
 
 export class UserRepository {
-  async findAllAsync(): Promise<User[]> {
+  async findAllAsync() {
     return prisma.user.findMany({
       select: userPublicSelect,
     });
   }
 
-  async findByIdAsync(id: string): Promise<User | null> {
+  async findByIdAsync(id: string) {
     return prisma.user.findUnique({
       where: { id },
       select: userPublicSelect,
     });
   }
 
-  async findByEmailAsync(email: string): Promise<User | null> {
+  async findByEmailAsync(email: string) {
     return prisma.user.findUnique({
       where: { email },
     });

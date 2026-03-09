@@ -1,4 +1,5 @@
 import type { Request, RequestHandler, Response } from 'express';
+
 import { artistService } from '@/api/artist/artistService';
 
 class ArtistController {
