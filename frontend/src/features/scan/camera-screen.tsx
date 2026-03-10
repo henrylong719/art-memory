@@ -7,7 +7,12 @@ import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import * as React from 'react';
-import { ActivityIndicator, Image as RNImage, Pressable, StyleSheet } from 'react-native';
+import {
+  ActivityIndicator,
+  Image as RNImage,
+  Pressable,
+  StyleSheet,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
