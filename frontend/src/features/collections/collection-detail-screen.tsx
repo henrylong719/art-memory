@@ -60,7 +60,7 @@ function GridItem({
           {imageUrl ? (
             <Image
               source={{ uri: imageUrl }}
-              style={{ width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.25 }}
+              className="w-full h-full"
               contentFit="cover"
               transition={300}
             />
@@ -266,10 +266,7 @@ export function CollectionDetailScreen() {
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View
-        style={{ paddingTop: insets.top }}
-        className="bg-stone-50/90 px-6 pb-4 flex-row justify-between items-center border-b border-stone-200/50"
-      >
+      <View className="bg-stone-50/90 px-6 pb-4 flex-row justify-between items-center border-b border-stone-200/50 mt-16">
         <Pressable
           onPress={() => router.back()}
           className="p-2 -ml-2 rounded-full active:bg-stone-200/50"

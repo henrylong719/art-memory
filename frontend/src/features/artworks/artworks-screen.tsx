@@ -174,10 +174,7 @@ export function ArtworksScreen() {
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View
-        style={{ paddingTop: insets.top }}
-        className="bg-stone-50/90 px-6 pb-2"
-      >
+      <View className="bg-stone-50/90 px-6 pb-2 pt-16">
         <Text className="font-serif text-3xl font-medium text-stone-900 mb-6 mt-4">
           Artworks
         </Text>

@@ -12,8 +12,8 @@ export function ScanEntryScreen() {
   return (
     <View className="flex-1 bg-neutral-50">
       {/* Header */}
-      <View className="px-6 pt-4 pb-2">
-        <Text className="font-serif text-[28px] font-semibold text-charcoal-900 text-center">
+      <View className="px-6 pt-16 pb-2">
+        <Text className="font-serif text-3xl font-medium text-stone-900">
           Scan
         </Text>
       </View>

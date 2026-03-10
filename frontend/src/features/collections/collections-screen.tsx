@@ -218,7 +218,7 @@ export function CollectionsScreen() {
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 pt-4 pb-6">
+        <View className="px-6 pt-16 pb-6">
           {/* Header */}
           <View className="flex-row justify-between items-center mb-8">
             <Text className="font-serif text-3xl font-medium text-stone-900">
