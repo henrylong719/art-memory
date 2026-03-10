@@ -219,7 +219,7 @@ export function MuseumDetailScreen() {
       {/* ── Nav buttons ── */}
       <View
         style={{ paddingTop: insets.top + 4 }}
-        className="absolute top-0 left-0 right-0 z-[60] flex-row justify-between items-center px-5"
+        className="absolute top-0 left-0 right-0 z-60 flex-row justify-between items-center px-5"
       >
         <Pressable
           onPress={() => router.back()}
@@ -304,7 +304,7 @@ export function MuseumDetailScreen() {
           </View>
 
           {/* Title */}
-          <Text className="font-serif text-[28px] leading-[34px] font-medium text-stone-900 mb-4">
+          <Text className="font-serif text-[28px] leading-8.5 font-medium text-stone-900 mb-4">
             {museum.name}
           </Text>
 
