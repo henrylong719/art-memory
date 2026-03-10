@@ -185,7 +185,7 @@ export function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-stone-50">
+    <View className="flex-1 bg-stone-50 mt-16">
       {/* Header */}
       <View
         style={{ paddingTop: insets.top }}
@@ -218,7 +218,7 @@ export function SettingsScreen() {
             <ActionRow
               icon={<User size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Edit Profile"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/edit')}
             />
             <Divider />
             <ActionRow
@@ -230,7 +230,7 @@ export function SettingsScreen() {
             <ActionRow
               icon={<Shield size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Password & Security"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/security')}
             />
           </Section>
 
@@ -264,7 +264,7 @@ export function SettingsScreen() {
           </Section>
 
           {/* Artwork Experience */}
-          <Section title="Artwork Experience" delay={0.2}>
+          {/* <Section title="Artwork Experience" delay={0.2}>
             <ActionRow
               icon={<LayoutGrid size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Default View"
@@ -283,7 +283,7 @@ export function SettingsScreen() {
               value={true}
               onToggle={() => {}}
             />
-          </Section>
+          </Section> */}
 
           {/* Support */}
           <Section title="Support" delay={0.3}>
@@ -298,19 +298,19 @@ export function SettingsScreen() {
                 <MessageSquare size={20} color="#a8a29e" strokeWidth={1.5} />
               }
               label="Contact Support"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/contact')}
             />
             <Divider />
             <ActionRow
               icon={<ShieldAlert size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Privacy Policy"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/privacy')}
             />
             <Divider />
             <ActionRow
               icon={<FileText size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Terms of Service"
-              onPress={() => {}}
+              onPress={() => router.push('/profile/terms')}
             />
           </Section>
 
@@ -337,21 +337,6 @@ export function SettingsScreen() {
                 Log Out
               </Text>
             </Pressable>
-          </Motion.View>
-
-          {/* Footer */}
-          <Motion.View
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: 'timing', duration: 400, delay: 500 }}
-            className="items-center justify-center pb-8 pt-4 gap-1"
-          >
-            <Text className="font-serif text-stone-900 font-medium tracking-wide">
-              Art Memory
-            </Text>
-            <Text className="text-stone-400 text-xs font-medium">
-              Version 1.0.0
-            </Text>
           </Motion.View>
         </View>
       </ScrollView>

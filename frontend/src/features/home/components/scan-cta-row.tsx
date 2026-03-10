@@ -23,7 +23,10 @@ export function ScanCtaRow() {
         >
           <View
             className="w-11 h-11 rounded-xl items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.12)', marginBottom: 2 }}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.12)',
+              marginBottom: 2,
+            }}
           >
             <ScanLine size={22} color="#fff" />
           </View>

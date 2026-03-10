@@ -19,13 +19,13 @@ const tabs = [
     icon: Home,
     tabBarButtonTestID: 'home-tab',
   },
-  {
-    name: 'scan',
-    title: 'Scan',
-    path: '/scan',
-    icon: ScanLine,
-    tabBarButtonTestID: 'scan-tab',
-  },
+  // {
+  //   name: 'scan',
+  //   title: 'Scan',
+  //   path: '/scan',
+  //   icon: ScanLine,
+  //   tabBarButtonTestID: 'scan-tab',
+  // },
   {
     name: 'artworks',
     title: 'Artworks',

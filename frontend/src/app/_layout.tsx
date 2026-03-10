@@ -21,6 +21,18 @@ export const unstable_settings = {
   initialRouteName: '(app)',
 };
 
+const scanFlow = ['camera', 'result', 'fallback', 'manual-entry'] as const;
+const profile_sub_screen = [
+  'contact',
+  'history',
+  'help',
+  'settings',
+  'edit',
+  'privacy',
+  'security',
+  'terms',
+] as const;
+
 hydrateAuth();
 loadSelectedTheme();
 SplashScreen.preventAutoHideAsync();
@@ -68,36 +80,20 @@ export default function RootLayout() {
         />
 
         {/* Scan flow (full-screen, no tab bar) */}
-        <Stack.Screen
-          name="scan/camera"
-          options={{ headerShown: false, animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="scan/result"
-          options={{ headerShown: false, animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="scan/fallback"
-          options={{ headerShown: false, animation: 'slide_from_bottom' }}
-        />
-        <Stack.Screen
-          name="scan/manual-entry"
-          options={{ headerShown: false, animation: 'slide_from_right' }}
-        />
+        {scanFlow.map((name) => (
+          <Stack.Screen
+            name={`scan/${name}`}
+            options={{ headerShown: false, animation: 'slide_from_bottom' }}
+          />
+        ))}
 
         {/* Profile sub-screens */}
-        <Stack.Screen
-          name="profile/history"
-          options={{ headerShown: false, animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="profile/help"
-          options={{ headerShown: false, animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="profile/setting"
-          options={{ headerShown: false, animation: 'slide_from_right' }}
-        />
+        {profile_sub_screen.map((name) => (
+          <Stack.Screen
+            name={`profile/${name}`}
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+        ))}
       </Stack>
     </Providers>
   );
