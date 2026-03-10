@@ -272,13 +272,13 @@ export function ProfileScreen() {
               <MenuRow
                 icon={<Bookmark size={20} color="#a8a29e" strokeWidth={1.5} />}
                 label="Saved Artworks"
-                onPress={() => router.push('/(app)/artworks')}
+                onPress={() => router.push('/profile/artworks')}
               />
               <Divider />
               <MenuRow
                 icon={<Library size={20} color="#a8a29e" strokeWidth={1.5} />}
                 label="Collections"
-                onPress={() => router.push('/(app)/collections')}
+                onPress={() => router.push('/profile/collections')}
               />
 
               <SectionBreak />

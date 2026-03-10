@@ -23,6 +23,8 @@ export const unstable_settings = {
 
 const scanFlow = ['camera', 'result', 'fallback', 'manual-entry'] as const;
 const profile_sub_screen = [
+  'artworks',
+  'collections',
   'contact',
   'history',
   'help',

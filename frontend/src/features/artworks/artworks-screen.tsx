@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
-import { Search, SlidersHorizontal } from 'lucide-react-native';
+import { ChevronLeft, Search, SlidersHorizontal } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Dimensions,
@@ -141,7 +141,11 @@ function ArtworkGridItem({
 }
 
 // ─── Main Screen ─────────────────────────────────────────
-export function ArtworksScreen() {
+export function ArtworksScreen({
+  fromProfile = false,
+}: {
+  fromProfile?: boolean;
+}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -175,9 +179,20 @@ export function ArtworksScreen() {
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
       <View className="bg-stone-50/90 px-6 pb-2 pt-16">
-        <Text className="font-serif text-3xl font-medium text-stone-900 mb-6 mt-4">
-          Artworks
-        </Text>
+        <View className="flex-row items-center gap-3 mb-6 mt-4">
+          {fromProfile && (
+            <Pressable
+              onPress={() => router.back()}
+              className="p-2 -ml-2 rounded-full active:bg-stone-200/50"
+              hitSlop={8}
+            >
+              <ChevronLeft size={24} color="#1c1917" />
+            </Pressable>
+          )}
+          <Text className="font-serif text-3xl font-medium text-stone-900">
+            Artworks
+          </Text>
+        </View>
 
         {/* Search Bar */}
         <View className="flex-row gap-3 mb-4">

@@ -3,7 +3,7 @@ import { forwardRef, useRef, useState, type RefObject } from 'react';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
-import { Plus, LibraryBig } from 'lucide-react-native';
+import { ChevronLeft, Plus, LibraryBig } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -197,7 +197,11 @@ const CreateCollectionSheet = forwardRef<
 });
 
 // ─── Main Screen ─────────────────────────────────────────
-export function CollectionsScreen() {
+export function CollectionsScreen({
+  fromProfile = false,
+}: {
+  fromProfile?: boolean;
+}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: collections, isLoading, refetch } = useCollections();
@@ -221,9 +225,20 @@ export function CollectionsScreen() {
         <View className="px-6 pt-16 pb-6">
           {/* Header */}
           <View className="flex-row justify-between items-center mb-8">
-            <Text className="font-serif text-3xl font-medium text-stone-900">
-              Collections
-            </Text>
+            <View className="flex-row items-center gap-3">
+              {fromProfile && (
+                <Pressable
+                  onPress={() => router.back()}
+                  className="p-2 -ml-2 rounded-full active:bg-stone-200/50"
+                  hitSlop={8}
+                >
+                  <ChevronLeft size={24} color="#1c1917" />
+                </Pressable>
+              )}
+              <Text className="font-serif text-3xl font-medium text-stone-900">
+                Collections
+              </Text>
+            </View>
             <Pressable
               onPress={() => sheetRef.current?.present()}
               className="p-2.5 bg-stone-900 rounded-full active:bg-stone-800"
