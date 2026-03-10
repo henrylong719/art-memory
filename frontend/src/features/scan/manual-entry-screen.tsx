@@ -56,26 +56,26 @@ export function ManualEntryScreen() {
   // ── Success state ──
   if (success) {
     return (
-      <View className="flex-1 bg-charcoal-900 items-center justify-center px-6">
+      <View className="flex-1 bg-stone-50 items-center justify-center p-6">
         <Animated.View
-          entering={ZoomIn.springify().damping(15).stiffness(200)}
-          className="w-24 h-24 bg-success-500 rounded-full items-center justify-center mb-6"
+          entering={ZoomIn.springify().stiffness(200).damping(20)}
+          className="w-20 h-20 bg-stone-900 rounded-full items-center justify-center mb-8"
           style={{
-            shadowColor: '#22C55E',
+            shadowColor: '#1c1917',
             shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.3,
-            shadowRadius: 20,
+            shadowOpacity: 0.15,
+            shadowRadius: 24,
           }}
         >
-          <Check size={48} color="#fff" strokeWidth={3} />
+          <Check size={36} color="#fff" strokeWidth={2} />
         </Animated.View>
         <Animated.View entering={FadeIn.delay(200)}>
-          <Text className="font-serif text-3xl font-semibold text-white text-center mb-2">
+          <Text className="font-serif text-[32px] font-medium text-stone-900 text-center mb-3">
             Artwork Saved
           </Text>
         </Animated.View>
         <Animated.View entering={FadeIn.delay(300)}>
-          <Text className="text-charcoal-400 text-center">
+          <Text className="text-stone-500 text-[15px] text-center" style={{ lineHeight: 22 }}>
             Added to your collection
           </Text>
         </Animated.View>

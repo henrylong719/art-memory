@@ -5,10 +5,9 @@ import { ChevronLeft } from 'lucide-react-native';
 import * as React from 'react';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Motion } from '@legendapp/motion';
 
-import { ScrollView, Text, View } from '@/components/ui';
+import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import { useRegister } from '@/lib/hooks/use-auth';
 
 // TextInput is not wrapped with withUniwind so it doesn't support className.
@@ -22,8 +21,6 @@ const inputBase: object = {
   color: '#1E1E1E',
   borderWidth: 1.5,
 };
-const inputBlurred = { borderColor: '#F5F5F5' };
-const inputFocused = { borderColor: '#B0B0B0' };
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -33,7 +30,6 @@ export function SignUpScreen() {
   const [lastName, setLastName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
-  const [focused, setFocused] = React.useState<string | null>(null);
 
   const axiosError = register.error as AxiosError<{ message: string }> | null;
   const errorMessage =
@@ -55,10 +51,11 @@ export function SignUpScreen() {
   const isDisabled = !email.trim() || !password || register.isPending;
 
   return (
-    <SafeAreaView className="flex flex-col h-full bg-stone-50 overflow-y-auto">
-      <View className="px-4 pt-12 pb-4 sticky top-0 bg-stone-50/90 backdrop-blur-md z-10">
+    <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
+      <View className="px-4 pb-2">
         <Pressable
-          className="p-2 -ml-2 rounded-full hover:bg-stone-200/50 transition-colors text-stone-900"
+          className="p-2 -ml-2"
+          style={{ backgroundColor: 'transparent' }}
           onPress={() => router.back()}
           hitSlop={8}
         >
@@ -67,13 +64,12 @@ export function SignUpScreen() {
       </View>
 
       <KeyboardAvoidingView
-        className="flex-1 px-8 pt-8 pb-8 flex flex-col"
+        style={{ flex: 1 }}
         behavior="padding"
         keyboardVerticalOffset={0}
       >
         <ScrollView
-          className="flex-1"
-          contentContainerClassName="grow pb-8"
+          contentContainerStyle={{ flexGrow: 1, padding: 24, paddingTop: 8 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -96,13 +92,22 @@ export function SignUpScreen() {
           {/* Fields */}
           <View className="flex flex-col flex-1">
             <View className="space-y-5 mb-6">
-              <View className="grid grid-cols-2 gap-4">
-                <View>
-                  <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+              <View className="flex-row mb-5" style={{ gap: 12 }}>
+                <View className="flex-1">
+                  <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                     First Name
                   </Text>
                   <TextInput
-                    className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                    style={{
+                      backgroundColor: '#fff',
+                      borderWidth: 1,
+                      borderColor: '#e7e5e4',
+                      borderRadius: 16,
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                      fontSize: 15,
+                      color: '#1c1917',
+                    }}
                     value={firstName}
                     onChangeText={setFirstName}
                     autoCapitalize="words"
@@ -111,11 +116,20 @@ export function SignUpScreen() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                  <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                     Last Name
                   </Text>
                   <TextInput
-                    className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                    style={{
+                      backgroundColor: '#fff',
+                      borderWidth: 1,
+                      borderColor: '#e7e5e4',
+                      borderRadius: 16,
+                      paddingVertical: 14,
+                      paddingHorizontal: 16,
+                      fontSize: 15,
+                      color: '#1c1917',
+                    }}
                     value={lastName}
                     onChangeText={setLastName}
                     autoCapitalize="words"
@@ -125,7 +139,7 @@ export function SignUpScreen() {
                 </View>
               </View>
 
-              <View>
+              <View className="mb-5">
                 <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                   Email
                 </Text>
@@ -177,9 +191,13 @@ export function SignUpScreen() {
           {/* CTA */}
           <View className="space-y-6 pb-2">
             <Pressable
-              className={`rounded-2xl py-4.25 items-center ${
-                isDisabled ? 'bg-stone-200' : 'bg-stone-900 active:bg-stone-800'
-              }`}
+              style={{
+                backgroundColor: isDisabled ? '#e7e5e4' : '#1c1917',
+                borderRadius: 16,
+                paddingVertical: 16,
+                alignItems: 'center',
+                marginBottom: 20,
+              }}
               onPress={handleSubmit}
               disabled={isDisabled}
             >
@@ -187,9 +205,12 @@ export function SignUpScreen() {
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text
-                  className={`text-[16px] font-semibold ${
-                    isDisabled ? 'text-stone-400' : 'text-white'
-                  }`}
+                  style={{
+                    color: isDisabled ? '#a8a29e' : '#ffffff',
+                    fontSize: 15,
+                    fontWeight: '600',
+                    letterSpacing: 0.3,
+                  }}
                 >
                   Create Account
                 </Text>

@@ -4,15 +4,13 @@ import { useRouter } from 'expo-router';
 import { Image, ScanLine } from 'lucide-react-native';
 import * as React from 'react';
 import { Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { Text, View } from '@/components/ui';
 
 export function ScanEntryScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
+    <View className="flex-1 bg-neutral-50">
       {/* Header */}
       <View className="px-6 pt-4 pb-2">
         <Text className="font-serif text-[28px] font-semibold text-charcoal-900 text-center">
@@ -95,6 +93,6 @@ export function ScanEntryScreen() {
           </Pressable>
         </Motion.View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

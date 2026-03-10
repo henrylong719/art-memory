@@ -13,7 +13,8 @@ export function ScanCtaRow() {
     <View className="flex-row items-stretch gap-3 px-6 mb-9">
       <View className="flex-1">
         <Pressable
-          className="flex-1 bg-charcoal-900 rounded-[20px] p-4.5 gap-2.5 justify-start active:bg-charcoal-800"
+          className="flex-1 bg-charcoal-900 rounded-[20px] p-4 justify-start"
+          style={{ gap: 10 }}
           onPress={() =>
             router.push({
               pathname: '/scan/camera',
@@ -21,14 +22,20 @@ export function ScanCtaRow() {
             })
           }
         >
-          <View className="w-11 h-11 rounded-xl bg-white/12 items-center justify-center mb-0.5">
+          <View
+            className="w-11 h-11 rounded-xl items-center justify-center"
+            style={{ backgroundColor: 'rgba(255,255,255,0.12)', marginBottom: 2 }}
+          >
             <ScanLine size={22} color="#fff" />
           </View>
-          <View className="gap-1">
-            <Text className="text-sm font-bold text-white leading-4.75">
+          <View style={{ gap: 4 }}>
+            <Text className="text-sm font-bold text-white">
               Artwork + Details
             </Text>
-            <Text className="text-[11px] text-white/55 leading-4">
+            <Text
+              className="text-[11px]"
+              style={{ color: 'rgba(255,255,255,0.55)', lineHeight: 16 }}
+            >
               Scan artwork and museum label for richer results
             </Text>
           </View>
@@ -37,7 +44,8 @@ export function ScanCtaRow() {
 
       <View className="flex-1">
         <Pressable
-          className="flex-1 bg-white rounded-[20px] p-4.5 gap-2.5 border border-charcoal-100 justify-start active:bg-neutral-50"
+          className="flex-1 bg-white rounded-[20px] p-4 border border-charcoal-100 justify-start"
+          style={{ gap: 10 }}
           onPress={() =>
             router.push({
               pathname: '/scan/camera',
@@ -45,14 +53,20 @@ export function ScanCtaRow() {
             })
           }
         >
-          <View className="w-11 h-11 rounded-xl bg-neutral-100 items-center justify-center mb-0.5">
+          <View
+            className="w-11 h-11 rounded-xl bg-neutral-100 items-center justify-center"
+            style={{ marginBottom: 2 }}
+          >
             <Image size={22} color="#474747" />
           </View>
-          <View className="gap-1">
-            <Text className="text-sm font-bold text-charcoal-900 leading-4.75">
+          <View style={{ gap: 4 }}>
+            <Text className="text-sm font-bold text-charcoal-900">
               Artwork Only
             </Text>
-            <Text className="text-[11px] text-charcoal-500 leading-4">
+            <Text
+              className="text-[11px] text-charcoal-500"
+              style={{ lineHeight: 16 }}
+            >
               Quickly identify without scanning the label
             </Text>
           </View>

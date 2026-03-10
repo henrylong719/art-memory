@@ -20,17 +20,17 @@ const envSchema = z.object({
 });
 
 // Config records per environment
-const EXPO_PUBLIC_APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV
-  ?? 'development') as z.infer<typeof envSchema>['EXPO_PUBLIC_APP_ENV'];
+const EXPO_PUBLIC_APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV ??
+  'development') as z.infer<typeof envSchema>['EXPO_PUBLIC_APP_ENV'];
 
 const BUNDLE_IDS = {
-  development: 'com.obytes.development',
-  preview: 'com.obytes.preview',
+  development: 'com.henrylong.artmemoryt',
+  preview: 'com.henrylong.preview',
   production: 'com.obytes',
 } as const;
 
 const PACKAGES = {
-  development: 'com.obytes.development',
+  development: 'com.henrylong.artmemory',
   preview: 'com.obytes.preview',
   production: 'com.obytes',
 } as const;
@@ -65,18 +65,19 @@ function getValidatedEnv(env: z.infer<typeof envSchema>) {
   const parsed = envSchema.safeParse(env);
 
   if (parsed.success === false) {
-    const errorMessage
-      = `❌ Invalid environment variables:${
-        JSON.stringify(parsed.error.flatten().fieldErrors, null, 2)
-      }\n❌ Missing variables in .env file for APP_ENV=${EXPO_PUBLIC_APP_ENV}`
-      + `\n💡 Tip: If you recently updated the .env file, try restarting with -c flag to clear the cache.`;
+    const errorMessage =
+      `❌ Invalid environment variables:${JSON.stringify(
+        parsed.error.flatten().fieldErrors,
+        null,
+        2,
+      )}\n❌ Missing variables in .env file for APP_ENV=${EXPO_PUBLIC_APP_ENV}` +
+      `\n💡 Tip: If you recently updated the .env file, try restarting with -c flag to clear the cache.`;
 
     if (STRICT_ENV_VALIDATION) {
       console.error(errorMessage);
       throw new Error('Invalid environment variables');
     }
-  }
-  else {
+  } else {
     console.log('✅ Environment variables validated successfully');
   }
 

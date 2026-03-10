@@ -1,6 +1,6 @@
-import { Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import {
   ScanLine,
@@ -63,19 +63,6 @@ export default function TabLayout() {
       });
     }
   }, [me]);
-
-  const hideSplash = useCallback(async () => {
-    await SplashScreen.hideAsync();
-  }, []);
-
-  useEffect(() => {
-    if (status !== 'idle') {
-      const timer = setTimeout(() => {
-        hideSplash();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [hideSplash, status]);
 
   if (status === 'signOut') {
     return <Redirect href="/onboarding" />;

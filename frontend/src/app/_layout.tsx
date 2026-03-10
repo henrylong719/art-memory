@@ -27,6 +27,13 @@ SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 500, fade: true });
 
 export default function RootLayout() {
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Providers>
       <Stack>
@@ -93,8 +100,6 @@ function Providers({ children }: { children: React.ReactNode }) {
   return (
     <GestureHandlerRootView
       style={styles.container}
-      // eslint-disable-next-line better-tailwindcss/no-unknown-classes
-      className={theme.dark ? 'dark' : undefined}
     >
       <KeyboardProvider>
         <ThemeProvider value={theme}>

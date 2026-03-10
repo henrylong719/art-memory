@@ -111,6 +111,7 @@ console.log(Env.EXPO_PUBLIC_MY_NEW_VAR);
 
 :::note[Type Conversion]
 All environment variables are strings by default. Convert them to the correct type:
+
 ```ts
 // For numbers
 EXPO_PUBLIC_VAR_NUMBER: Number(process.env.EXPO_PUBLIC_VAR_NUMBER ?? 0),
@@ -118,6 +119,7 @@ EXPO_PUBLIC_VAR_NUMBER: Number(process.env.EXPO_PUBLIC_VAR_NUMBER ?? 0),
 // For booleans
 EXPO_PUBLIC_VAR_BOOL: process.env.EXPO_PUBLIC_VAR_BOOL === 'true',
 ```
+
 :::
 
 ## Environment Switching
@@ -188,7 +190,7 @@ const envSchema = z.object({
 
 // 2. Define config records per environment
 const BUNDLE_IDS = {
-  development: 'com.obytes.development',
+  development: 'com.henrylong.artmemory',
   preview: 'com.obytes.preview',
   production: 'com.obytes',
 } as const;
@@ -234,9 +236,11 @@ Client-side environment variables with the `EXPO_PUBLIC_*` prefix are NOT passed
 
 :::note[TSX Dependency]
 The `tsx` package must be installed as a dev dependency to allow importing TypeScript files in `app.config.ts`:
+
 ```bash
 pnpm add -D tsx
 ```
+
 :::
 
 ### Client-Side Access

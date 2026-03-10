@@ -2,9 +2,8 @@
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { ActivityIndicator, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ScrollView, Text, View } from '@/components/ui';
+import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import {
   useArtworks,
   useMe,
@@ -49,7 +48,7 @@ export function HomeScreen() {
     <SafeAreaView className="flex-1 bg-neutral-50" edges={['top']}>
       <ScrollView
         className="flex-1"
-        contentContainerClassName="pb-8"
+        contentContainerStyle={{ paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -58,7 +57,7 @@ export function HomeScreen() {
             <Text className="text-xs font-semibold text-charcoal-500 tracking-widest uppercase mb-1">
               {greeting}
             </Text>
-            <Text className="font-serif text-[32px] font-semibold text-charcoal-900 leading-9.5">
+            <Text className="font-serif text-[32px] font-semibold text-charcoal-900">
               {firstName}
             </Text>
           </View>
@@ -92,7 +91,7 @@ export function HomeScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerClassName="px-6 gap-3.5"
+              contentContainerStyle={{ paddingHorizontal: 24, gap: 14 }}
             >
               {recentScans.map((scan) => (
                 <ScanCard
@@ -174,7 +173,7 @@ export function HomeScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerClassName="px-6 gap-3.5"
+              contentContainerStyle={{ paddingHorizontal: 24, gap: 14 }}
             >
               {featuredArtworks.map((artwork) => (
                 <ArtworkCard

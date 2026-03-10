@@ -34,7 +34,8 @@ export function ScanCard({
         )}
       </View>
       <Text
-        className="text-[13px] font-semibold text-charcoal-900 leading-4.5"
+        className="text-[13px] font-semibold text-charcoal-900"
+        style={{ lineHeight: 18 }}
         numberOfLines={1}
       >
         {scan.artwork?.title ?? 'Unknown artwork'}
@@ -68,7 +69,8 @@ export function ArtworkCard({
         )}
       </View>
       <Text
-        className="text-[13px] font-semibold text-charcoal-900 leading-4.5"
+        className="text-[13px] font-semibold text-charcoal-900"
+        style={{ lineHeight: 18 }}
         numberOfLines={2}
       >
         {artwork.title}
@@ -106,7 +108,7 @@ export function MuseumCard({
           <View className="absolute inset-0 bg-charcoal-200" />
         )}
         {museum.openNow != null && (
-          <View className="absolute top-3 left-3 flex-row items-center gap-1.5 bg-white/92 rounded-full px-2.5 py-1">
+          <View className="absolute top-3 left-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}>
             <View
               className={`w-1.5 h-1.5 rounded-full ${
                 museum.openNow ? 'bg-green-500' : 'bg-charcoal-300'

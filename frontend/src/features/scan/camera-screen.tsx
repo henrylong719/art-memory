@@ -7,8 +7,15 @@ import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import * as React from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
-import Animated, { ZoomIn } from 'react-native-reanimated';
+import { ActivityIndicator, Image as RNImage, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  ZoomIn,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
@@ -53,6 +60,39 @@ export function CameraScreen() {
   // Captured URIs
   const [artworkUri, setArtworkUri] = React.useState<string | null>(null);
   const [processing, setProcessing] = React.useState(false);
+  const [processingUri, setProcessingUri] = React.useState<string | null>(null);
+
+  // Scan line animation (replaces @legendapp/motion keyframe array)
+  const scanLineY = useSharedValue(0);
+  const scanLineStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scanLineY.value }],
+  }));
+  const pulseOpacity = useSharedValue(0.5);
+  const pulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
+  React.useEffect(() => {
+    if (processing) {
+      scanLineY.value = 0;
+      scanLineY.value = withRepeat(
+        withSequence(
+          withTiming(320, { duration: 1000 }),
+          withTiming(0, { duration: 1000 }),
+        ),
+        -1,
+        false,
+      );
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 750 }),
+          withTiming(0.5, { duration: 750 }),
+        ),
+        -1,
+        false,
+      );
+    }
+  }, [processing, scanLineY, pulseOpacity]);
 
   // Scan mutations
   const scanArtwork = useScanArtwork();
@@ -92,6 +132,7 @@ export function CameraScreen() {
   // ── Process scan (hit API) ──
   const processScan = React.useCallback(
     async (artUri: string, labelUri?: string) => {
+      setProcessingUri(artUri);
       setProcessing(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -186,7 +227,7 @@ export function CameraScreen() {
       {/* ── Camera feed ── */}
       <CameraView
         ref={cameraRef}
-        className="absolute inset-0"
+        style={StyleSheet.absoluteFillObject}
         facing="back"
         flash={flash ? 'on' : 'off'}
       />
@@ -198,14 +239,18 @@ export function CameraScreen() {
       >
         <Pressable
           onPress={handleBack}
-          className="w-11 h-11 bg-white/15 rounded-full items-center justify-center"
+          className="w-11 h-11 rounded-full items-center justify-center"
+          style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
           hitSlop={8}
         >
           <X size={22} color="#fff" />
         </Pressable>
 
         {/* Mode badge */}
-        <View className="bg-white/15 px-4 py-2 rounded-full flex-row items-center gap-2">
+        <View
+          className="px-4 py-2 rounded-full flex-row items-center gap-2"
+          style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+        >
           {isArtworkStep ? (
             <Camera size={14} color="#fff" />
           ) : (
@@ -218,7 +263,8 @@ export function CameraScreen() {
 
         <Pressable
           onPress={() => setFlash((f) => !f)}
-          className="w-11 h-11 bg-white/15 rounded-full items-center justify-center"
+          className="w-11 h-11 rounded-full items-center justify-center"
+          style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
           hitSlop={8}
         >
           {flash ? (
@@ -232,7 +278,28 @@ export function CameraScreen() {
       {/* ── Viewfinder overlay ── */}
       <View className="flex-1 items-center justify-center" pointerEvents="none">
         {/* Dimmed area around frame */}
-        <View className="absolute inset-0 bg-black/40" />
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.35)',
+          }}
+        />
+
+        {/* Dimmed area around frame */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.15)',
+          }}
+        />
 
         {/* Frame cutout */}
         <Motion.View
@@ -240,9 +307,10 @@ export function CameraScreen() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className={`relative border-2 border-white/45 rounded-xl ${
+          className={`relative border-2 rounded-xl ${
             isArtworkStep ? 'w-[75%] aspect-[3/4]' : 'w-[85%] aspect-[4/5]'
           }`}
+          style={{ borderColor: 'rgba(255,255,255,0.45)' }}
         >
           <CornerMarker position="tl" />
           <CornerMarker position="tr" />
@@ -258,27 +326,47 @@ export function CameraScreen() {
           >
             <View className="flex-row gap-2">
               <View
-                className={`w-2 h-2 rounded-full ${
-                  isArtworkStep ? 'bg-white' : 'bg-white/30'
-                }`}
+                className="w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: isArtworkStep
+                    ? '#fff'
+                    : 'rgba(255,255,255,0.3)',
+                }}
               />
               <View
-                className={`w-2 h-2 rounded-full ${
-                  !isArtworkStep ? 'bg-white' : 'bg-white/30'
-                }`}
+                className="w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: !isArtworkStep
+                    ? '#fff'
+                    : 'rgba(255,255,255,0.3)',
+                }}
               />
             </View>
           </View>
         )}
 
         {/* Instruction prompt */}
-        <View className="absolute bottom-36 left-0 right-0 items-center px-8">
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 100,
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            paddingHorizontal: 32,
+          }}
+        >
           <Motion.View
             key={step}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'timing', duration: 300 }}
-            className="bg-black/55 px-5 py-2.5 rounded-full"
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 9999,
+            }}
           >
             <Text className="text-white text-sm font-semibold tracking-wide text-center">
               {isArtworkStep
@@ -300,7 +388,10 @@ export function CameraScreen() {
             entering={ZoomIn.duration(250)}
             className="absolute left-6 top-0 bottom-0 justify-center"
           >
-            <View className="w-14 h-14 rounded-xl overflow-hidden border-2 border-white/30">
+            <View
+              className="w-14 h-14 rounded-xl overflow-hidden border-2"
+              style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+            >
               <Image
                 source={artworkUri}
                 className="w-full h-full"
@@ -332,50 +423,62 @@ export function CameraScreen() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ type: 'timing', duration: 250 }}
-            className="absolute inset-0 z-[100] bg-charcoal-950 items-center justify-center"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 100,
+              backgroundColor: '#2E2E2E',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            {/* Preview image */}
-            <View className="w-64 aspect-[3/4] rounded-2xl overflow-hidden mb-8">
-              {artworkUri && (
-                <Image
-                  source={artworkUri}
-                  className="w-full h-full opacity-70"
-                  contentFit="cover"
+            {/* Blurred image card */}
+            <View
+              style={{
+                width: 260,
+                aspectRatio: 3 / 4,
+                borderRadius: 16,
+                overflow: 'hidden',
+                marginBottom: 28,
+              }}
+            >
+              {processingUri && (
+                <RNImage
+                  source={{ uri: processingUri }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                  blurRadius={20}
                 />
               )}
-              <View className="absolute inset-0 bg-charcoal-900/40" />
-              {/* Scan line animation */}
-              <Motion.View
-                animate={{ y: [0, 320, 0] }}
-                transition={{
-                  type: 'timing',
-                  duration: 2000,
-                  loop: true,
-                }}
-                className="absolute top-0 left-0 right-0 h-0.5 bg-white"
+              {/* Scrim */}
+              <View
                 style={{
-                  shadowColor: '#fff',
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 1,
-                  shadowRadius: 15,
+                  ...StyleSheet.absoluteFillObject,
+                  backgroundColor: 'rgba(0,0,0,1)',
                 }}
               />
               {/* Spinner */}
-              <View className="absolute inset-0 items-center justify-center">
+              <View
+                style={{
+                  ...StyleSheet.absoluteFillObject,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <ActivityIndicator size="large" color="#fff" />
               </View>
             </View>
 
-            <Motion.View
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ type: 'timing', duration: 1500, loop: true }}
-            >
+            <Animated.View style={pulseStyle}>
               <Text className="font-serif text-xl text-white tracking-wide">
                 {isCombined
                   ? 'Analyzing artwork & details...'
                   : 'Identifying artwork...'}
               </Text>
-            </Motion.View>
+            </Animated.View>
           </Motion.View>
         )}
       </AnimatePresence>
