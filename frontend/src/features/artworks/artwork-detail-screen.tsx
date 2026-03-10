@@ -7,13 +7,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Bookmark,
   ChevronLeft,
-  ChevronRight,
   Clock,
   ExternalLink,
   MapPin,
   Palette,
+  Plus,
   Ruler,
   Share2,
+  X,
 } from 'lucide-react-native';
 import * as React from 'react';
 import { ActivityIndicator, Pressable, Share, Platform } from 'react-native';
@@ -419,11 +420,15 @@ function DetailCard({
 // ─── Collection Bottom Sheet ─────────────────────────────
 const CollectionSheet = React.forwardRef<
   BottomSheetModal,
-  { onSelect: (id: string) => void; isPending: boolean }
->(({ onSelect, isPending }, ref) => {
+  {
+    onSelect: (id: string) => void;
+    isPending: boolean;
+    onCreateNew?: () => void;
+  }
+>(({ onSelect, isPending, onCreateNew }, ref) => {
   const { data: collections, isLoading } = useCollections();
 
-  const snapPoints = React.useMemo(() => ['50%'], []);
+  const snapPoints = React.useMemo(() => ['55%'], []);
 
   return (
     <BottomSheetModal
@@ -434,43 +439,89 @@ const CollectionSheet = React.forwardRef<
       enableDynamicSizing={false}
       handleComponent={() => (
         <View className="items-center pt-3 pb-2">
-          <View className="w-10 h-1 bg-charcoal-200 rounded-full" />
+          <View className="w-12 h-1.5 bg-stone-200 rounded-full" />
         </View>
       )}
     >
       <BottomSheetView className="flex-1 px-6 pb-8">
+        {/* Title row */}
+        <View className="flex-row justify-between items-center mb-6">
+          <Text className="font-serif text-2xl font-medium text-stone-900">
+            Save to Collection
+          </Text>
+          <Pressable
+            onPress={() =>
+              (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
+            }
+            className="p-2 bg-stone-100 rounded-full"
+            hitSlop={8}
+          >
+            <X size={20} color="#1c1917" />
+          </Pressable>
+        </View>
+
         {isLoading ? (
           <ActivityIndicator size="small" color="#1c1917" className="mt-4" />
         ) : (
-          <View className="gap-2">
-            {collections?.map((collection) => (
-              <Pressable
-                key={collection.id}
-                onPress={() => onSelect(collection.id)}
-                disabled={isPending}
-                className="flex-row items-center gap-4 bg-neutral-50 rounded-2xl px-4 py-3.5 active:bg-neutral-100"
-              >
-                <View className="w-12 h-12 bg-charcoal-100 rounded-xl items-center justify-center">
-                  <Bookmark size={18} color="#969696" />
-                </View>
-                <View className="flex-1">
-                  <Text
-                    className="text-sm font-semibold text-charcoal-900"
-                    numberOfLines={1}
-                  >
-                    {collection.name}
-                  </Text>
-                  <Text className="text-xs text-charcoal-400">
-                    {collection._count.savedArtworks} artwork
-                    {collection._count.savedArtworks === 1 ? '' : 's'}
-                    {collection.isDefault ? ' · Default' : ''}
-                  </Text>
-                </View>
-                <ChevronRight size={16} color="#B0B0B0" />
-              </Pressable>
-            ))}
+          <View className="gap-3 mb-6">
+            {collections?.map((collection) => {
+              const coverImage =
+                collection.coverUrl ??
+                collection.savedArtworks?.[0]?.artwork?.imageUrl ??
+                null;
+
+              return (
+                <Pressable
+                  key={collection.id}
+                  onPress={() => onSelect(collection.id)}
+                  disabled={isPending}
+                  className="flex-row items-center p-3 rounded-2xl active:bg-stone-50 border border-transparent active:border-stone-200"
+                >
+                  {/* Collection thumbnail */}
+                  <View className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 mr-4">
+                    {coverImage ? (
+                      <Image
+                        source={{ uri: coverImage }}
+                        className="w-full h-full"
+                        contentFit="cover"
+                        transition={200}
+                      />
+                    ) : (
+                      <View className="w-full h-full items-center justify-center">
+                        <Bookmark size={16} color="#a8a29e" />
+                      </View>
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      className="font-medium text-stone-900 text-[15px]"
+                      numberOfLines={1}
+                    >
+                      {collection.name}
+                    </Text>
+                    <Text className="text-stone-500 text-xs mt-1">
+                      {collection._count.savedArtworks} artwork
+                      {collection._count.savedArtworks === 1 ? '' : 's'}
+                      {collection.isDefault ? ' · Default' : ''}
+                    </Text>
+                  </View>
+                  <View className="w-6 h-6 rounded-full border border-stone-300" />
+                </Pressable>
+              );
+            })}
           </View>
         )}
+
+        {/* Create New Collection */}
+        <Pressable
+          onPress={onCreateNew}
+          className="flex-row items-center justify-center gap-2 py-4 border-2 border-dashed border-stone-200 rounded-2xl active:bg-stone-50 active:border-stone-300"
+        >
+          <Plus size={20} color="#57534e" />
+          <Text className="text-stone-600 font-medium">
+            Create New Collection
+          </Text>
+        </Pressable>
       </BottomSheetView>
     </BottomSheetModal>
   );

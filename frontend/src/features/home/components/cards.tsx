@@ -1,6 +1,6 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import * as React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
 import { Image, Text, View } from '@/components/ui';
 import type { Artwork, NearbyMuseum, Scan } from '@/lib/api/types';
@@ -25,7 +25,7 @@ export function ScanCard({
         {scan.artwork?.imageUrl ? (
           <Image
             source={{ uri: scan.artwork.imageUrl }}
-            style={StyleSheet.absoluteFill}
+            className="w-full h-full"
             contentFit="cover"
             transition={300}
           />
@@ -60,7 +60,7 @@ export function ArtworkCard({
         {artwork.imageUrl ? (
           <Image
             source={{ uri: artwork.imageUrl }}
-            style={StyleSheet.absoluteFill}
+            className="w-full h-full"
             contentFit="cover"
             transition={300}
           />
@@ -100,7 +100,7 @@ export function MuseumCard({
         {museum.photoUrl ? (
           <Image
             source={{ uri: museum.photoUrl }}
-            style={StyleSheet.absoluteFill}
+            className="w-full h-full"
             contentFit="cover"
             transition={300}
           />
@@ -108,7 +108,10 @@ export function MuseumCard({
           <View className="absolute inset-0 bg-charcoal-200" />
         )}
         {museum.openNow != null && (
-          <View className="absolute top-3 left-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1" style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}>
+          <View
+            className="absolute top-3 left-3 flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
+            style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+          >
             <View
               className={`w-1.5 h-1.5 rounded-full ${
                 museum.openNow ? 'bg-green-500' : 'bg-charcoal-300'
