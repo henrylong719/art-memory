@@ -1,12 +1,26 @@
 import type { InternalAxiosRequestConfig } from 'axios';
 import type { TokenType } from '@/lib/auth/utils';
 import axios from 'axios';
+import Constants from 'expo-constants';
 import Env from 'env';
 import { signOut } from '@/features/auth/use-auth-store';
 import { getToken, removeToken, setToken } from '@/lib/auth/utils';
 
+// In development, derive the API host from the Metro bundler connection so the
+// correct LAN IP is always used regardless of network changes. Falls back to the
+// explicitly configured URL (required for preview/production builds).
+function getBaseUrl(): string {
+  if (__DEV__) {
+    const metroHost = Constants.expoConfig?.hostUri?.split(':').shift();
+    if (metroHost) return `http://${metroHost}:8080`;
+  }
+  return Env.EXPO_PUBLIC_API_URL ?? '';
+}
+
+const BASE_URL = getBaseUrl();
+
 export const client = axios.create({
-  baseURL: Env.EXPO_PUBLIC_API_URL,
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -83,7 +97,7 @@ client.interceptors.response.use(
 
       // Call refresh endpoint directly (bypass interceptors)
       const { data } = await axios.post(
-        `${Env.EXPO_PUBLIC_API_URL}/auth/refresh`,
+        `${BASE_URL}/auth/refresh`,
         { refreshToken: currentToken.refresh },
       );
 
