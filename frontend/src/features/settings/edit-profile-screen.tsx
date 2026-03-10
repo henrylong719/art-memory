@@ -1,7 +1,7 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { Motion } from '@legendapp/motion';
+import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
-import { Camera, Check, ChevronLeft } from 'lucide-react-native';
+import { Camera, Check, ChevronLeft, Lock } from 'lucide-react-native';
 import * as React from 'react';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,15 +15,34 @@ export function EditProfileScreen() {
   const { data: me } = useMe();
   const updateMe = useUpdateMe();
 
+  // Form state
   const [firstName, setFirstName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
 
+  // Track initial values to detect dirty state
+  const [initialValues, setInitialValues] = React.useState({
+    firstName: '',
+    lastName: '',
+  });
+
+  // Save flow states
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
+
+  // Hydrate from API
   React.useEffect(() => {
     if (me) {
-      setFirstName(me.firstName ?? '');
-      setLastName(me.lastName ?? '');
+      const fn = me.firstName ?? '';
+      const ln = me.lastName ?? '';
+      setFirstName(fn);
+      setLastName(ln);
+      setInitialValues({ firstName: fn, lastName: ln });
     }
   }, [me]);
+
+  const isDirty =
+    firstName !== initialValues.firstName ||
+    lastName !== initialValues.lastName;
 
   const avatarUrl = me?.avatarUrl;
   const initials =
@@ -31,13 +50,48 @@ export function EditProfileScreen() {
     '?';
 
   const handleSave = () => {
+    if (!isDirty || isSaving) return;
+
+    setIsSaving(true);
+    setShowSuccess(false);
+
     updateMe.mutate(
       {
         firstName: firstName.trim() || undefined,
         lastName: lastName.trim() || undefined,
       },
-      { onSuccess: () => router.back() },
+      {
+        onSuccess: () => {
+          setIsSaving(false);
+          setShowSuccess(true);
+          // Update initial values so form is no longer dirty
+          setInitialValues({
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+          });
+
+          // Dismiss toast after a delay
+          setTimeout(() => {
+            setShowSuccess(false);
+          }, 2500);
+        },
+        onError: () => {
+          setIsSaving(false);
+        },
+      },
     );
+  };
+
+  // Button style based on state
+  const getButtonStyle = () => {
+    if (isSaving) return 'bg-stone-800';
+    if (isDirty) return 'bg-stone-900 active:bg-stone-800';
+    return 'bg-stone-200';
+  };
+
+  const getButtonTextColor = () => {
+    if (isSaving || isDirty) return 'text-white';
+    return 'text-stone-400';
   };
 
   return (
@@ -45,7 +99,7 @@ export function EditProfileScreen() {
       {/* Header */}
       <View
         style={{ paddingTop: insets.top }}
-        className="bg-stone-50 px-6 pb-4 flex-row items-center gap-4 border-b border-stone-200/50"
+        className="bg-stone-50 px-6 pb-4 flex-row items-center gap-4 border-b border-stone-200/50 z-10"
       >
         <Pressable
           onPress={() => router.back()}
@@ -58,6 +112,38 @@ export function EditProfileScreen() {
           Edit Profile
         </Text>
       </View>
+
+      {/* Success Toast */}
+      <AnimatePresence>
+        {showSuccess && (
+          <Motion.View
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: 'timing', duration: 300 }}
+            className="absolute z-20 self-center"
+            style={{ top: insets.top + 60 }}
+          >
+            <View
+              className="bg-stone-900 flex-row items-center gap-2.5 px-5 py-3 rounded-full"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                elevation: 6,
+              }}
+            >
+              <View className="w-5 h-5 rounded-full bg-white/20 items-center justify-center">
+                <Check size={12} color="#fff" strokeWidth={3} />
+              </View>
+              <Text className="text-[14px] font-medium text-white tracking-wide">
+                Profile updated
+              </Text>
+            </View>
+          </Motion.View>
+        )}
+      </AnimatePresence>
 
       <ScrollView
         className="flex-1"
@@ -110,6 +196,7 @@ export function EditProfileScreen() {
           transition={{ type: 'timing', duration: 450, delay: 100 }}
           className="w-full gap-5"
         >
+          {/* First Name + Last Name side by side */}
           <View className="gap-1.5">
             <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 ml-1">
               First Name
@@ -150,12 +237,16 @@ export function EditProfileScreen() {
             />
           </View>
 
+          {/* Email (read-only) */}
           <View className="gap-1.5">
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 ml-1">
-              Email
-            </Text>
-            <View className="w-full bg-stone-100 border border-stone-200 rounded-2xl px-4 py-3.5">
-              <Text className="text-[15px] text-stone-400">
+            <View className="flex-row items-center justify-between ml-1 mr-2">
+              <Text className="text-[12px] font-semibold tracking-widest uppercase text-stone-500">
+                Email
+              </Text>
+              <Lock size={12} color="#a8a29e" />
+            </View>
+            <View className="w-full bg-stone-100 border border-stone-200/60 rounded-2xl px-4 py-3.5">
+              <Text className="text-[15px] text-stone-500">
                 {me?.email ?? ''}
               </Text>
             </View>
@@ -171,26 +262,24 @@ export function EditProfileScreen() {
         >
           <Pressable
             onPress={handleSave}
-            disabled={updateMe.isPending}
-            className="w-full bg-stone-900 rounded-full py-4 flex-row items-center justify-center gap-2 active:bg-stone-800"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 2,
-            }}
+            disabled={!isDirty || isSaving}
+            className={`w-full rounded-full py-4 flex-row items-center justify-center gap-2 ${getButtonStyle()}`}
+            style={
+              isDirty && !isSaving
+                ? {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }
+                : undefined
+            }
           >
-            {updateMe.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Check size={20} color="#fff" strokeWidth={2} />
-                <Text className="text-white font-medium text-[16px]">
-                  Save Changes
-                </Text>
-              </>
-            )}
+            {isSaving ? <ActivityIndicator color="#fff" size="small" /> : null}
+            <Text className={`font-medium text-[16px] ${getButtonTextColor()}`}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Text>
           </Pressable>
         </Motion.View>
       </ScrollView>
