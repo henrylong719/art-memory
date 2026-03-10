@@ -1,5 +1,4 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import * as React from 'react';
 
 import {
   ActivityIndicator,

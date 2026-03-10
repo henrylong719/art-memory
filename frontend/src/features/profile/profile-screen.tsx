@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import type { ReactNode } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import {
@@ -10,7 +11,6 @@ import {
   LogOut,
   Settings,
 } from 'lucide-react-native';
-import * as React from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -29,7 +29,7 @@ function MenuRow({
   label,
   onPress,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onPress: () => void;
 }) {

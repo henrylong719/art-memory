@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import * as React from 'react';
 
 import {
   Button,

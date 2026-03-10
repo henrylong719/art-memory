@@ -1,6 +1,6 @@
+import type { ReactNode } from 'react';
 import type { TxKeyPath } from '@/lib/i18n';
 
-import * as React from 'react';
 import { Pressable, Text, View } from '@/components/ui';
 import { ChevronRight } from 'lucide-react-native';
 
@@ -8,7 +8,7 @@ type ItemProps = {
   text: TxKeyPath;
   value?: string;
   onPress?: () => void;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 };
 
 export function SettingsItem({ text, value, icon, onPress }: ItemProps) {

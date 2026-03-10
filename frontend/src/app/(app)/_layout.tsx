@@ -1,5 +1,4 @@
 import { Redirect, Tabs } from 'expo-router';
-import * as React from 'react';
 import { useEffect } from 'react';
 
 import {

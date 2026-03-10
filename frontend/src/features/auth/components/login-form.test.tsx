@@ -1,7 +1,5 @@
 import type { LoginFormProps } from './login-form';
 
-import * as React from 'react';
-
 import { cleanup, screen, setup, waitFor } from '@/lib/test-utils';
 import { LoginForm } from './login-form';
 

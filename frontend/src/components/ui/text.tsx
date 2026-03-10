@@ -1,7 +1,7 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useMemo } from 'react';
 import type { TextProps, TextStyle } from 'react-native';
 import type { TxKeyPath } from '@/lib/i18n';
-import * as React from 'react';
 import { I18nManager, Text as NNText, StyleSheet } from 'react-native';
 
 import { twMerge } from 'tailwind-merge';
@@ -19,7 +19,7 @@ export function Text({
   children,
   ...props
 }: Props) {
-  const textStyle = React.useMemo(
+  const textStyle = useMemo(
     () =>
       twMerge(
         'font-inter text-base font-normal text-black',
@@ -28,7 +28,7 @@ export function Text({
     [className],
   );
 
-  const nStyle = React.useMemo(
+  const nStyle = useMemo(
     () =>
       StyleSheet.flatten([
         {

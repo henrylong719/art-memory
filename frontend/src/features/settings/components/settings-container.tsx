@@ -1,10 +1,10 @@
+import type { ReactNode } from 'react';
 import type { TxKeyPath } from '@/lib/i18n';
 
-import * as React from 'react';
 import { Text, View } from '@/components/ui';
 
 type Props = {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: TxKeyPath;
 };
 

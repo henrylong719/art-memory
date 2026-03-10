@@ -1,14 +1,14 @@
+import { useCallback } from 'react';
 import type { Post } from './api';
 import { FlashList } from '@shopify/flash-list';
 
-import * as React from 'react';
 import { EmptyList, FocusAwareStatusBar, Text, View } from '@/components/ui';
 import { usePosts } from './api';
 import { PostCard } from './components/post-card';
 
 export function FeedScreen() {
   const { data, isPending, isError } = usePosts();
-  const renderItem = React.useCallback(
+  const renderItem = useCallback(
     ({ item }: { item: Post }) => <PostCard {...item} />,
     [],
   );

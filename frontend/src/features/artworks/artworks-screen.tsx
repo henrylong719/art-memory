@@ -1,8 +1,8 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useMemo, useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { Search, SlidersHorizontal } from 'lucide-react-native';
-import * as React from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -145,8 +145,8 @@ export function ArtworksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [activeFilter, setActiveFilter] = React.useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All');
 
   // Fetch all artworks for browsing; use search hook when user types
   const allArtworks = useArtworks();
@@ -159,7 +159,7 @@ export function ArtworksScreen() {
     : allArtworks.isLoading;
 
   // Client-side filter by style
-  const filteredArtworks = React.useMemo(() => {
+  const filteredArtworks = useMemo(() => {
     if (!artworks) return [];
     if (activeFilter === 'All') return artworks;
     return artworks.filter((a) => {

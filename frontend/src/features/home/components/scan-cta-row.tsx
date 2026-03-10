@@ -1,7 +1,6 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { useRouter } from 'expo-router';
 import { Image, ScanLine } from 'lucide-react-native';
-import * as React from 'react';
 import { Pressable } from 'react-native';
 
 import { Text, View } from '@/components/ui';

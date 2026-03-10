@@ -1,13 +1,8 @@
 import type { PressableProps } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { MotiView } from 'moti';
-import * as React from 'react';
 import { useCallback } from 'react';
-import {
-  I18nManager,
-  Pressable,
-  View,
-} from 'react-native';
+import { I18nManager, Pressable, View } from 'react-native';
 
 import colors from '@/components/ui/colors';
 
@@ -121,15 +116,13 @@ function CheckboxBase({
   return (
     <CheckboxRoot checked={checked} testID={testID} {...props}>
       <CheckboxIcon checked={checked} />
-      {label
-        ? (
-            <Label
-              text={label}
-              testID={testID ? `${testID}-label` : undefined}
-              className="pr-2"
-            />
-          )
-        : null}
+      {label ? (
+        <Label
+          text={label}
+          testID={testID ? `${testID}-label` : undefined}
+          className="pr-2"
+        />
+      ) : null}
     </CheckboxRoot>
   );
 }
@@ -183,11 +176,9 @@ function RadioBase({
   return (
     <RadioRoot checked={checked} testID={testID} {...props}>
       <RadioIcon checked={checked} />
-      {label
-        ? (
-            <Label text={label} testID={testID ? `${testID}-label` : undefined} />
-          )
-        : null}
+      {label ? (
+        <Label text={label} testID={testID ? `${testID}-label` : undefined} />
+      ) : null}
     </RadioRoot>
   );
 }
@@ -250,11 +241,9 @@ function SwitchBase({
   return (
     <SwitchRoot checked={checked} testID={testID} {...props}>
       <SwitchIcon checked={checked} />
-      {label
-        ? (
-            <Label text={label} testID={testID ? `${testID}-label` : undefined} />
-          )
-        : null}
+      {label ? (
+        <Label text={label} testID={testID ? `${testID}-label` : undefined} />
+      ) : null}
     </SwitchRoot>
   );
 }

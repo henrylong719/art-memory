@@ -1,5 +1,4 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import * as React from 'react';
 import { Pressable } from 'react-native';
 
 import { Image, Text, View } from '@/components/ui';

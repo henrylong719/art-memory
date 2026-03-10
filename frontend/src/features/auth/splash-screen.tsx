@@ -2,7 +2,6 @@
 import { Motion } from '@legendapp/motion';
 import { Image as NImage } from 'expo-image';
 import { useRouter } from 'expo-router';
-import * as React from 'react';
 import { Pressable, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView, Text } from '@/components/ui';
 

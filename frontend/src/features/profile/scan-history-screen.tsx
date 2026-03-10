@@ -2,7 +2,6 @@
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import * as React from 'react';
 import { ActivityIndicator, FlatList, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

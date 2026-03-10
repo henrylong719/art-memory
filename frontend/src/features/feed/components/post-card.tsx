@@ -1,7 +1,6 @@
 import type { Post } from '../api';
 
 import { Link } from 'expo-router';
-import * as React from 'react';
 
 import { Image, Pressable, Text, View } from '@/components/ui';
 

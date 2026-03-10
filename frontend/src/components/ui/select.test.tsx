@@ -1,6 +1,5 @@
 import type { OptionType } from '@/components/ui';
 
-import * as React from 'react';
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 import { Select } from './select';

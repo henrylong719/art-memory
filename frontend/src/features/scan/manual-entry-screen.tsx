@@ -1,8 +1,8 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { Check, X } from 'lucide-react-native';
-import * as React from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,8 +21,8 @@ export function ManualEntryScreen() {
   const insets = useSafeAreaInsets();
   const saveArtwork = useSaveArtwork();
 
-  const [success, setSuccess] = React.useState(false);
-  const [formData, setFormData] = React.useState({
+  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState({
     title: '',
     artist: '',
     year: '',
@@ -253,7 +253,7 @@ function FormField({
   autoFocus?: boolean;
   keyboardType?: 'default' | 'number-pad';
 }) {
-  const [focused, setFocused] = React.useState(false);
+  const [focused, setFocused] = useState(false);
 
   return (
     <View>

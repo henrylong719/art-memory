@@ -1,5 +1,4 @@
 import type { SvgProps } from 'react-native-svg';
-import * as React from 'react';
 import Svg, { Rect } from 'react-native-svg';
 
 export function Artworks({ color = '#000', ...props }: SvgProps) {

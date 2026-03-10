@@ -1,4 +1,3 @@
-import * as React from 'react';
 
 import { FocusAwareStatusBar, SafeAreaView, ScrollView } from '@/components/ui';
 import { Buttons } from './components/buttons-demo';

@@ -1,6 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { useRouter } from 'expo-router';
-import * as React from 'react';
 import { ActivityIndicator, Pressable } from 'react-native';
 
 import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
