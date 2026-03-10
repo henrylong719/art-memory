@@ -313,7 +313,7 @@ export function CameraScreen() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
           className={`relative border-2 rounded-xl ${
-            isArtworkStep ? 'w-[75%] aspect-[3/4]' : 'w-[85%] aspect-[4/5]'
+            isArtworkStep ? 'w-[75%] aspect-3/4' : 'w-[85%] aspect-4/5'
           }`}
           style={{ borderColor: 'rgba(255,255,255,0.45)' }}
         >
