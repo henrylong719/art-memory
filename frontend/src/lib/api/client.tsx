@@ -1,26 +1,12 @@
 import type { InternalAxiosRequestConfig } from 'axios';
 import type { TokenType } from '@/lib/auth/utils';
 import axios from 'axios';
-import Constants from 'expo-constants';
 import Env from 'env';
 import { signOut } from '@/features/auth/use-auth-store';
 import { getToken, removeToken, setToken } from '@/lib/auth/utils';
 
-// In development, derive the API host from the Metro bundler connection so the
-// correct LAN IP is always used regardless of network changes. Falls back to the
-// explicitly configured URL (required for preview/production builds).
-function getBaseUrl(): string {
-  if (__DEV__) {
-    const metroHost = Constants.expoConfig?.hostUri?.split(':').shift();
-    if (metroHost) return `http://${metroHost}:8080`;
-  }
-  return Env.EXPO_PUBLIC_API_URL ?? '';
-}
-
-const BASE_URL = getBaseUrl();
-
 export const client = axios.create({
-  baseURL: BASE_URL,
+  baseURL: Env.EXPO_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +21,7 @@ client.interceptors.request.use(
     }
     return config;
   },
-  error => Promise.reject(error),
+  (error) => Promise.reject(error),
 );
 
 // ─── Response Interceptor: Auto-refresh on 401 ──────────
@@ -49,8 +35,7 @@ function processQueue(error: unknown, token: string | null = null) {
   failedQueue.forEach((promise) => {
     if (token) {
       promise.resolve(token);
-    }
-    else {
+    } else {
       promise.reject(error);
     }
   });
@@ -58,17 +43,21 @@ function processQueue(error: unknown, token: string | null = null) {
 }
 
 client.interceptors.response.use(
-  response => response,
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
     // Skip refresh for auth endpoints
-    const isAuthEndpoint
-      = originalRequest?.url?.includes('/auth/login')
-        || originalRequest?.url?.includes('/auth/register')
-        || originalRequest?.url?.includes('/auth/refresh');
+    const isAuthEndpoint =
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/register') ||
+      originalRequest?.url?.includes('/auth/refresh');
 
-    if (error.response?.status !== 401 || isAuthEndpoint || originalRequest._retry) {
+    if (
+      error.response?.status !== 401 ||
+      isAuthEndpoint ||
+      originalRequest._retry
+    ) {
       return Promise.reject(error);
     }
 
@@ -97,7 +86,7 @@ client.interceptors.response.use(
 
       // Call refresh endpoint directly (bypass interceptors)
       const { data } = await axios.post(
-        `${BASE_URL}/auth/refresh`,
+        `${Env.EXPO_PUBLIC_API_URL}/auth/refresh`,
         { refreshToken: currentToken.refresh },
       );
 
@@ -119,15 +108,13 @@ client.interceptors.response.use(
       // Retry original request
       originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
       return client(originalRequest);
-    }
-    catch (refreshError) {
+    } catch (refreshError) {
       processQueue(refreshError, null);
       // Refresh failed — sign out the user
       removeToken();
       signOut();
       return Promise.reject(refreshError);
-    }
-    finally {
+    } finally {
       isRefreshing = false;
     }
   },

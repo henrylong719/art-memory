@@ -12,7 +12,10 @@ export function useRegister() {
       return data.responseObject;
     },
     onSuccess: (result) => {
-      signIn({ access: result.tokens.accessToken, refresh: result.tokens.refreshToken });
+      signIn({
+        access: result.tokens.accessToken,
+        refresh: result.tokens.refreshToken,
+      });
       setUser(result.user);
     },
   });
@@ -25,7 +28,10 @@ export function useLogin() {
       return data.responseObject;
     },
     onSuccess: (result) => {
-      signIn({ access: result.tokens.accessToken, refresh: result.tokens.refreshToken });
+      signIn({
+        access: result.tokens.accessToken,
+        refresh: result.tokens.refreshToken,
+      });
       setUser(result.user);
     },
   });

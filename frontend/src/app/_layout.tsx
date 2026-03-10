@@ -90,6 +90,14 @@ export default function RootLayout() {
           name="profile/history"
           options={{ headerShown: false, animation: 'slide_from_right' }}
         />
+        <Stack.Screen
+          name="profile/help"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="profile/setting"
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
       </Stack>
     </Providers>
   );

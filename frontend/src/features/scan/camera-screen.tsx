@@ -10,6 +10,7 @@ import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Image as RNImage,
+  Platform,
   Pressable,
   StyleSheet,
 } from 'react-native';
@@ -67,6 +68,8 @@ export function CameraScreen() {
   >('portrait');
 
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     Accelerometer.setUpdateInterval(400); // check ~2.5x per second
 
     const subscription = Accelerometer.addListener(({ x, y }) => {

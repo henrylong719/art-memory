@@ -157,7 +157,7 @@ export function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 pt-4 pb-6">
+        <View className="px-6 pt-4 pb-6 mt-16">
           {/* Title */}
           <Text className="font-serif text-[32px] leading-tight font-medium text-stone-900 mb-8 px-2">
             Profile

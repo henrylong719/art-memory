@@ -148,7 +148,7 @@ export function HelpSupportScreen() {
   };
 
   return (
-    <View className="flex-1 bg-stone-50">
+    <View className="flex-1 bg-stone-50 mt-16">
       {/* Header */}
       <View
         style={{ paddingTop: insets.top }}
