@@ -8,7 +8,7 @@ import 'tsx/cjs';
 // eslint-disable-next-line perfectionist/sort-imports
 import Env from './env';
 
-const EXPO_ACCOUNT_OWNER = 'art_memory';
+const EXPO_ACCOUNT_OWNER = 'henry_long';
 const EAS_PROJECT_ID = 'c3e1075b-6fe7-4686-aa49-35b46a229044';
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
@@ -33,7 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   description: `${Env.EXPO_PUBLIC_NAME} Mobile App`,
   owner: EXPO_ACCOUNT_OWNER,
   scheme: Env.EXPO_PUBLIC_SCHEME,
-  slug: 'art_memory',
+  slug: 'art-memory',
   version: Env.EXPO_PUBLIC_VERSION.toString(),
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -121,7 +121,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
   extra: {
     eas: {
-      projectId: EAS_PROJECT_ID,
+      projectId: '3b52eed7-5c1b-4314-9812-d0a53c2f6955',
     },
   },
 });

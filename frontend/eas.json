@@ -40,13 +40,19 @@
       "distribution": "internal",
       "environment": "development",
       "ios": {
-        "image": "latest"
+        "image": "latest",
+        "simulator": true
       },
       "android": {
         "image": "latest"
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "development"
+      }
+    },
+    "ios-simulator": {
+      "ios": {
+        "simulator": true
       }
     },
     "simulator": {
