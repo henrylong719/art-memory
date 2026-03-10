@@ -1,5 +1,4 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import type { ReactNode } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import {
@@ -11,6 +10,7 @@ import {
   LogOut,
   Settings,
 } from 'lucide-react-native';
+import * as React from 'react';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -29,7 +29,7 @@ function MenuRow({
   label,
   onPress,
 }: {
-  icon: ReactNode;
+  icon: React.ReactNode;
   label: string;
   onPress: () => void;
 }) {
@@ -51,7 +51,7 @@ function MenuRow({
 
 // ─── Separator ───────────────────────────────────────────
 function Divider() {
-  return <View className="h-px bg-stone-100 ml-[52px]" />;
+  return <View className="h-px bg-stone-100 ml-13" />;
 }
 
 function SectionBreak() {
@@ -157,7 +157,7 @@ export function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 pt-16 pb-6">
+        <View className="px-6 pt-4 pb-6">
           {/* Title */}
           <Text className="font-serif text-[32px] leading-tight font-medium text-stone-900 mb-8 px-2">
             Profile
@@ -285,13 +285,13 @@ export function ProfileScreen() {
               <MenuRow
                 icon={<Settings size={20} color="#a8a29e" strokeWidth={1.5} />}
                 label="Preferences"
-                onPress={() => {}}
+                onPress={() => router.push('/profile/settings')}
               />
               <Divider />
               <MenuRow
                 icon={<LifeBuoy size={20} color="#a8a29e" strokeWidth={1.5} />}
                 label="Help & Support"
-                onPress={() => {}}
+                onPress={() => router.push('/profile/help')}
               />
             </View>
           </Motion.View>

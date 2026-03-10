@@ -161,7 +161,7 @@ export function ScanHistoryScreen() {
               <Text className="font-serif text-xl font-medium text-stone-900 mb-2">
                 No scans yet
               </Text>
-              <Text className="text-stone-500 text-sm text-center max-w-[240px]">
+              <Text className="text-stone-500 text-sm text-center max-w-60">
                 Head to the Scan tab to identify your first artwork
               </Text>
             </View>

@@ -52,7 +52,7 @@ export function SignUpScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
-      <View className="px-4 pb-2">
+      <View className="px-4 pb-2 mt-16">
         <Pressable
           className="p-2 -ml-2"
           style={{ backgroundColor: 'transparent' }}
