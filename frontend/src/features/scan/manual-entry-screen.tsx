@@ -75,7 +75,10 @@ export function ManualEntryScreen() {
           </Text>
         </Animated.View>
         <Animated.View entering={FadeIn.delay(300)}>
-          <Text className="text-stone-500 text-[15px] text-center" style={{ lineHeight: 22 }}>
+          <Text
+            className="text-stone-500 text-[15px] text-center"
+            style={{ lineHeight: 22 }}
+          >
             Added to your collection
           </Text>
         </Animated.View>
@@ -176,7 +179,7 @@ export function ManualEntryScreen() {
                   keyboardType="number-pad"
                 />
               </View>
-              <View className="flex-[2]">
+              <View className="flex-2">
                 <FormField
                   label="Medium"
                   placeholder="e.g. Oil on canvas"
