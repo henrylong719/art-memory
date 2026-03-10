@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { forwardRef, useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import type { Artwork } from '@/lib/api/types';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
@@ -16,7 +17,6 @@ import {
   Share2,
   X,
 } from 'lucide-react-native';
-import * as React from 'react';
 import { ActivityIndicator, Pressable, Share, Platform } from 'react-native';
 import Animated, {
   interpolate,
@@ -52,10 +52,10 @@ export function ArtworkDetailScreen() {
   const removeSavedArtwork = useRemoveSavedArtwork();
 
   const scrollY = useSharedValue(0);
-  const bottomSheetRef = React.useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   // Check if already saved
-  const savedEntry = React.useMemo(
+  const savedEntry = useMemo(
     () => savedArtworks?.find((s) => s.artworkId === id),
     [savedArtworks, id],
   );
@@ -385,7 +385,7 @@ export function ArtworkDetailScreen() {
 }
 
 // ─── Tag Pill ────────────────────────────────────────────
-function TagPill({ icon, label }: { icon?: React.ReactNode; label: string }) {
+function TagPill({ icon, label }: { icon?: ReactNode; label: string }) {
   return (
     <View className="flex-row items-center gap-1.5 bg-white border border-neutral-200 px-4 py-2 rounded-full">
       {icon}
@@ -400,7 +400,7 @@ function DetailCard({
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {
@@ -418,7 +418,7 @@ function DetailCard({
 }
 
 // ─── Collection Bottom Sheet ─────────────────────────────
-const CollectionSheet = React.forwardRef<
+const CollectionSheet = forwardRef<
   BottomSheetModal,
   {
     onSelect: (id: string) => void;
@@ -428,7 +428,7 @@ const CollectionSheet = React.forwardRef<
 >(({ onSelect, isPending, onCreateNew }, ref) => {
   const { data: collections, isLoading } = useCollections();
 
-  const snapPoints = React.useMemo(() => ['55%'], []);
+  const snapPoints = useMemo(() => ['55%'], []);
 
   return (
     <BottomSheetModal
@@ -451,7 +451,7 @@ const CollectionSheet = React.forwardRef<
           </Text>
           <Pressable
             onPress={() =>
-              (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss()
+              (ref as RefObject<BottomSheetModal>)?.current?.dismiss()
             }
             className="p-2 bg-stone-100 rounded-full"
             hitSlop={8}

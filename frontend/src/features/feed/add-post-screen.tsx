@@ -1,7 +1,6 @@
 import { useForm } from '@tanstack/react-form';
 
 import { Stack } from 'expo-router';
-import * as React from 'react';
 import { showMessage } from 'react-native-flash-message';
 import * as z from 'zod';
 

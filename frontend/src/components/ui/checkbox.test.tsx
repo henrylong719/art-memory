@@ -1,5 +1,4 @@
 /* eslint-disable max-lines-per-function */
-import * as React from 'react';
 
 import { cleanup, screen, setup } from '@/lib/test-utils';
 
@@ -11,7 +10,7 @@ afterEach(cleanup);
 
 describe('checkbox, Radio & Switch components ', () => {
   it('<Checkbox /> renders correctly and call on change on Press', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Checkbox
         testID="checkbox"
@@ -37,8 +36,8 @@ describe('checkbox, Radio & Switch components ', () => {
     expect(mockOnChange).toHaveBeenCalledWith(true);
   });
 
-  it('<CheckBox/> shouldn\'t change value while disabled', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+  it("<CheckBox/> shouldn't change value while disabled", async () => {
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Checkbox
         disabled={true}
@@ -54,7 +53,7 @@ describe('checkbox, Radio & Switch components ', () => {
     expect(mockOnChange).toHaveBeenCalledTimes(0);
   });
   it('<CheckBox/> Should render the correct label', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Checkbox
         disabled={true}
@@ -85,7 +84,7 @@ describe('checkbox, Radio & Switch components ', () => {
   });
 
   it('<Radio /> renders correctly and call on change on Press', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Radio
         testID="radio"
@@ -106,7 +105,7 @@ describe('checkbox, Radio & Switch components ', () => {
   });
 
   it('<Radio /> should render the correct label', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Radio
         testID="radio"
@@ -132,8 +131,8 @@ describe('checkbox, Radio & Switch components ', () => {
     expect(mockOnChange).toHaveBeenCalledWith(true);
   });
 
-  it('<Radio/> shouldn\'t change value while disabled', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+  it("<Radio/> shouldn't change value while disabled", async () => {
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Radio
         disabled={true}
@@ -150,7 +149,7 @@ describe('checkbox, Radio & Switch components ', () => {
   });
 
   it('<Switch /> renders correctly and call on change on Press', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Switch
         testID="switch"
@@ -173,7 +172,7 @@ describe('checkbox, Radio & Switch components ', () => {
   });
 
   it('<Switch /> should render the correct label', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Switch
         testID="switch"
@@ -198,8 +197,8 @@ describe('checkbox, Radio & Switch components ', () => {
     expect(mockOnChange).toHaveBeenCalledWith(true);
   });
 
-  it('<Switch/> shouldn\'t change value while disabled', async () => {
-    const mockOnChange = jest.fn(checked => checked);
+  it("<Switch/> shouldn't change value while disabled", async () => {
+    const mockOnChange = jest.fn((checked) => checked);
     const { user } = setup(
       <Switch
         disabled={true}

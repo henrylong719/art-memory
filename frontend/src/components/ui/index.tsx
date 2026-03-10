@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
+import type { ComponentType } from 'react';
 import type { SafeAreaViewProps } from 'react-native-safe-area-context';
-import * as React from 'react';
 import Svg from 'react-native-svg';
 import { SafeAreaView as RNSafeAreaView } from 'react-native-safe-area-context';
 import { withUniwind } from 'uniwind';
@@ -28,7 +28,9 @@ export {
 } from 'react-native';
 
 // SafeAreaView wrapped with Uniwind so className (flex-1, bg-*, etc.) is processed
-export const SafeAreaView = withUniwind(RNSafeAreaView) as React.ComponentType<SafeAreaViewProps & { className?: string }>;
+export const SafeAreaView = withUniwind(RNSafeAreaView) as ComponentType<
+  SafeAreaViewProps & { className?: string }
+>;
 
 // Apply withUniwind to Svg to add className support
 export const StyledSvg = withUniwind(Svg);

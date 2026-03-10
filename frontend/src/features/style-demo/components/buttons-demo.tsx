@@ -1,4 +1,3 @@
-import * as React from 'react';
 
 import { Button, View } from '@/components/ui';
 

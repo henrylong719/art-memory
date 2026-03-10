@@ -1,9 +1,9 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { forwardRef, useRef, useState, type RefObject } from 'react';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { Plus, LibraryBig } from 'lucide-react-native';
-import * as React from 'react';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -94,12 +94,12 @@ function CollectionCard({
 }
 
 // ─── Create Collection Sheet ─────────────────────────────
-const CreateCollectionSheet = React.forwardRef<
+const CreateCollectionSheet = forwardRef<
   BottomSheetModal,
   { onCreated?: () => void }
 >(({ onCreated }, ref) => {
-  const [name, setName] = React.useState('');
-  const [description, setDescription] = React.useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const createCollection = useCreateCollection();
 
   const handleCreate = () => {
@@ -110,7 +110,7 @@ const CreateCollectionSheet = React.forwardRef<
         onSuccess: () => {
           setName('');
           setDescription('');
-          (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss();
+          (ref as RefObject<BottomSheetModal>)?.current?.dismiss();
           onCreated?.();
         },
       },
@@ -201,7 +201,7 @@ export function CollectionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: collections, isLoading, refetch } = useCollections();
-  const sheetRef = React.useRef<BottomSheetModal>(null);
+  const sheetRef = useRef<BottomSheetModal>(null);
 
   if (isLoading) {
     return (

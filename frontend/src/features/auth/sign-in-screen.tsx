@@ -1,8 +1,8 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useState } from 'react';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import * as React from 'react';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
@@ -14,8 +14,8 @@ export function SignInScreen() {
   const router = useRouter();
   const login = useLogin();
 
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const axiosError = login.error as AxiosError<{ message: string }> | null;
   const errorMessage =

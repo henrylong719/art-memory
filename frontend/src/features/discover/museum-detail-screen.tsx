@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import type { ReactNode } from 'react';
 import { Motion } from '@legendapp/motion';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -11,7 +12,6 @@ import {
   Share2,
   Star,
 } from 'lucide-react-native';
-import * as React from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -41,7 +41,7 @@ function InfoCard({
   subtitle,
   onPress,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   subtitle: string;
   onPress?: () => void;

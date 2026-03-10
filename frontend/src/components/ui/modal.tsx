@@ -29,13 +29,13 @@
  *
  */
 
+import { memo, useCallback, useImperativeHandle, useMemo, useRef, type ForwardedRef } from 'react';
 import type {
   BottomSheetBackdropProps,
   BottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
 import { BottomSheetModal, useBottomSheet } from '@gorhom/bottom-sheet';
 import { X } from 'lucide-react-native';
-import * as React from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useUniwind } from 'uniwind';
@@ -46,7 +46,7 @@ type ModalProps = BottomSheetModalProps & {
   title?: string;
 };
 
-type ModalRef = React.ForwardedRef<BottomSheetModal>;
+type ModalRef = ForwardedRef<BottomSheetModal>;
 
 type ModalHeaderProps = {
   title?: string;
@@ -54,30 +54,30 @@ type ModalHeaderProps = {
 };
 
 export function useModal() {
-  const ref = React.useRef<BottomSheetModal>(null);
-  const present = React.useCallback((data?: any) => {
+  const ref = useRef<BottomSheetModal>(null);
+  const present = useCallback((data?: any) => {
     ref.current?.present(data);
   }, []);
-  const dismiss = React.useCallback(() => {
+  const dismiss = useCallback(() => {
     ref.current?.dismiss();
   }, []);
   return { ref, present, dismiss };
 }
 
 export function Modal({ ref, snapPoints: _snapPoints = ['60%'] as (string | number)[], title, detached = false, ...props }: ModalProps & { ref?: ModalRef }) {
-  const detachedProps = React.useMemo(
+  const detachedProps = useMemo(
     () => getDetachedProps(detached),
     [detached],
   );
   const modal = useModal();
-  const snapPoints = React.useMemo(() => _snapPoints, [_snapPoints]);
+  const snapPoints = useMemo(() => _snapPoints, [_snapPoints]);
 
-  React.useImperativeHandle(
+  useImperativeHandle(
     ref,
     () => (modal.ref.current as BottomSheetModal) || null,
   );
 
-  const renderHandleComponent = React.useCallback(
+  const renderHandleComponent = useCallback(
     () => (
       <>
         <View className="mt-2 mb-8 h-1 w-12 self-center rounded-lg bg-gray-400 dark:bg-gray-700" />
@@ -147,7 +147,7 @@ function getDetachedProps(detached: boolean) {
  * ModalHeader
  */
 
-const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
+const ModalHeader = memo(({ title, dismiss }: ModalHeaderProps) => {
   return (
     <>
       {title && (

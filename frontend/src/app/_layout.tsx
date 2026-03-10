@@ -2,7 +2,6 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import * as React from 'react';
 import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -13,6 +12,7 @@ import { hydrateAuth } from '@/features/auth/use-auth-store';
 import { APIProvider } from '@/lib/api';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
 import '../global.css';
+import { useEffect, type ReactNode } from 'react';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -27,7 +27,7 @@ SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 500, fade: true });
 
 export default function RootLayout() {
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       SplashScreen.hideAsync();
     }, 500);
@@ -95,12 +95,10 @@ export default function RootLayout() {
   );
 }
 
-function Providers({ children }: { children: React.ReactNode }) {
+function Providers({ children }: { children: ReactNode }) {
   const theme = useThemeConfig();
   return (
-    <GestureHandlerRootView
-      style={styles.container}
-    >
+    <GestureHandlerRootView style={styles.container}>
       <KeyboardProvider>
         <ThemeProvider value={theme}>
           <APIProvider>

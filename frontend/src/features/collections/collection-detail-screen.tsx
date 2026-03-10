@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { forwardRef, useRef, useState, type RefObject } from 'react';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,7 +10,6 @@ import {
   MoreHorizontal,
   Trash2,
 } from 'lucide-react-native';
-import * as React from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -162,7 +162,7 @@ function ListItem({
 }
 
 // ─── Options Sheet ───────────────────────────────────────
-const OptionsSheet = React.forwardRef<
+const OptionsSheet = forwardRef<
   BottomSheetModal,
   { collectionId: string; onDeleted: () => void }
 >(({ collectionId, onDeleted }, ref) => {
@@ -171,7 +171,7 @@ const OptionsSheet = React.forwardRef<
   const handleDelete = () => {
     deleteCollection.mutate(collectionId, {
       onSuccess: () => {
-        (ref as React.RefObject<BottomSheetModal>)?.current?.dismiss();
+        (ref as RefObject<BottomSheetModal>)?.current?.dismiss();
         onDeleted();
       },
     });
@@ -226,8 +226,8 @@ export function CollectionDetailScreen() {
   const { data: savedArtworks, isLoading: loadingSaved } =
     useSavedArtworksByCollection(id);
 
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
-  const optionsRef = React.useRef<BottomSheetModal>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const optionsRef = useRef<BottomSheetModal>(null);
 
   const isLoading = loadingCollection || loadingSaved;
 

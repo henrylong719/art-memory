@@ -1,15 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
+import type { ReactElement, ReactNode } from 'react';
 import type { RenderOptions } from '@testing-library/react-native';
 
-import type { ReactElement } from 'react';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import { render, userEvent } from '@testing-library/react-native';
-import * as React from 'react';
 import '@shopify/flash-list/jestSetup';
 
 function createAppWrapper() {
-  return ({ children }: { children: React.ReactNode }) => (
+  return ({ children }: { children: ReactNode }) => (
     <BottomSheetModalProvider>
       <NavigationContainer>{children}</NavigationContainer>
     </BottomSheetModalProvider>

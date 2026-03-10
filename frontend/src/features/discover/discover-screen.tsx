@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import {
@@ -8,7 +9,6 @@ import {
   SlidersHorizontal,
   Star,
 } from 'lucide-react-native';
-import * as React from 'react';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -192,8 +192,8 @@ export function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [activeCategory, setActiveCategory] = React.useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
 
   const nearby = useNearbyMuseums();
   const searchResults = useMuseumSearch(searchQuery, nearby.coords);

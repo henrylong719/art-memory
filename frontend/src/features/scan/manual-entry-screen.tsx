@@ -1,8 +1,8 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { Check, X } from 'lucide-react-native';
-import * as React from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,8 +21,8 @@ export function ManualEntryScreen() {
   const insets = useSafeAreaInsets();
   const saveArtwork = useSaveArtwork();
 
-  const [success, setSuccess] = React.useState(false);
-  const [formData, setFormData] = React.useState({
+  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState({
     title: '',
     artist: '',
     year: '',
@@ -75,7 +75,10 @@ export function ManualEntryScreen() {
           </Text>
         </Animated.View>
         <Animated.View entering={FadeIn.delay(300)}>
-          <Text className="text-stone-500 text-[15px] text-center" style={{ lineHeight: 22 }}>
+          <Text
+            className="text-stone-500 text-[15px] text-center"
+            style={{ lineHeight: 22 }}
+          >
             Added to your collection
           </Text>
         </Animated.View>
@@ -176,7 +179,7 @@ export function ManualEntryScreen() {
                   keyboardType="number-pad"
                 />
               </View>
-              <View className="flex-[2]">
+              <View className="flex-2">
                 <FormField
                   label="Medium"
                   placeholder="e.g. Oil on canvas"
@@ -253,7 +256,7 @@ function FormField({
   autoFocus?: boolean;
   keyboardType?: 'default' | 'number-pad';
 }) {
-  const [focused, setFocused] = React.useState(false);
+  const [focused, setFocused] = useState(false);
 
   return (
     <View>

@@ -4,9 +4,9 @@ import { Motion, AnimatePresence } from '@legendapp/motion';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
+import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
-import * as React from 'react';
 import {
   ActivityIndicator,
   Image as RNImage,
@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
 import { useScanArtwork, useScanCombined } from '@/lib/hooks';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ─── Types ───────────────────────────────────────────────
 type ScanType = 'combined' | 'artwork_only';
@@ -54,18 +55,45 @@ export function CameraScreen() {
 
   const scanType: ScanType =
     params.type === 'artwork_only' ? 'artwork_only' : 'combined';
-  const [step, setStep] = React.useState<Step>(
-    (params.step as Step) || 'artwork',
-  );
+  const [step, setStep] = useState<Step>((params.step as Step) || 'artwork');
 
-  const cameraRef = React.useRef<CameraView>(null);
+  const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
-  const [flash, setFlash] = React.useState(false);
+  const [flash, setFlash] = useState(false);
+
+  // ── Auto-detect device orientation via accelerometer ──
+  const [frameOrientation, setFrameOrientation] = useState<
+    'portrait' | 'landscape'
+  >('portrait');
+
+  useEffect(() => {
+    Accelerometer.setUpdateInterval(400); // check ~2.5x per second
+
+    const subscription = Accelerometer.addListener(({ x, y }) => {
+      // |x| > |y| means device is tilted sideways (landscape hold)
+      // Add a threshold to avoid flickering near the boundary
+      const absX = Math.abs(x);
+      const absY = Math.abs(y);
+
+      if (absX > absY + 0.15) {
+        setFrameOrientation((prev) =>
+          prev !== 'landscape' ? 'landscape' : prev,
+        );
+      } else if (absY > absX + 0.15) {
+        setFrameOrientation((prev) =>
+          prev !== 'portrait' ? 'portrait' : prev,
+        );
+      }
+      // If within the dead zone (±0.15), keep the current orientation
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // Captured URIs
-  const [artworkUri, setArtworkUri] = React.useState<string | null>(null);
-  const [processing, setProcessing] = React.useState(false);
-  const [processingUri, setProcessingUri] = React.useState<string | null>(null);
+  const [artworkUri, setArtworkUri] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [processingUri, setProcessingUri] = useState<string | null>(null);
 
   // Scan line animation (replaces @legendapp/motion keyframe array)
   const scanLineY = useSharedValue(0);
@@ -77,7 +105,7 @@ export function CameraScreen() {
     opacity: pulseOpacity.value,
   }));
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (processing) {
       scanLineY.value = 0;
       scanLineY.value = withRepeat(
@@ -107,14 +135,14 @@ export function CameraScreen() {
   const isCombined = scanType === 'combined';
 
   // ── Permissions ──
-  React.useEffect(() => {
+  useEffect(() => {
     if (!permission?.granted) {
       requestPermission();
     }
   }, [permission, requestPermission]);
 
   // ── Location (best effort) ──
-  const getLocation = React.useCallback(async () => {
+  const getLocation = useCallback(async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return undefined;
@@ -135,7 +163,7 @@ export function CameraScreen() {
   });
 
   // ── Process scan (hit API) ──
-  const processScan = React.useCallback(
+  const processScan = useCallback(
     async (artUri: string, labelUri?: string) => {
       setProcessingUri(artUri);
       setProcessing(true);
@@ -175,7 +203,7 @@ export function CameraScreen() {
   );
 
   // ── Capture photo ──
-  const handleCapture = React.useCallback(async () => {
+  const handleCapture = useCallback(async () => {
     if (!cameraRef.current || processing) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -308,14 +336,28 @@ export function CameraScreen() {
 
         {/* Frame cutout */}
         <Motion.View
-          key={step}
+          key={`${step}-${frameOrientation}`}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className={`relative border-2 rounded-xl ${
-            isArtworkStep ? 'w-[75%] aspect-3/4' : 'w-[85%] aspect-4/5'
-          }`}
-          style={{ borderColor: 'rgba(255,255,255,0.45)' }}
+          className="relative border-2 rounded-xl"
+          style={{
+            borderColor: 'rgba(255,255,255,0.45)',
+            width: isArtworkStep
+              ? frameOrientation === 'portrait'
+                ? '75%'
+                : '90%'
+              : frameOrientation === 'portrait'
+                ? '85%'
+                : '90%',
+            aspectRatio: isArtworkStep
+              ? frameOrientation === 'portrait'
+                ? 3 / 4
+                : 4 / 3
+              : frameOrientation === 'portrait'
+                ? 4 / 5
+                : 5 / 4,
+          }}
         >
           <CornerMarker position="tl" />
           <CornerMarker position="tr" />

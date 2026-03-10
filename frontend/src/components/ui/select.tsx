@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { memo, useCallback, useMemo, type RefObject } from 'react';
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { PressableProps } from 'react-native';
 import {
@@ -7,7 +8,6 @@ import {
 } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import { Check, ChevronDown } from 'lucide-react-native';
-import * as React from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { tv } from 'tailwind-variants';
 
@@ -65,13 +65,13 @@ function keyExtractor(item: OptionType) {
   return `select-item-${item.value}`;
 }
 
-export function Options({ ref, options, onSelect, value, testID }: OptionsProps & { ref?: React.RefObject<BottomSheetModal | null> }) {
+export function Options({ ref, options, onSelect, value, testID }: OptionsProps & { ref?: RefObject<BottomSheetModal | null> }) {
   const height = options.length * 70 + 100;
-  const snapPoints = React.useMemo(() => [height], [height]);
+  const snapPoints = useMemo(() => [height], [height]);
   const { theme } = useUniwind();
   const isDark = theme === 'dark';
 
-  const renderSelectItem = React.useCallback(
+  const renderSelectItem = useCallback(
     ({ item }: { item: OptionType }) => (
       <Option
         key={`select-item-${item.value}`}
@@ -104,7 +104,7 @@ export function Options({ ref, options, onSelect, value, testID }: OptionsProps 
   );
 }
 
-const Option = React.memo(
+const Option = memo(
   ({
     label,
     selected = false,
@@ -151,7 +151,7 @@ export function Select(props: SelectProps) {
   } = props;
   const modal = useModal();
 
-  const onSelectOption = React.useCallback(
+  const onSelectOption = useCallback(
     (option: OptionType) => {
       onSelect?.(option.value);
       modal.dismiss();
@@ -159,7 +159,7 @@ export function Select(props: SelectProps) {
     [modal, onSelect],
   );
 
-  const styles = React.useMemo(
+  const styles = useMemo(
     () =>
       selectTv({
         error: Boolean(error),
@@ -168,7 +168,7 @@ export function Select(props: SelectProps) {
     [error, disabled],
   );
 
-  const textValue = React.useMemo(
+  const textValue = useMemo(
     () =>
       value !== undefined
         ? (options?.filter(t => t.value === value)?.[0]?.label ?? placeholder)
