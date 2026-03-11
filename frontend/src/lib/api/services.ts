@@ -70,6 +70,16 @@ export const artworkApi = {
 
   generateStory: (id: string) =>
     client.post<ApiResponse<Artwork>>(`/artworks/${id}/generate-story`),
+
+  create: (data: {
+    title: string;
+    artistName?: string;
+    year?: number;
+    medium?: string;
+    imageUrl?: string;
+    source?: string;
+  }) =>
+    client.post<ApiResponse<Artwork>>('/artworks', data),
 };
 
 // ─── Scan ────────────────────────────────────────────────
@@ -112,7 +122,7 @@ export const scanApi = {
     });
   },
 
-  correct: (id: string, data: { userCorrectedTitle?: string; userCorrectedArtist?: string }) =>
+  correct: (id: string, data: { userCorrectedTitle?: string; userCorrectedArtist?: string; artworkId?: string }) =>
     client.put<ApiResponse<Scan>>(`/scans/${id}/correct`, data),
 };
 

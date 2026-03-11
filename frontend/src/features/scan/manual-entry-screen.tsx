@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, ScrollView, Text, View } from '@/components/ui';
 import { uploadApi } from '@/lib/api/services';
-import { useCorrectScan, useSaveArtwork } from '@/lib/hooks';
+import { useCorrectScan, useCreateArtwork } from '@/lib/hooks';
 
 function toFilePayload(uri: string) {
   const name = uri.split('/').pop() ?? 'photo.jpg';
@@ -32,7 +32,7 @@ export function ManualEntryScreen() {
     scanImageUrl?: string;
     scanId?: string;
   }>();
-  const saveArtwork = useSaveArtwork();
+  const createArtwork = useCreateArtwork();
   const correctScan = useCorrectScan();
 
   const [success, setSuccess] = useState(false);
@@ -61,12 +61,13 @@ export function ManualEntryScreen() {
         photoUrl = data.responseObject.url;
       }
 
-      await saveArtwork.mutateAsync({
-        customTitle: formData.title.trim(),
-        customArtist: formData.artist.trim(),
-        customYear: formData.year ? Number(formData.year) : undefined,
-        customMedium: formData.medium.trim() || undefined,
-        userPhotoUrl: photoUrl || undefined,
+      const artwork = await createArtwork.mutateAsync({
+        title: formData.title.trim(),
+        artistName: formData.artist.trim(),
+        year: formData.year ? Number(formData.year) : undefined,
+        medium: formData.medium.trim() || undefined,
+        imageUrl: photoUrl || undefined,
+        source: 'MANUAL',
       });
 
       if (scanId) {
@@ -75,12 +76,20 @@ export function ManualEntryScreen() {
           data: {
             userCorrectedTitle: formData.title.trim(),
             userCorrectedArtist: formData.artist.trim(),
+            artworkId: artwork.id,
           },
         });
       }
 
       setSuccess(true);
-      setTimeout(() => router.replace('/(app)/collections'), 1500);
+      setTimeout(
+        () =>
+          router.replace({
+            pathname: '/scan/result',
+            params: { id: artwork.id },
+          }),
+        1500,
+      );
     } catch {
       setSubmitting(false);
     }
@@ -104,7 +113,7 @@ export function ManualEntryScreen() {
         </Animated.View>
         <Animated.View entering={FadeIn.delay(200)}>
           <Text className="font-serif text-[32px] font-medium text-stone-900 text-center mb-3">
-            Artwork Saved
+            Artwork Created
           </Text>
         </Animated.View>
         <Animated.View entering={FadeIn.delay(300)}>
@@ -112,7 +121,7 @@ export function ManualEntryScreen() {
             className="text-stone-500 text-[15px] text-center"
             style={{ lineHeight: 22 }}
           >
-            Added to your collection
+            Taking you to the details…
           </Text>
         </Animated.View>
       </View>

@@ -290,6 +290,7 @@ export class ScanService {
     data: {
       userCorrectedTitle?: string;
       userCorrectedArtist?: string;
+      artworkId?: string;
     },
   ) {
     try {

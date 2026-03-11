@@ -69,5 +69,6 @@ export const CorrectScanSchema = z.object({
   body: z.object({
     userCorrectedTitle: z.string().min(1).optional(),
     userCorrectedArtist: z.string().min(1).optional(),
+    artworkId: z.string().min(1).optional(),
   }),
 });

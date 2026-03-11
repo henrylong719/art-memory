@@ -72,7 +72,7 @@ export function useCorrectScan() {
       data,
     }: {
       id: string;
-      data: { userCorrectedTitle?: string; userCorrectedArtist?: string };
+      data: { userCorrectedTitle?: string; userCorrectedArtist?: string; artworkId?: string };
     }) => {
       const { data: response } = await scanApi.correct(id, data);
       return response.responseObject;

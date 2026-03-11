@@ -33,6 +33,26 @@ export function useSearchArtworks(query: string) {
   });
 }
 
+export function useCreateArtwork() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      title: string;
+      artistName?: string;
+      year?: number;
+      medium?: string;
+      imageUrl?: string;
+      source?: string;
+    }) => {
+      const { data } = await artworkApi.create(input);
+      return data.responseObject;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artworks'] });
+    },
+  });
+}
+
 export function useGenerateStory() {
   const queryClient = useQueryClient();
   return useMutation({
