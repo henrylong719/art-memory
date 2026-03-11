@@ -271,13 +271,4 @@ export async function generateArtworkStory(artwork: {
   };
 }
 
-// ─── Usage tracking helper ───────────────────────────────
-
-export function extractUsageInfo(rawResponse: any) {
-  return {
-    model: rawResponse.model || env.OPENAI_MODEL,
-    tokensIn: rawResponse.usage?.prompt_tokens || null,
-    tokensOut: rawResponse.usage?.completion_tokens || null,
-    durationMs: rawResponse.durationMs || null,
-  };
-}
+export { extractOpenAIUsageInfo as extractUsageInfo } from './openaiUsage';

@@ -110,6 +110,7 @@ export class ScanService {
         model: usageInfo.model,
         tokensIn: usageInfo.tokensIn,
         tokensOut: usageInfo.tokensOut,
+        costUsd: usageInfo.costUsd,
         durationMs: usageInfo.durationMs,
         success: true,
       });
@@ -202,6 +203,7 @@ export class ScanService {
         model: usageInfo.model,
         tokensIn: usageInfo.tokensIn,
         tokensOut: usageInfo.tokensOut,
+        costUsd: usageInfo.costUsd,
         durationMs: usageInfo.durationMs,
         success: true,
       });

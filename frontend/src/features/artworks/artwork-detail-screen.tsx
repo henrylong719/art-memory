@@ -43,12 +43,13 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
+import { GeneratingSkeleton } from '@/components/ui/generating-skeleton';
 import { renderBackdrop } from '@/components/ui/modal';
 import {
   useArtwork,
   useCollections,
   useDeleteArtwork,
-  useGenerateStory,
+  useStoryGenerator,
   useSaveArtwork,
   useSavedArtworks,
   useRemoveSavedArtwork,
@@ -58,6 +59,10 @@ import {
 const HERO_HEIGHT_PORTRAIT = 420;
 const HERO_HEIGHT_LANDSCAPE = 280;
 const HEADER_HEIGHT = 56;
+
+/** Convert a numeric size to a web-safe CSS value (px string on web, number on native). */
+const px = (v: number) =>
+  Platform.OS === 'web' ? (`${v}px` as unknown as number) : v;
 
 // ─── Main Screen ─────────────────────────────────────────
 export function ArtworkDetailScreen() {
@@ -71,7 +76,7 @@ export function ArtworkDetailScreen() {
   const removeSavedArtwork = useRemoveSavedArtwork();
 
   const deleteArtwork = useDeleteArtwork();
-  const generateStory = useGenerateStory();
+  const storyGen = useStoryGenerator({ artworkId: id });
 
   const [imageAspect, setImageAspect] = useState<number | null>(null);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
@@ -112,7 +117,6 @@ export function ArtworkDetailScreen() {
 
   // Animated hero parallax
   const heroStyle = useAnimatedStyle(() => ({
-    height: heroHeight + 80,
     transform: [{ translateY: scrollY.value * 0.4 }],
   }));
 
@@ -202,9 +206,11 @@ export function ArtworkDetailScreen() {
             zIndex: 50,
             paddingTop: insets.top,
             height: HEADER_HEIGHT + insets.top,
+            backgroundColor: '#FAFAFA',
+            borderBottomWidth: 1,
+            borderBottomColor: '#e5e5e5',
           },
         ]}
-        className="bg-neutral-50 border-b border-neutral-200"
       >
         <View className="flex-1 flex-row items-center justify-center px-16">
           <Text
@@ -258,29 +264,34 @@ export function ArtworkDetailScreen() {
         contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
       >
         {/* Hero image */}
-        <View style={{ height: heroHeight, overflow: 'hidden' }}>
-          <Animated.View style={heroStyle}>
-            <Pressable
-              onPress={() => {
-                const now = Date.now();
-                if (now - lastTapRef.current < 300) {
-                  setFullscreenVisible(true);
-                }
-                lastTapRef.current = now;
-              }}
+        <View style={{ height: px(heroHeight), overflow: 'hidden' }}>
+          <View style={{ height: px(heroHeight + 80) }}>
+            <Animated.View
+              style={[heroStyle, { width: '100%', height: '100%' }]}
             >
-              <Image
-                source={artwork.imageUrl ?? ''}
-                style={{ width: '100%', height: heroHeight + 80 }}
-                contentFit={imageIsLandscape ? 'contain' : 'cover'}
-                transition={400}
-                onLoad={(e) => {
-                  const { width: w, height: h } = e.source;
-                  if (w && h) setImageAspect(w / h);
+              <Pressable
+                onPress={() => {
+                  const now = Date.now();
+                  if (now - lastTapRef.current < 300) {
+                    setFullscreenVisible(true);
+                  }
+                  lastTapRef.current = now;
                 }}
-              />
-            </Pressable>
-          </Animated.View>
+              >
+                <Image
+                  source={artwork.imageUrl ?? ''}
+                  className="w-full"
+                  style={{ height: px(heroHeight + 80) }}
+                  contentFit={imageIsLandscape ? 'contain' : 'cover'}
+                  transition={400}
+                  onLoad={(e) => {
+                    const { width: w, height: h } = e.source;
+                    if (w && h) setImageAspect(w / h);
+                  }}
+                />
+              </Pressable>
+            </Animated.View>
+          </View>
           {/* Bottom fade */}
           <LinearGradient
             colors={['transparent', 'rgba(250,250,250,0.6)', '#FAFAFA']}
@@ -395,32 +406,8 @@ export function ArtworkDetailScreen() {
                   </View>
                 )}
               </View>
-            ) : generateStory.isPending ? (
-              /* Generating skeleton */
-              <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
-                <View
-                  className="w-12 h-12 bg-white rounded-full items-center justify-center mb-4"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 4,
-                    elevation: 1,
-                  }}
-                >
-                  <ActivityIndicator size="small" color="#1c1917" />
-                </View>
-                <View className="w-full gap-3 mb-5 px-4 opacity-50">
-                  <View className="h-2.5 bg-neutral-200 rounded-full w-full" />
-                  <View className="h-2.5 bg-neutral-200 rounded-full w-[85%] self-center" />
-                  <View className="h-2.5 bg-neutral-200 rounded-full w-[60%] self-center" />
-                </View>
-                <View className="bg-neutral-200 px-5 py-2.5 rounded-xl">
-                  <Text className="text-sm font-medium text-charcoal-400">
-                    Generating...
-                  </Text>
-                </View>
-              </View>
+            ) : storyGen.isPending ? (
+              <GeneratingSkeleton />
             ) : (
               /* No description — generate CTA */
               <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
@@ -442,21 +429,54 @@ export function ArtworkDetailScreen() {
                 <Text className="text-charcoal-400 text-sm text-center mb-5 max-w-[200px] leading-5">
                   Use AI to generate a short story and context for this artwork
                 </Text>
+
+                {/* Error / limit message */}
+                {storyGen.errorMessage && (
+                  <Text className="text-red-500 text-xs text-center mb-3 max-w-[240px]">
+                    {storyGen.errorMessage}
+                  </Text>
+                )}
+
                 <Pressable
-                  onPress={() => generateStory.mutate(id)}
-                  className="bg-charcoal-900 px-5 py-2.5 rounded-xl active:bg-charcoal-800"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 1,
-                  }}
+                  onPress={storyGen.generate}
+                  disabled={storyGen.isDisabled}
+                  className={`px-5 py-2.5 rounded-xl ${
+                    storyGen.isDisabled
+                      ? 'bg-charcoal-200'
+                      : 'bg-charcoal-900 active:bg-charcoal-800'
+                  }`}
+                  style={
+                    !storyGen.isDisabled
+                      ? {
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 2,
+                          elevation: 1,
+                        }
+                      : undefined
+                  }
                 >
-                  <Text className="text-white text-sm font-medium">
-                    Generate Story
+                  <Text
+                    className={`text-sm font-medium ${
+                      storyGen.isDisabled ? 'text-charcoal-400' : 'text-white'
+                    }`}
+                  >
+                    {storyGen.isOnCooldown
+                      ? `Wait ${storyGen.cooldownRemaining}s`
+                      : storyGen.isAtLimit
+                        ? 'Daily limit reached'
+                        : 'Generate Story'}
                   </Text>
                 </Pressable>
+
+                {/* Remaining generations counter */}
+                {storyGen.limitInfo && !storyGen.isAtLimit && (
+                  <Text className="text-charcoal-300 text-[11px] mt-2.5">
+                    {storyGen.limitInfo.remaining} of {storyGen.limitInfo.limit}{' '}
+                    generations left today
+                  </Text>
+                )}
               </View>
             )}
           </View>

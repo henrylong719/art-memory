@@ -9,6 +9,7 @@ import {
   extractUsageInfo,
 } from '@/common/services/openai';
 import { logger } from '@/server';
+import { STORY_LIMITS } from '@/common/config/storyLimit';
 
 export class ArtworkService {
   private artworkRepository: ArtworkRepository;
@@ -279,6 +280,11 @@ export class ArtworkService {
     }
   }
 
+  // Minimum seconds between generations per user
+  private static readonly COOLDOWN_SECONDS = 60;
+
+  private static readonly STORY_ENDPOINT = 'openai/text/story';
+
   async generateStory(id: string, userId: string) {
     try {
       const artwork = await this.artworkRepository.findById(id);
@@ -290,15 +296,64 @@ export class ArtworkService {
         );
       }
 
-      // If artwork already has a rich description, return it
-      if (artwork.description && artwork.description.length > 200) {
-        return ServiceResponse.success('Story already exists', artwork);
+      // ── Fetch user plan ──
+      const { prisma } = await import('@/common/db/prisma');
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { plan: true },
+      });
+      const plan = user?.plan ?? 'FREE';
+
+      // ── Cooldown check ──
+      const latestLog = await this.aiUsageLogRepository.findLatest(
+        userId,
+        ArtworkService.STORY_ENDPOINT,
+      );
+
+      if (latestLog) {
+        const elapsed = (Date.now() - latestLog.createdAt.getTime()) / 1000;
+        const remaining = Math.ceil(ArtworkService.COOLDOWN_SECONDS - elapsed);
+
+        if (remaining > 0) {
+          return ServiceResponse.failure(
+            `Please wait ${remaining} seconds before generating another story.`,
+            { cooldownRemaining: remaining },
+            StatusCodes.TOO_MANY_REQUESTS,
+          );
+        }
       }
 
-      // Need artist name for the story
+      // ── Daily limit check ──
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const todayCount = await this.aiUsageLogRepository.countSince(
+        userId,
+        ArtworkService.STORY_ENDPOINT,
+        startOfDay,
+      );
+
+      const dailyLimit = STORY_LIMITS[plan] ?? STORY_LIMITS.FREE;
+
+      if (todayCount >= dailyLimit) {
+        return ServiceResponse.failure(
+          `Daily story limit reached (${dailyLimit}/${dailyLimit}). ${
+            plan === 'FREE'
+              ? 'Upgrade your plan for more generations.'
+              : 'Limit resets at midnight.'
+          }`,
+          {
+            used: todayCount,
+            limit: dailyLimit,
+            plan,
+          },
+          StatusCodes.TOO_MANY_REQUESTS,
+        );
+      }
+
+      // ── Generate story via OpenAI ──
       const artistName = artwork.artist?.name || 'Unknown Artist';
 
-      // Generate story via OpenAI
       const { story, rawResponse } = await generateArtworkStory({
         title: artwork.title,
         artistName,
@@ -311,10 +366,11 @@ export class ArtworkService {
       const usageInfo = extractUsageInfo(rawResponse);
       await this.aiUsageLogRepository.create({
         userId,
-        endpoint: 'openai/text/story',
+        endpoint: ArtworkService.STORY_ENDPOINT,
         model: usageInfo.model,
         tokensIn: usageInfo.tokensIn,
         tokensOut: usageInfo.tokensOut,
+        costUsd: usageInfo.costUsd,
         durationMs: usageInfo.durationMs,
         success: true,
       });
@@ -324,7 +380,18 @@ export class ArtworkService {
         description: story,
       });
 
-      return ServiceResponse.success('Story generated', updated);
+      // Return with usage metadata
+      const newUsed = todayCount + 1;
+      return ServiceResponse.success('Story generated', {
+        ...updated,
+        _storyMeta: {
+          used: newUsed,
+          limit: dailyLimit,
+          remaining: dailyLimit - newUsed,
+          cooldownSeconds: ArtworkService.COOLDOWN_SECONDS,
+          plan,
+        },
+      });
     } catch (ex) {
       logger.error(
         `Error generating story for artwork ${id}: ${(ex as Error).message}`,

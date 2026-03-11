@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AlertCircle, Camera, RefreshCw, Sparkles } from 'lucide-react-native';
@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, ScrollView, Text, View } from '@/components/ui';
+import { GeneratingSkeleton } from '@/components/ui/generating-skeleton';
 import Toast from '@/components/ui/toast';
 import {
   useArtwork,
@@ -21,6 +22,7 @@ import {
   useGenerateStory,
   useToast,
 } from '@/lib/hooks';
+import type { StoryLimitError } from '@/lib/hooks/use-artwork';
 
 export function EditArtworkScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,9 +63,47 @@ export function EditArtworkScreen() {
     'available' | 'missing' | 'generating' | 'generated'
   >('missing');
 
-  // ── Hydrate form from API ──
+  // ── Cooldown & limit state ──
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [limitInfo, setLimitInfo] = useState<{
+    used: number;
+    limit: number;
+    remaining: number;
+  } | null>(null);
+
+  // Tick down cooldown every second
   useEffect(() => {
-    if (artwork) {
+    if (cooldownRemaining > 0) {
+      cooldownRef.current = setInterval(() => {
+        setCooldownRemaining((prev) => {
+          if (prev <= 1) {
+            if (cooldownRef.current) clearInterval(cooldownRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, [cooldownRemaining]);
+
+  const startCooldown = useCallback((seconds: number) => {
+    setCooldownRemaining(seconds);
+  }, []);
+
+  const isOnCooldown = cooldownRemaining > 0;
+  const isAtLimit = limitInfo !== null && limitInfo.remaining <= 0;
+  const generateDisabled = generateStory.isPending || isOnCooldown || isAtLimit;
+
+  // ── Hydrate form from API (only on initial load) ──
+  const hasHydrated = useRef(false);
+
+  useEffect(() => {
+    if (artwork && !hasHydrated.current) {
+      hasHydrated.current = true;
       const vals = {
         title: artwork.title ?? '',
         artist: artwork.artist?.name ?? '',
@@ -85,8 +125,14 @@ export function EditArtworkScreen() {
     }
   }, [artwork]);
 
+  // Track whether the description was changed by AI generation.
+  // This flag ensures Save stays enabled even if a query refetch
+  // causes initialValues and description to momentarily align.
+  const [descriptionDirtyFromAI, setDescriptionDirtyFromAI] = useState(false);
+
   // ── Dirty check ──
   const hasChanges =
+    descriptionDirtyFromAI ||
     title !== initialValues.title ||
     artist !== initialValues.artist ||
     year !== initialValues.year ||
@@ -97,16 +143,47 @@ export function EditArtworkScreen() {
 
   // ── Handlers ──
   const handleGenerate = () => {
+    if (generateDisabled) return;
+
     setAboutState('generating');
     generateStory.mutate(id, {
-      onSuccess: (updatedArtwork) => {
-        if (updatedArtwork?.description) {
-          setDescription(updatedArtwork.description);
+      onSuccess: (result) => {
+        if (result?.description) {
+          setDescription(result.description);
+          setDescriptionDirtyFromAI(true);
         }
         setAboutState('generated');
+
+        // Start cooldown from backend meta
+        const meta = (result as any)?._storyMeta;
+        if (meta) {
+          setLimitInfo({
+            used: meta.used,
+            limit: meta.limit,
+            remaining: meta.remaining,
+          });
+          startCooldown(meta.cooldownSeconds);
+        } else {
+          startCooldown(60);
+        }
       },
-      onError: () => {
+      onError: (error: any) => {
         setAboutState(description ? 'available' : 'missing');
+
+        const limitError = error as StoryLimitError;
+        if (limitError?.type === 'cooldown') {
+          startCooldown(limitError.cooldownRemaining ?? 60);
+          showToast(limitError.message, 'error');
+        } else if (limitError?.type === 'daily_limit') {
+          setLimitInfo({
+            used: limitError.used ?? 0,
+            limit: limitError.limit ?? 0,
+            remaining: 0,
+          });
+          showToast(limitError.message, 'error');
+        } else {
+          showToast('Failed to generate story.', 'error');
+        }
       },
     });
   };
@@ -139,6 +216,7 @@ export function EditArtworkScreen() {
       },
       {
         onSuccess: () => {
+          setDescriptionDirtyFromAI(false);
           showToast('Changes saved', 'success');
           setTimeout(() => {
             router.back();
@@ -149,11 +227,24 @@ export function EditArtworkScreen() {
           error: Error & { response?: { data?: { message?: string } } },
         ) => {
           const message =
-            error.response?.data?.message || 'Failed to change password.';
+            error.response?.data?.message || 'Failed to save changes.';
           showToast(message, 'error');
         },
       },
     );
+  };
+
+  // ── Helper: generate button label ──
+  const getGenerateLabel = () => {
+    if (isOnCooldown) return `Wait ${cooldownRemaining}s`;
+    if (isAtLimit) return 'Daily limit reached';
+    return 'Generate Story';
+  };
+
+  const getRegenerateLabel = () => {
+    if (isOnCooldown) return `${cooldownRemaining}s`;
+    if (isAtLimit) return 'Limit reached';
+    return 'Regenerate';
   };
 
   // ── Loading ──
@@ -455,48 +546,44 @@ export function EditArtworkScreen() {
                   </Text>
                   <Pressable
                     onPress={handleGenerate}
-                    className="bg-charcoal-900 px-5 py-2.5 rounded-xl active:bg-charcoal-800"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 2,
-                      elevation: 1,
-                    }}
+                    disabled={generateDisabled}
+                    className={`px-5 py-2.5 rounded-xl ${
+                      generateDisabled
+                        ? 'bg-charcoal-200'
+                        : 'bg-charcoal-900 active:bg-charcoal-800'
+                    }`}
+                    style={
+                      !generateDisabled
+                        ? {
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 2,
+                            elevation: 1,
+                          }
+                        : undefined
+                    }
                   >
-                    <Text className="text-white text-sm font-medium">
-                      Generate Story
+                    <Text
+                      className={`text-sm font-medium ${
+                        generateDisabled ? 'text-charcoal-400' : 'text-white'
+                      }`}
+                    >
+                      {getGenerateLabel()}
                     </Text>
                   </Pressable>
+
+                  {/* Remaining generations counter */}
+                  {limitInfo && !isAtLimit && (
+                    <Text className="text-charcoal-300 text-[11px] mt-2.5">
+                      {limitInfo.remaining} of {limitInfo.limit} generations
+                      left today
+                    </Text>
+                  )}
                 </View>
               )}
 
-              {aboutState === 'generating' && (
-                <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
-                  <View
-                    className="w-12 h-12 bg-white rounded-full items-center justify-center mb-4"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 4,
-                      elevation: 1,
-                    }}
-                  >
-                    <ActivityIndicator size="small" color="#1c1917" />
-                  </View>
-                  <View className="w-full gap-3 mb-5 px-4 opacity-50">
-                    <View className="h-2.5 bg-neutral-200 rounded-full w-full" />
-                    <View className="h-2.5 bg-neutral-200 rounded-full w-[85%] self-center" />
-                    <View className="h-2.5 bg-neutral-200 rounded-full w-[60%] self-center" />
-                  </View>
-                  <View className="bg-neutral-200 px-5 py-2.5 rounded-xl">
-                    <Text className="text-sm font-medium text-charcoal-400">
-                      Generating...
-                    </Text>
-                  </View>
-                </View>
-              )}
+              {aboutState === 'generating' && <GeneratingSkeleton />}
 
               {(aboutState === 'available' || aboutState === 'generated') && (
                 <View
@@ -525,15 +612,21 @@ export function EditArtworkScreen() {
                         {aboutState === 'generated'
                           ? 'AI Generated'
                           : 'Story Text'}
+                        {limitInfo
+                          ? ` · ${limitInfo.remaining}/${limitInfo.limit} left`
+                          : ''}
                       </Text>
                     </View>
                     <Pressable
                       onPress={handleGenerate}
-                      className="flex-row items-center gap-1.5 active:opacity-60"
+                      disabled={generateDisabled}
+                      className={`flex-row items-center gap-1.5 ${
+                        generateDisabled ? 'opacity-40' : 'active:opacity-60'
+                      }`}
                     >
                       <RefreshCw size={12} color="#78716c" />
                       <Text className="text-[12px] font-medium text-charcoal-400">
-                        Regenerate
+                        {getRegenerateLabel()}
                       </Text>
                     </Pressable>
                   </View>
