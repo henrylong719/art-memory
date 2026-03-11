@@ -83,7 +83,10 @@ export function PasswordSecurityScreen() {
                 elevation: 1,
               }}
             >
-              <Pressable className="flex-row items-center justify-between py-4 px-5 active:bg-stone-50">
+              <Pressable
+                onPress={() => router.push('/profile/change-password')}
+                className="flex-row items-center justify-between py-4 px-5 active:bg-stone-50"
+              >
                 <View className="flex-row items-center gap-4">
                   <KeyRound size={20} color="#a8a29e" strokeWidth={1.5} />
                   <View>

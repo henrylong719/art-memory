@@ -332,6 +332,46 @@ export class AuthService {
     }
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<ServiceResponse<null>> {
+    try {
+      const user = await this.authRepository.getUserPasswordHash(userId);
+
+      if (!user || !user.passwordHash) {
+        return ServiceResponse.failure(
+          'This account uses social login and has no password to change.',
+          null,
+          StatusCodes.BAD_REQUEST,
+        );
+      }
+
+      const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isValid) {
+        return ServiceResponse.failure(
+          'Current password is incorrect',
+          null,
+          StatusCodes.UNAUTHORIZED,
+        );
+      }
+
+      const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+      await this.authRepository.updatePasswordHash(userId, newHash);
+
+      return ServiceResponse.success('Password changed successfully', null);
+    } catch (ex) {
+      const errorMessage = `Error changing password: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while changing password.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // ─── Private helpers ───────────────────────────────────
 
   private async generateTokens(userId: string, email: string) {

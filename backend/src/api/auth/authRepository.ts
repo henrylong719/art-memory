@@ -159,4 +159,25 @@ export class AuthRepository {
       where: { userId },
     });
   }
+
+  async getUserPasswordHash(userId: string) {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+  }
+
+  async updatePasswordHash(userId: string, passwordHash: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        plan: true,
+      },
+    });
+  }
 }

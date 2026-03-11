@@ -34,6 +34,9 @@ export const authApi = {
 
   socialLogin: (data: { provider: 'google' | 'facebook'; token: string }) =>
     client.post<ApiResponse<AuthResponse>>('/auth/social', data),
+
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    client.post<ApiResponse<null>>('/auth/change-password', data),
 };
 
 // ─── User ────────────────────────────────────────────────

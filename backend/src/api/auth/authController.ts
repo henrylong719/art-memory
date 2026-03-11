@@ -29,6 +29,24 @@ class AuthController {
     const serviceResponse = await authService.logout(refreshToken);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
+  public changePassword: RequestHandler = async (
+    req: Request,
+    res: Response,
+  ) => {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).send({ success: false, message: 'Unauthorized' });
+      return;
+    }
+    const { currentPassword, newPassword } = req.body;
+    const serviceResponse = await authService.changePassword(
+      userId,
+      currentPassword,
+      newPassword,
+    );
+    res.status(serviceResponse.statusCode).send(serviceResponse);
+  };
+
   public logoutAll: RequestHandler = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) {

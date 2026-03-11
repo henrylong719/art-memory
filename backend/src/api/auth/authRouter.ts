@@ -5,6 +5,7 @@ import {
   LoginSchema,
   SocialLoginSchema,
   RefreshTokenSchema,
+  ChangePasswordSchema,
   AuthResponseSchema,
 } from '@/api/auth/authModel';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
@@ -110,6 +111,28 @@ authRouter.post(
   '/logout',
   validateRequest(RefreshTokenSchema),
   authController.logout,
+);
+
+// POST /auth/change-password (requires authentication)
+authRegistry.registerPath({
+  method: 'post',
+  path: '/auth/change-password',
+  tags: ['Auth'],
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: ChangePasswordSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(AuthResponseSchema, 'Password changed'),
+});
+
+authRouter.post(
+  '/change-password',
+  authenticate,
+  validateRequest(ChangePasswordSchema),
+  authController.changePassword,
 );
 
 // POST /auth/logout-all (requires authentication)

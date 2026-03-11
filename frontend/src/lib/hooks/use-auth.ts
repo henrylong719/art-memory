@@ -68,6 +68,18 @@ export function useLogout() {
   });
 }
 
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (input: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      const { data } = await authApi.changePassword(input);
+      return data;
+    },
+  });
+}
+
 export function useLogoutAll() {
   return useMutation({
     mutationFn: async () => {

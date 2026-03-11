@@ -3,7 +3,7 @@
 import { Motion, AnimatePresence } from '@legendapp/motion';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -65,14 +65,17 @@ async function cropToFrame(
   frameAspectWH: number,
 ): Promise<{ uri: string; isLandscape: boolean }> {
   // First pass: force EXIF orientation normalization by applying a no-op
-  // rotation. An empty actions array may skip processing, but rotate(0)
-  // forces the image through the pipeline, baking EXIF rotation into pixels.
-  const normalized = await manipulateAsync(uri, [{ rotate: 0 }], {
+  // rotation. rotate(0) forces the image through the pipeline, baking
+  // EXIF rotation into pixels.
+  const normalizedRef = await ImageManipulator.manipulate(uri)
+    .rotate(0)
+    .renderAsync();
+  const normalized = await normalizedRef.saveAsync({
     format: SaveFormat.JPEG,
     compress: 1,
   });
-  const photoW = normalized.width;
-  const photoH = normalized.height;
+  const photoW = normalizedRef.width;
+  const photoH = normalizedRef.height;
 
   const screenIsPortrait = screenH > screenW;
   const bottomBarH = screenIsPortrait
@@ -102,13 +105,15 @@ async function cropToFrame(
   const height = Math.min(Math.round(frameScreenH / scale), photoH - originY);
 
   // Second pass: crop the EXIF-normalized image
-  const result = await manipulateAsync(
-    normalized.uri,
-    [{ crop: { originX, originY, width, height } }],
-    { format: SaveFormat.JPEG, compress: 0.85 },
-  );
+  const croppedRef = await ImageManipulator.manipulate(normalized.uri)
+    .crop({ originX, originY, width, height })
+    .renderAsync();
+  const result = await croppedRef.saveAsync({
+    format: SaveFormat.JPEG,
+    compress: 0.85,
+  });
 
-  return { uri: result.uri, isLandscape: result.width > result.height };
+  return { uri: result.uri, isLandscape: croppedRef.width > croppedRef.height };
 }
 
 // ─── Main Screen ─────────────────────────────────────────
@@ -185,11 +190,11 @@ export function CameraScreen() {
     );
     textOpacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
 
-    frameScale.value = 0.75;
+    frameScale.value = 0.55;
     frameOpacity.value = 0;
     frameScale.value = withDelay(
       delay + 200,
-      withSpring(1, { damping: 18, stiffness: 140, mass: 0.8 }),
+      withSpring(1, { damping: 10, stiffness: 120, mass: 1 }),
     );
     frameOpacity.value = withDelay(
       delay + 200,
@@ -203,11 +208,11 @@ export function CameraScreen() {
     if (prevOrientation.current === physicalOrientation) return;
     prevOrientation.current = physicalOrientation;
 
-    frameScale.value = 0.92;
+    frameScale.value = 0.82;
     frameScale.value = withSpring(1, {
-      damping: 14,
-      stiffness: 160,
-      mass: 0.6,
+      damping: 10,
+      stiffness: 130,
+      mass: 0.8,
     });
   }, [physicalOrientation, frameScale]);
 
@@ -531,48 +536,26 @@ export function CameraScreen() {
           <CornerMarker position="bl" />
           <CornerMarker position="br" />
 
-          {/* Instruction text – always at the visual bottom of the frame */}
+          {/* Instruction text – always at the visual bottom of the frame.
+               Portrait: text sits at the bottom edge, centered horizontally.
+               Landscape-left/right: text moves to the side edge that is the
+               "visual bottom" and rotates so it reads correctly. */}
           <View
             style={
-              physicalOrientation === 'landscape-left'
-                ? {
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    left: 16,
-                    justifyContent: 'center',
-                  }
-                : physicalOrientation === 'landscape-right'
-                  ? {
-                      position: 'absolute',
-                      top: 0,
-                      bottom: 0,
-                      right: 16,
-                      justifyContent: 'center',
-                    }
-                  : {
-                      position: 'absolute',
-                      bottom: 16,
-                      left: 0,
-                      right: 0,
-                      alignItems: 'center',
-                    }
+              physicalOrientation === 'portrait'
+                ? styles.instructionPortrait
+                : physicalOrientation === 'landscape-left'
+                  ? styles.instructionLandscapeLeft
+                  : styles.instructionLandscapeRight
             }
           >
             <View
               style={
-                physicalOrientation !== 'portrait'
-                  ? {
-                      transform: [
-                        {
-                          rotate:
-                            physicalOrientation === 'landscape-left'
-                              ? '90deg'
-                              : '-90deg',
-                        },
-                      ],
-                    }
-                  : undefined
+                physicalOrientation === 'portrait'
+                  ? undefined
+                  : physicalOrientation === 'landscape-left'
+                    ? styles.rotateCW
+                    : styles.rotateCCW
               }
             >
               <Animated.View
@@ -764,3 +747,34 @@ export function CameraScreen() {
     </View>
   );
 }
+
+// ─── Instruction text position styles ─────────────────────
+const styles = StyleSheet.create({
+  // Portrait: centered at the bottom of the frame
+  instructionPortrait: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  // Landscape-left (top of phone points left): visual bottom = portrait left edge
+  instructionLandscapeLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 16,
+    justifyContent: 'center',
+  },
+  // Landscape-right (top of phone points right): visual bottom = portrait right edge
+  instructionLandscapeRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 16,
+    justifyContent: 'center',
+  },
+  // Rotation wrappers so text reads correctly when sideways
+  rotateCW: { transform: [{ rotate: '90deg' }] },
+  rotateCCW: { transform: [{ rotate: '-90deg' }] },
+});
