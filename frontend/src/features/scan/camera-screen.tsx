@@ -5,6 +5,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as Location from 'expo-location';
+import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import {
@@ -125,7 +126,26 @@ export function CameraScreen() {
   const [flash, setFlash] = useState(false);
 
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
   const isLandscape = screenWidth > screenHeight;
+
+  // Detect physical device tilt via accelerometer (app is portrait-locked).
+  // 'portrait' | 'landscape-left' | 'landscape-right'
+  type PhysicalOrientation = 'portrait' | 'landscape-left' | 'landscape-right';
+  const [physicalOrientation, setPhysicalOrientation] =
+    useState<PhysicalOrientation>('portrait');
+  useEffect(() => {
+    Accelerometer.setUpdateInterval(300);
+    const subscription = Accelerometer.addListener(({ x, y }) => {
+      if (Math.abs(x) > Math.abs(y) + 0.15) {
+        // Phone tilted sideways
+        setPhysicalOrientation(x > 0 ? 'landscape-right' : 'landscape-left');
+      } else {
+        setPhysicalOrientation('portrait');
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   // Captured URIs
   const [artworkUri, setArtworkUri] = useState<string | null>(null);
@@ -141,6 +161,14 @@ export function CameraScreen() {
     opacity: frameOpacity.value,
   }));
 
+  // Instruction text bounce animation
+  const textTranslateY = useSharedValue(18);
+  const textOpacity = useSharedValue(0);
+  const textBounceStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: textTranslateY.value }],
+    opacity: textOpacity.value,
+  }));
+
   const isFirstMount = useRef(true);
 
   useEffect(() => {
@@ -148,14 +176,40 @@ export function CameraScreen() {
     const delay = isFirstMount.current ? 400 : 0;
     isFirstMount.current = false;
 
+    // Text bounces up first, then the frame follows
+    textTranslateY.value = 18;
+    textOpacity.value = 0;
+    textTranslateY.value = withDelay(
+      delay,
+      withSpring(0, { damping: 16, stiffness: 120, mass: 0.8 }),
+    );
+    textOpacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
+
     frameScale.value = 0.75;
     frameOpacity.value = 0;
     frameScale.value = withDelay(
-      delay,
+      delay + 200,
       withSpring(1, { damping: 18, stiffness: 140, mass: 0.8 }),
     );
-    frameOpacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
-  }, [step, frameScale, frameOpacity]);
+    frameOpacity.value = withDelay(
+      delay + 200,
+      withTiming(1, { duration: 200 }),
+    );
+  }, [step, frameScale, frameOpacity, textTranslateY, textOpacity]);
+
+  // Bounce the frame when physical orientation changes
+  const prevOrientation = useRef(physicalOrientation);
+  useEffect(() => {
+    if (prevOrientation.current === physicalOrientation) return;
+    prevOrientation.current = physicalOrientation;
+
+    frameScale.value = 0.92;
+    frameScale.value = withSpring(1, {
+      damping: 14,
+      stiffness: 160,
+      mass: 0.6,
+    });
+  }, [physicalOrientation, frameScale]);
 
   // Scan line animation (replaces @legendapp/motion keyframe array)
   const scanLineY = useSharedValue(0);
@@ -476,6 +530,70 @@ export function CameraScreen() {
           <CornerMarker position="tr" />
           <CornerMarker position="bl" />
           <CornerMarker position="br" />
+
+          {/* Instruction text – always at the visual bottom of the frame */}
+          <View
+            style={
+              physicalOrientation === 'landscape-left'
+                ? {
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: 16,
+                    justifyContent: 'center',
+                  }
+                : physicalOrientation === 'landscape-right'
+                  ? {
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      right: 16,
+                      justifyContent: 'center',
+                    }
+                  : {
+                      position: 'absolute',
+                      bottom: 16,
+                      left: 0,
+                      right: 0,
+                      alignItems: 'center',
+                    }
+            }
+          >
+            <View
+              style={
+                physicalOrientation !== 'portrait'
+                  ? {
+                      transform: [
+                        {
+                          rotate:
+                            physicalOrientation === 'landscape-left'
+                              ? '90deg'
+                              : '-90deg',
+                        },
+                      ],
+                    }
+                  : undefined
+              }
+            >
+              <Animated.View
+                style={[
+                  textBounceStyle,
+                  {
+                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 9999,
+                  },
+                ]}
+              >
+                <Text className="text-white text-sm font-semibold tracking-wide text-center">
+                  {isArtworkStep
+                    ? 'Center the artwork in the frame'
+                    : 'Capture the label or wall text clearly'}
+                </Text>
+              </Animated.View>
+            </View>
+          </View>
         </Animated.View>
 
         {/* Step indicator for combined mode */}
@@ -504,37 +622,6 @@ export function CameraScreen() {
             </View>
           </View>
         )}
-
-        {/* Instruction prompt */}
-        <View
-          style={{
-            position: 'absolute',
-            bottom: isLandscape ? 12 : 150,
-            left: 0,
-            right: 0,
-            alignItems: 'center',
-            paddingHorizontal: 32,
-          }}
-        >
-          <Motion.View
-            key={step}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'timing', duration: 300 }}
-            style={{
-              backgroundColor: 'rgba(0,0,0,0.55)',
-              paddingHorizontal: 20,
-              paddingVertical: 10,
-              borderRadius: 9999,
-            }}
-          >
-            <Text className="text-white text-sm font-semibold tracking-wide text-center">
-              {isArtworkStep
-                ? 'Center the artwork in the frame'
-                : 'Capture the label or wall text clearly'}
-            </Text>
-          </Motion.View>
-        </View>
       </View>
 
       {/* ── Bottom controls ── */}
