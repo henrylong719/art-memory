@@ -417,7 +417,7 @@ export function MuseumDetailScreen() {
             )}
           </View>
 
-          <View className="flex-row gap-4 mb-10">
+          <View className="flex-col gap-4 mb-4">
             {museum.phone && (
               <InfoCard
                 icon={<Phone size={20} color="#a8a29e" />}
@@ -426,6 +426,7 @@ export function MuseumDetailScreen() {
                 onPress={handleCall}
               />
             )}
+
             {museum.address && (
               <InfoCard
                 icon={<MapPin size={20} color="#a8a29e" />}

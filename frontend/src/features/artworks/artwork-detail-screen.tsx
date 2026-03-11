@@ -7,10 +7,8 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import type { Artwork } from '@/lib/api/types';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Bookmark,
@@ -264,57 +262,31 @@ export function ArtworkDetailScreen() {
         contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
       >
         {/* Hero image */}
-        <View style={{ height: px(heroHeight), overflow: 'hidden' }}>
-          <View style={{ height: px(heroHeight + 80) }}>
-            <Animated.View
-              style={[heroStyle, { width: '100%', height: '100%' }]}
+        <View className="mb-8">
+          <Animated.View>
+            <Pressable
+              onPress={() => {
+                const now = Date.now();
+                if (now - lastTapRef.current < 300) {
+                  setFullscreenVisible(true);
+                }
+                lastTapRef.current = now;
+              }}
             >
-              <Pressable
-                onPress={() => {
-                  const now = Date.now();
-                  if (now - lastTapRef.current < 300) {
-                    setFullscreenVisible(true);
-                  }
-                  lastTapRef.current = now;
-                }}
-              >
+              <View style={{ height: px(heroHeight), overflow: 'hidden' }}>
                 <Image
                   source={artwork.imageUrl ?? ''}
-                  className="w-full"
-                  style={{ height: px(heroHeight + 80) }}
-                  contentFit={imageIsLandscape ? 'contain' : 'cover'}
+                  className="w-full h-full"
                   transition={400}
                   onLoad={(e) => {
                     const { width: w, height: h } = e.source;
                     if (w && h) setImageAspect(w / h);
                   }}
                 />
-              </Pressable>
-            </Animated.View>
-          </View>
-          {/* Bottom fade */}
-          <LinearGradient
-            colors={['transparent', 'rgba(250,250,250,0.6)', '#FAFAFA']}
-            locations={[0, 0.6, 1]}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 100,
-            }}
-          />
-          {/* Top fade */}
-          <LinearGradient
-            colors={['rgba(0,0,0,0.45)', 'transparent']}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 120,
-            }}
-          />
+              </View>
+            </Pressable>
+          </Animated.View>
+
           {/* Confidence badge */}
           {confidencePercent && confidencePercent >= 80 && (
             <Motion.View
