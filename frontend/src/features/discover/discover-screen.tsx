@@ -5,17 +5,92 @@ import { useRouter } from 'expo-router';
 import {
   ChevronLeft,
   MapPin,
+  Navigation,
   Search,
   SlidersHorizontal,
   Star,
 } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, TextInput } from 'react-native';
+import {
+  ActionSheetIOS,
+  ActivityIndicator,
+  Linking,
+  Platform,
+  Pressable,
+  TextInput,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, ScrollView, Text, View } from '@/components/ui';
 import { useNearbyMuseums, useMuseumSearch } from '@/lib/hooks';
 
 import type { NearbyMuseum } from '@/lib/api/types';
+
+// ─── Map Navigation ─────────────────────────────────────
+async function openMapsForMuseum(museum: NearbyMuseum) {
+  const { latitude, longitude, name } = museum;
+  const encodedName = encodeURIComponent(name);
+
+  if (Platform.OS === 'ios') {
+    const candidates = [
+      {
+        label: 'Apple Maps',
+        scheme: 'maps:',
+        url: `maps:0,0?q=${encodedName}&ll=${latitude},${longitude}`,
+      },
+      {
+        label: 'Google Maps',
+        scheme: 'comgooglemaps://',
+        url: `comgooglemaps://?q=${encodedName}&center=${latitude},${longitude}`,
+      },
+      {
+        label: 'Waze',
+        scheme: 'waze://',
+        url: `waze://?ll=${latitude},${longitude}&navigate=yes`,
+      },
+    ];
+
+    const available: typeof candidates = [];
+    for (const c of candidates) {
+      try {
+        if (await Linking.canOpenURL(c.scheme)) {
+          available.push(c);
+        }
+      } catch {
+        // scheme not queryable
+      }
+    }
+
+    // Fallback: Google Maps in browser
+    if (available.length === 0) {
+      Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`,
+      ).catch(() => {});
+      return;
+    }
+
+    if (available.length === 1) {
+      Linking.openURL(available[0].url).catch(() => {});
+      return;
+    }
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [...available.map((o) => o.label), 'Cancel'],
+        cancelButtonIndex: available.length,
+        title: 'Open in Maps',
+        message: `Get directions to ${name}`,
+      },
+      (buttonIndex) => {
+        if (buttonIndex < available.length) {
+          Linking.openURL(available[buttonIndex].url).catch(() => {});
+        }
+      },
+    );
+  } else {
+    const url = `geo:${latitude},${longitude}?q=${encodedName}`;
+    Linking.openURL(url).catch(() => {});
+  }
+}
 
 // ─── Category Chips ──────────────────────────────────────
 const CATEGORIES = ['All', 'Art Museums', 'Modern Art', 'Contemporary'];
@@ -79,10 +154,10 @@ function MuseumCard({
   index: number;
   onPress: () => void;
 }) {
-  const distance = museum.distance
-    ? museum.distance < 1000
-      ? `${Math.round(museum.distance)} m`
-      : `${(museum.distance / 1000).toFixed(1)} km`
+  const distance = museum.distance != null
+    ? museum.distance < 1
+      ? `${Math.round(museum.distance * 1000)} m`
+      : `${museum.distance.toFixed(1)} km`
     : null;
 
   return (
@@ -91,9 +166,8 @@ function MuseumCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'timing', duration: 500, delay: index * 100 }}
     >
-      <Pressable
-        onPress={onPress}
-        className="bg-white rounded-3xl overflow-hidden border border-stone-100 active:opacity-90"
+      <View
+        className="bg-white rounded-3xl overflow-hidden border border-stone-100"
         style={{
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
@@ -102,69 +176,73 @@ function MuseumCard({
           elevation: 1,
         }}
       >
-        {/* Image */}
-        <View className="h-48 bg-stone-200 overflow-hidden">
-          {museum.photoUrl ? (
-            <Image
-              source={{ uri: museum.photoUrl }}
-              className="w-full h-full"
-              contentFit="cover"
-              transition={300}
-            />
-          ) : (
-            <View className="flex-1 items-center justify-center bg-stone-200">
-              <MapPin size={24} color="#a8a29e" />
-            </View>
-          )}
-
-          {/* Open badge */}
-          {museum.openNow != null && (
-            <View
-              className="absolute top-4 left-4 flex-row items-center gap-1.5 px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
-            >
-              <View
-                className={`w-1.5 h-1.5 rounded-full ${
-                  museum.openNow ? 'bg-emerald-500' : 'bg-stone-400'
-                }`}
+        <Pressable onPress={onPress} className="active:opacity-90">
+          {/* Image */}
+          <View className="h-48 bg-stone-200 overflow-hidden">
+            {museum.photoUrl ? (
+              <Image
+                source={{ uri: museum.photoUrl }}
+                className="w-full h-full"
+                contentFit="cover"
+                transition={300}
               />
-              <Text className="text-xs font-semibold text-stone-900">
-                {museum.openNow ? 'Open Now' : 'Closed'}
-              </Text>
-            </View>
-          )}
+            ) : (
+              <View className="flex-1 items-center justify-center bg-stone-200">
+                <MapPin size={24} color="#a8a29e" />
+              </View>
+            )}
 
-          {/* Rating badge */}
-          {museum.rating != null && (
-            <View
-              className="absolute bottom-4 right-4 flex-row items-center gap-1 px-2.5 py-1 rounded-full"
-              style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+            {/* Open badge */}
+            {museum.openNow != null && (
+              <View
+                className="absolute top-4 left-4 flex-row items-center gap-1.5 px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
+              >
+                <View
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    museum.openNow ? 'bg-emerald-500' : 'bg-stone-400'
+                  }`}
+                />
+                <Text className="text-xs font-semibold text-stone-900">
+                  {museum.openNow ? 'Open Now' : 'Closed'}
+                </Text>
+              </View>
+            )}
+
+            {/* Rating badge */}
+            {museum.rating != null && (
+              <View
+                className="absolute bottom-4 right-4 flex-row items-center gap-1 px-2.5 py-1 rounded-full"
+                style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+              >
+                <Star size={12} color="#fbbf24" fill="#fbbf24" />
+                <Text className="text-white text-xs font-semibold">
+                  {museum.rating}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Info */}
+          <View className="px-5 pt-5">
+            <Text
+              className="font-serif text-xl font-medium text-stone-900 leading-snug mb-2"
+              numberOfLines={2}
             >
-              <Star size={12} color="#fbbf24" fill="#fbbf24" />
-              <Text className="text-white text-xs font-semibold">
-                {museum.rating}
-              </Text>
-            </View>
-          )}
-        </View>
+              {museum.name}
+            </Text>
+            <Text
+              className="text-stone-600 text-sm leading-relaxed"
+              numberOfLines={2}
+            >
+              {museum.address}
+            </Text>
+          </View>
+        </Pressable>
 
-        {/* Info */}
-        <View className="p-5">
-          <Text
-            className="font-serif text-xl font-medium text-stone-900 leading-snug mb-2"
-            numberOfLines={2}
-          >
-            {museum.name}
-          </Text>
-          <Text
-            className="text-stone-600 text-sm leading-relaxed mb-4"
-            numberOfLines={2}
-          >
-            {museum.address}
-          </Text>
-
-          {/* Footer */}
-          <View className="flex-row items-center justify-between border-t border-stone-100 pt-4">
+        {/* Footer — outside card Pressable so Directions button gets its own tap */}
+        <View className="flex-row items-center justify-between border-t border-stone-100 mx-5 mt-4 pt-4 pb-5">
+          <View className="flex-row items-center gap-3">
             {museum.userRatingsTotal != null && (
               <View className="px-2.5 py-1 bg-stone-100 rounded-lg">
                 <Text className="text-xs font-medium text-stone-600">
@@ -181,8 +259,16 @@ function MuseumCard({
               </View>
             )}
           </View>
+          <Pressable
+            onPress={() => openMapsForMuseum(museum)}
+            className="flex-row items-center gap-1.5 bg-stone-600 px-3.5 py-2 rounded-full active:bg-stone-800"
+            hitSlop={4}
+          >
+            <Navigation size={13} color="#fff" fill="#fff" />
+            <Text className="text-white text-xs font-semibold">Directions</Text>
+          </Pressable>
         </View>
-      </Pressable>
+      </View>
     </Motion.View>
   );
 }
@@ -271,7 +357,7 @@ export function DiscoverScreen() {
       >
         <View className="px-6 pt-6">
           {/* Location indicator */}
-          <View className="flex-row items-center gap-2 mb-6 bg-stone-200/50 px-4 py-3 rounded-2xl">
+          {/* <View className="flex-row items-center gap-2 mb-6 bg-stone-200/50 px-4 py-3 rounded-2xl">
             <MapPin size={18} color="#78716c" />
             <Text className="text-sm text-stone-600">
               Current location:{' '}
@@ -279,7 +365,7 @@ export function DiscoverScreen() {
                 {locationLabel}
               </Text>
             </Text>
-          </View>
+          </View> */}
 
           {/* Loading */}
           {(nearby.locationStatus === 'requesting' || isLoading) && (
@@ -320,7 +406,7 @@ export function DiscoverScreen() {
                   onPress={() =>
                     museum.museumId
                       ? router.push(`/discover/${museum.museumId}`)
-                      : undefined
+                      : router.push(`/discover/${museum.placeId}?place=1`)
                   }
                 />
               ))}

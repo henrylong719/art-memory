@@ -53,6 +53,21 @@ export function useCreateArtwork() {
   });
 }
 
+export function useDeleteArtwork() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await artworkApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artworks'] });
+      queryClient.invalidateQueries({ queryKey: ['scans'] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['saved-artworks'] });
+    },
+  });
+}
+
 export function useGenerateStory() {
   const queryClient = useQueryClient();
   return useMutation({

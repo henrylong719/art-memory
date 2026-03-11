@@ -4,11 +4,11 @@ import { Pressable } from 'react-native';
 import { Image, Text, View } from '@/components/ui';
 import type { Artwork, NearbyMuseum, Scan } from '@/lib/api/types';
 
-function formatDistance(meters?: number): string {
-  if (meters == null) return '';
-  return meters < 1000
-    ? `${Math.round(meters)} m away`
-    : `${(meters / 1000).toFixed(1)} km away`;
+function formatDistance(km?: number): string {
+  if (km == null) return '';
+  return km < 1
+    ? `${Math.round(km * 1000)} m away`
+    : `${km.toFixed(1)} km away`;
 }
 
 export function ScanCard({

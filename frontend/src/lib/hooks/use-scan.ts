@@ -64,6 +64,18 @@ export function useScanCombined() {
   });
 }
 
+export function useDeleteScan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await scanApi.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scans'] });
+    },
+  });
+}
+
 export function useCorrectScan() {
   const queryClient = useQueryClient();
   return useMutation({

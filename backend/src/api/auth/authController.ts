@@ -13,6 +13,11 @@ class AuthController {
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
 
+  public socialLogin: RequestHandler = async (req: Request, res: Response) => {
+    const serviceResponse = await authService.socialLogin(req.body);
+    res.status(serviceResponse.statusCode).send(serviceResponse);
+  };
+
   public refresh: RequestHandler = async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
     const serviceResponse = await authService.refresh(refreshToken);

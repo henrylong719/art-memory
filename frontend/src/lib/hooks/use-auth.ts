@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterInput } from '@/lib/api/types';
+import type { LoginInput, RegisterInput, SocialLoginInput } from '@/lib/api/types';
 import { useMutation } from '@tanstack/react-query';
 import { signIn, signOut } from '@/features/auth/use-auth-store';
 import { setUser } from '@/features/auth/use-user-store';
@@ -25,6 +25,22 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (input: LoginInput) => {
       const { data } = await authApi.login(input);
+      return data.responseObject;
+    },
+    onSuccess: (result) => {
+      signIn({
+        access: result.tokens.accessToken,
+        refresh: result.tokens.refreshToken,
+      });
+      setUser(result.user);
+    },
+  });
+}
+
+export function useSocialLogin() {
+  return useMutation({
+    mutationFn: async (input: SocialLoginInput) => {
+      const { data } = await authApi.socialLogin(input);
       return data.responseObject;
     },
     onSuccess: (result) => {

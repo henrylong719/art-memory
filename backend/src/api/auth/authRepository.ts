@@ -29,6 +29,70 @@ export class AuthRepository {
     });
   }
 
+  async createSocialUser(data: {
+    email: string;
+    googleId?: string;
+    facebookId?: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+  }) {
+    return prisma.user.create({
+      data: {
+        ...data,
+        collections: {
+          create: {
+            name: 'My Collection',
+            description: 'Default collection',
+            isDefault: true,
+          },
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        plan: true,
+      },
+    });
+  }
+
+  async findUserBySocialId(field: 'googleId' | 'facebookId', value: string) {
+    return prisma.user.findFirst({
+      where: { [field]: value },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        plan: true,
+      },
+    });
+  }
+
+  async linkSocialId(
+    userId: string,
+    field: 'googleId' | 'facebookId',
+    value: string,
+    avatarUrl?: string,
+  ) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        [field]: value,
+        ...(avatarUrl && { avatarUrl }),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        plan: true,
+      },
+    });
+  }
+
   async findUserByEmail(email: string) {
     return prisma.user.findUnique({
       where: { email },

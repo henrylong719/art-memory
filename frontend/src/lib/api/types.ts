@@ -39,6 +39,11 @@ export type LoginInput = {
   password: string;
 };
 
+export type SocialLoginInput = {
+  provider: 'google' | 'facebook';
+  token: string;
+};
+
 // ─── User ────────────────────────────────────────────────
 
 export type User = {

@@ -70,6 +70,12 @@ export class ScanRepository {
     });
   }
 
+  async delete(id: string) {
+    return prisma.scan.delete({
+      where: { id },
+    });
+  }
+
   async countByUser(userId: string) {
     return prisma.scan.count({
       where: { userId },

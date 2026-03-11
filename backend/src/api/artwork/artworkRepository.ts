@@ -115,6 +115,16 @@ export class ArtworkRepository {
     });
   }
 
+  async disconnectRelations(id: string) {
+    await prisma.scan.updateMany({
+      where: { artworkId: id },
+      data: { artworkId: null },
+    });
+    await prisma.savedArtwork.deleteMany({
+      where: { artworkId: id },
+    });
+  }
+
   async delete(id: string) {
     return prisma.artwork.delete({
       where: { id },

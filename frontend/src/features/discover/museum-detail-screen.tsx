@@ -10,9 +10,9 @@ import {
   MapPin,
   Phone,
   Share2,
-  Star,
 } from 'lucide-react-native';
 import {
+  ActionSheetIOS,
   ActivityIndicator,
   Linking,
   Platform,
@@ -74,11 +74,12 @@ function InfoCard({
 
 // ─── Main Screen ─────────────────────────────────────────
 export function MuseumDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, place } = useLocalSearchParams<{ id: string; place?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { data: museum, isLoading, error } = useMuseum(id);
+  const isPlaceId = place === '1';
+  const { data: museum, isLoading, error } = useMuseum(id, isPlaceId);
 
   const scrollY = useSharedValue(0);
 
@@ -114,16 +115,85 @@ export function MuseumDetailScreen() {
     }
   };
 
-  const handleOpenMaps = () => {
+  const handleOpenMaps = async () => {
     if (!museum) return;
-    const address = encodeURIComponent(
+    const { latitude, longitude, name } = museum;
+    const encodedName = encodeURIComponent(name);
+    const encodedAddress = encodeURIComponent(
       [museum.address, museum.city, museum.state, museum.country]
         .filter(Boolean)
         .join(', '),
     );
-    const url =
-      Platform.OS === 'ios' ? `maps:?q=${address}` : `geo:0,0?q=${address}`;
-    Linking.openURL(url).catch(() => {});
+
+    if (Platform.OS === 'ios') {
+      const hasCoords = latitude != null && longitude != null;
+      const candidates = [
+        {
+          label: 'Apple Maps',
+          scheme: 'maps:',
+          url: hasCoords
+            ? `maps:0,0?q=${encodedName}&ll=${latitude},${longitude}`
+            : `maps:?q=${encodedAddress}`,
+        },
+        {
+          label: 'Google Maps',
+          scheme: 'comgooglemaps://',
+          url: hasCoords
+            ? `comgooglemaps://?q=${encodedName}&center=${latitude},${longitude}`
+            : `comgooglemaps://?q=${encodedAddress}`,
+        },
+        ...(hasCoords
+          ? [
+              {
+                label: 'Waze',
+                scheme: 'waze://',
+                url: `waze://?ll=${latitude},${longitude}&navigate=yes`,
+              },
+            ]
+          : []),
+      ];
+
+      const available: typeof candidates = [];
+      for (const c of candidates) {
+        try {
+          if (await Linking.canOpenURL(c.scheme)) {
+            available.push(c);
+          }
+        } catch {
+          // scheme not queryable
+        }
+      }
+
+      if (available.length === 0) {
+        const webUrl = hasCoords
+          ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+          : `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+        Linking.openURL(webUrl).catch(() => {});
+        return;
+      }
+
+      if (available.length === 1) {
+        Linking.openURL(available[0].url).catch(() => {});
+        return;
+      }
+
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [...available.map((o) => o.label), 'Cancel'],
+          cancelButtonIndex: available.length,
+          title: 'Open in Maps',
+          message: `Get directions to ${name}`,
+        },
+        (buttonIndex) => {
+          if (buttonIndex < available.length) {
+            Linking.openURL(available[buttonIndex].url).catch(() => {});
+          }
+        },
+      );
+    } else {
+      const url = `geo:${latitude ?? 0},${longitude ?? 0}?q=${encodedAddress}`;
+      Linking.openURL(url).catch(() => {});
+    }
   };
 
   const handleOpenWebsite = () => {
@@ -365,36 +435,6 @@ export function MuseumDetailScreen() {
               />
             )}
           </View>
-
-          {/* Full address */}
-          {museum.address && (
-            <Pressable
-              onPress={handleOpenMaps}
-              className="flex-row items-center justify-between bg-white border border-stone-100 rounded-2xl px-5 py-4 active:bg-stone-50"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
-            >
-              <View className="flex-1 mr-4">
-                <Text className="text-sm font-semibold text-stone-900">
-                  Get Directions
-                </Text>
-                <Text
-                  className="text-xs text-stone-400 mt-0.5"
-                  numberOfLines={1}
-                >
-                  {[museum.address, museum.city, museum.postalCode]
-                    .filter(Boolean)
-                    .join(', ')}
-                </Text>
-              </View>
-              <MapPin size={18} color="#78716c" />
-            </Pressable>
-          )}
         </Motion.View>
       </Animated.ScrollView>
     </View>

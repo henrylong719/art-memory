@@ -74,13 +74,15 @@ export function useNearbyMuseums(radiusMeters = 10000) {
   return { ...query, locationStatus, coords };
 }
 
-// ─── Museum by ID ────────────────────────────────────────
+// ─── Museum by ID or Place ID ────────────────────────────
 
-export function useMuseum(id: string) {
+export function useMuseum(id: string, isPlaceId = false) {
   return useQuery({
-    queryKey: ['museums', id],
+    queryKey: ['museums', isPlaceId ? 'place' : 'id', id],
     queryFn: async () => {
-      const { data } = await museumApi.getById(id);
+      const { data } = isPlaceId
+        ? await museumApi.getDetails(id)
+        : await museumApi.getById(id);
       return data.responseObject;
     },
     enabled: !!id,

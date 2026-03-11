@@ -28,6 +28,9 @@ export const authApi = {
 
   logout: (refreshToken: string) =>
     client.post<ApiResponse<null>>('/auth/logout', { refreshToken }),
+
+  socialLogin: (data: { provider: 'google' | 'facebook'; token: string }) =>
+    client.post<ApiResponse<AuthResponse>>('/auth/social', data),
 };
 
 // ─── User ────────────────────────────────────────────────
@@ -80,6 +83,9 @@ export const artworkApi = {
     source?: string;
   }) =>
     client.post<ApiResponse<Artwork>>('/artworks', data),
+
+  delete: (id: string) =>
+    client.delete<ApiResponse<null>>(`/artworks/${id}`),
 };
 
 // ─── Scan ────────────────────────────────────────────────
@@ -124,6 +130,9 @@ export const scanApi = {
 
   correct: (id: string, data: { userCorrectedTitle?: string; userCorrectedArtist?: string; artworkId?: string }) =>
     client.put<ApiResponse<Scan>>(`/scans/${id}/correct`, data),
+
+  delete: (id: string) =>
+    client.delete<ApiResponse<null>>(`/scans/${id}`),
 };
 
 // ─── Collection ──────────────────────────────────────────

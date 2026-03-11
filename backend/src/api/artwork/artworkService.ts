@@ -263,6 +263,8 @@ export class ArtworkService {
         );
       }
 
+      // Disconnect scans and saved artworks before deleting
+      await this.artworkRepository.disconnectRelations(id);
       await this.artworkRepository.delete(id);
       return ServiceResponse.success('Artwork deleted', null);
     } catch (ex) {

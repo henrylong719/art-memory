@@ -85,7 +85,14 @@ export class AuthService {
         );
       }
 
-      // Verify password
+      // Verify password (social-only users have no passwordHash)
+      if (!user.passwordHash) {
+        return ServiceResponse.failure(
+          'This account uses social login. Please sign in with Google or Facebook.',
+          null,
+          StatusCodes.UNAUTHORIZED,
+        );
+      }
       const isValidPassword = await bcrypt.compare(
         data.password,
         user.passwordHash,
@@ -113,6 +120,132 @@ export class AuthService {
       logger.error(errorMessage);
       return ServiceResponse.failure(
         'An error occurred during login.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async socialLogin(data: {
+    provider: 'google' | 'facebook';
+    token: string;
+  }): Promise<ServiceResponse<AuthResponse | null>> {
+    try {
+      // Verify token with provider and get profile
+      let profile: {
+        id: string;
+        email: string;
+        firstName?: string;
+        lastName?: string;
+        avatarUrl?: string;
+      };
+
+      if (data.provider === 'google') {
+        const res = await fetch(
+          `https://www.googleapis.com/oauth2/v3/userinfo`,
+          { headers: { Authorization: `Bearer ${data.token}` } },
+        );
+        if (!res.ok) {
+          return ServiceResponse.failure(
+            'Invalid Google token',
+            null,
+            StatusCodes.UNAUTHORIZED,
+          );
+        }
+        const gUser = (await res.json()) as {
+          sub: string;
+          email: string;
+          given_name?: string;
+          family_name?: string;
+          picture?: string;
+        };
+        profile = {
+          id: gUser.sub,
+          email: gUser.email,
+          firstName: gUser.given_name,
+          lastName: gUser.family_name,
+          avatarUrl: gUser.picture,
+        };
+      } else {
+        const res = await fetch(
+          `https://graph.facebook.com/me?fields=id,email,first_name,last_name,picture.type(large)&access_token=${data.token}`,
+        );
+        if (!res.ok) {
+          return ServiceResponse.failure(
+            'Invalid Facebook token',
+            null,
+            StatusCodes.UNAUTHORIZED,
+          );
+        }
+        const fbUser = (await res.json()) as {
+          id: string;
+          email?: string;
+          first_name?: string;
+          last_name?: string;
+          picture?: { data?: { url?: string } };
+        };
+        if (!fbUser.email) {
+          return ServiceResponse.failure(
+            'Email permission is required from Facebook',
+            null,
+            StatusCodes.BAD_REQUEST,
+          );
+        }
+        profile = {
+          id: fbUser.id,
+          email: fbUser.email,
+          firstName: fbUser.first_name,
+          lastName: fbUser.last_name,
+          avatarUrl: fbUser.picture?.data?.url,
+        };
+      }
+
+      const normalizedEmail = this.normalizeEmail(profile.email);
+      const providerIdField =
+        data.provider === 'google' ? 'googleId' : 'facebookId';
+
+      // Check if user exists by social ID or email
+      let user = await this.authRepository.findUserBySocialId(
+        providerIdField,
+        profile.id,
+      );
+
+      if (!user) {
+        // Check if email already exists (link accounts)
+        const existingByEmail =
+          await this.authRepository.findUserByEmail(normalizedEmail);
+
+        if (existingByEmail) {
+          // Link social account to existing user
+          user = await this.authRepository.linkSocialId(
+            existingByEmail.id,
+            providerIdField,
+            profile.id,
+            profile.avatarUrl,
+          );
+        } else {
+          // Create new user
+          user = await this.authRepository.createSocialUser({
+            email: normalizedEmail,
+            [providerIdField]: profile.id,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            avatarUrl: profile.avatarUrl,
+          });
+        }
+      }
+
+      const tokens = await this.generateTokens(user.id, user.email);
+
+      return ServiceResponse.success<AuthResponse>('Login successful', {
+        user,
+        tokens,
+      });
+    } catch (ex) {
+      const errorMessage = `Error during social login: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred during social login.',
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );

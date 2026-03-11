@@ -125,6 +125,13 @@ class ScanController {
     const serviceResponse = await scanService.correctScan(id, userId, req.body);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
+
+  public deleteScan: RequestHandler = async (req: Request, res: Response) => {
+    const userId = req.user!.userId;
+    const id = req.params.id as string;
+    const serviceResponse = await scanService.deleteScan(id, userId);
+    res.status(serviceResponse.statusCode).send(serviceResponse);
+  };
 }
 
 export const scanController = new ScanController();

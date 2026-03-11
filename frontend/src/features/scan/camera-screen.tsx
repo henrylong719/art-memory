@@ -54,21 +54,24 @@ const BAR_HEIGHT_LANDSCAPE = 96; // h-24
 
 async function cropToFrame(
   uri: string,
-  rawW: number,
-  rawH: number,
+  _rawW: number,
+  _rawH: number,
   screenW: number,
   screenH: number,
   frameWidthFraction: number,
   frameAspectWH: number,
 ): Promise<{ uri: string; isLandscape: boolean }> {
-  // manipulateAsync normalises EXIF orientation.
-  // If the raw dims don't match the screen orientation, swap them so
-  // our coordinate math aligns with the post-EXIF pixel grid.
-  const screenIsPortrait = screenH > screenW;
-  const photoMatchesScreen = (rawH > rawW) === screenIsPortrait;
-  const photoW = photoMatchesScreen ? rawW : rawH;
-  const photoH = photoMatchesScreen ? rawH : rawW;
+  // First pass: force EXIF orientation normalization by applying a no-op
+  // rotation. An empty actions array may skip processing, but rotate(0)
+  // forces the image through the pipeline, baking EXIF rotation into pixels.
+  const normalized = await manipulateAsync(uri, [{ rotate: 0 }], {
+    format: SaveFormat.JPEG,
+    compress: 1,
+  });
+  const photoW = normalized.width;
+  const photoH = normalized.height;
 
+  const screenIsPortrait = screenH > screenW;
   const bottomBarH = screenIsPortrait
     ? BAR_HEIGHT_PORTRAIT
     : BAR_HEIGHT_LANDSCAPE;
@@ -77,10 +80,12 @@ async function cropToFrame(
   const frameScreenW = screenW * frameWidthFraction;
   const frameScreenH = frameScreenW / frameAspectWH;
 
-  // Frame position – centred in the viewfinder area (screen minus bottom bar)
+  // Frame position – centred in the viewfinder area (screen minus bottom bar),
+  // shifted down by 40px (paddingTop on the overlay container)
+  const FRAME_OFFSET_Y = 40;
   const viewfinderH = screenH - bottomBarH;
   const frameScreenX = (screenW - frameScreenW) / 2;
-  const frameScreenY = (viewfinderH - frameScreenH) / 2;
+  const frameScreenY = (viewfinderH - frameScreenH) / 2 + FRAME_OFFSET_Y / 2;
 
   // Camera preview uses "cover" scaling
   const scale = Math.max(screenW / photoW, screenH / photoH);
@@ -93,13 +98,14 @@ async function cropToFrame(
   const width = Math.min(Math.round(frameScreenW / scale), photoW - originX);
   const height = Math.min(Math.round(frameScreenH / scale), photoH - originY);
 
+  // Second pass: crop the EXIF-normalized image
   const result = await manipulateAsync(
-    uri,
+    normalized.uri,
     [{ crop: { originX, originY, width, height } }],
     { format: SaveFormat.JPEG, compress: 0.85 },
   );
 
-  return { uri: result.uri, isLandscape: width > height };
+  return { uri: result.uri, isLandscape: result.width > result.height };
 }
 
 // ─── Main Screen ─────────────────────────────────────────
@@ -252,7 +258,7 @@ export function CameraScreen() {
 
     const photo = await cameraRef.current.takePictureAsync({
       quality: 0.85,
-      skipProcessing: false,
+      skipProcessing: true,
     });
 
     if (!photo?.uri) return;
@@ -266,13 +272,13 @@ export function CameraScreen() {
     if (isLandscape) {
       const bottomBarH = 96; // h-24 in landscape
       const viewfinderH = screenHeight - bottomBarH;
-      const heightPct = isArtworkStep ? 0.75 : 0.8;
+      const heightPct = 0.85;
       const frameH = viewfinderH * heightPct;
       const frameW = frameH * (4 / 3);
       frameWidthFraction = frameW / screenWidth;
       frameAspect = 4 / 3;
     } else {
-      frameWidthFraction = isArtworkStep ? 0.75 : 0.85;
+      frameWidthFraction = isArtworkStep ? 0.85 : 0.9;
       frameAspect = isArtworkStep ? 3 / 4 : 4 / 5;
     }
 
@@ -305,7 +311,15 @@ export function CameraScreen() {
       setArtworkIsLandscape(photoIsLandscape);
       await processScan(croppedUri);
     }
-  }, [processing, isCombined, isArtworkStep, artworkUri, processScan, screenWidth, screenHeight]);
+  }, [
+    processing,
+    isCombined,
+    isArtworkStep,
+    artworkUri,
+    processScan,
+    screenWidth,
+    screenHeight,
+  ]);
 
   // ── Back ──
   const handleBack = () => {
@@ -392,7 +406,11 @@ export function CameraScreen() {
       </View>
 
       {/* ── Viewfinder overlay ── */}
-      <View className="flex-1 items-center justify-center" pointerEvents="none">
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ paddingTop: 40 }}
+        pointerEvents="none"
+      >
         {/* Dimmed area around frame */}
         <View
           style={{
@@ -424,11 +442,11 @@ export function CameraScreen() {
           className={`relative border-2 rounded-xl ${
             isLandscape
               ? isArtworkStep
-                ? 'h-[75%] aspect-4/3'
-                : 'h-[80%] aspect-4/3'
+                ? 'h-[85%] aspect-4/3'
+                : 'h-[85%] aspect-4/3'
               : isArtworkStep
-                ? 'w-[75%] aspect-3/4'
-                : 'w-[85%] aspect-4/5'
+                ? 'w-[85%] aspect-3/4'
+                : 'w-[90%] aspect-4/5'
           }`}
           style={{
             borderColor: 'rgba(255,255,255,0.45)',
@@ -471,7 +489,7 @@ export function CameraScreen() {
         <View
           style={{
             position: 'absolute',
-            bottom: isLandscape ? 12 : 100,
+            bottom: isLandscape ? 12 : 50,
             left: 0,
             right: 0,
             alignItems: 'center',

@@ -3,6 +3,7 @@ import express, { type Router } from 'express';
 import {
   RegisterSchema,
   LoginSchema,
+  SocialLoginSchema,
   RefreshTokenSchema,
   AuthResponseSchema,
 } from '@/api/auth/authModel';
@@ -46,6 +47,27 @@ authRegistry.registerPath({
 });
 
 authRouter.post('/login', validateRequest(LoginSchema), authController.login);
+
+// POST /auth/social
+authRegistry.registerPath({
+  method: 'post',
+  path: '/auth/social',
+  tags: ['Auth'],
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: SocialLoginSchema.shape.body },
+      },
+    },
+  },
+  responses: createApiResponse(AuthResponseSchema, 'Social login successful'),
+});
+
+authRouter.post(
+  '/social',
+  validateRequest(SocialLoginSchema),
+  authController.socialLogin,
+);
 
 // POST /auth/refresh
 authRegistry.registerPath({

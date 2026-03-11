@@ -24,6 +24,13 @@ export const LoginSchema = z.object({
   }),
 });
 
+export const SocialLoginSchema = z.object({
+  body: z.object({
+    provider: z.enum(['google', 'facebook']),
+    token: z.string().min(1, 'Token is required'),
+  }),
+});
+
 export const RefreshTokenSchema = z.object({
   body: z.object({
     refreshToken: z.string().min(1, 'Refresh token is required'),

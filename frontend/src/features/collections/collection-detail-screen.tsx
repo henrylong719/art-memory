@@ -1,25 +1,24 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { forwardRef, useRef, useState, type RefObject } from 'react';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
+  Check,
   ChevronLeft,
   LayoutGrid,
   List,
   MoreHorizontal,
-  Trash2,
 } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Modal,
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
-import { renderBackdrop } from '@/components/ui/modal';
 import {
   useCollection,
   useDeleteCollection,
@@ -56,7 +55,10 @@ function GridItem({
       style={{ width: COLUMN_WIDTH }}
     >
       <Pressable onPress={onPress} className="gap-2 active:opacity-80">
-        <View className="rounded-2xl overflow-hidden bg-stone-200">
+        <View
+          className="rounded-2xl overflow-hidden bg-stone-200"
+          style={{ width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.25 }}
+        >
           {imageUrl ? (
             <Image
               source={{ uri: imageUrl }}
@@ -65,10 +67,7 @@ function GridItem({
               transition={300}
             />
           ) : (
-            <View
-              style={{ width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.25 }}
-              className="items-center justify-center"
-            >
+            <View className="w-full h-full items-center justify-center">
               <Text className="text-stone-400 text-xs">No image</Text>
             </View>
           )}
@@ -161,61 +160,6 @@ function ListItem({
   );
 }
 
-// ─── Options Sheet ───────────────────────────────────────
-const OptionsSheet = forwardRef<
-  BottomSheetModal,
-  { collectionId: string; onDeleted: () => void }
->(({ collectionId, onDeleted }, ref) => {
-  const deleteCollection = useDeleteCollection();
-
-  const handleDelete = () => {
-    deleteCollection.mutate(collectionId, {
-      onSuccess: () => {
-        (ref as RefObject<BottomSheetModal>)?.current?.dismiss();
-        onDeleted();
-      },
-    });
-  };
-
-  return (
-    <BottomSheetModal
-      ref={ref}
-      index={0}
-      snapPoints={['25%']}
-      backdropComponent={renderBackdrop}
-      enableDynamicSizing={false}
-      handleComponent={() => (
-        <View className="items-center pt-3 pb-2">
-          <View className="w-10 h-1 bg-stone-200 rounded-full" />
-        </View>
-      )}
-    >
-      <BottomSheetView className="flex-1 px-6 pb-8">
-        <Pressable
-          onPress={handleDelete}
-          disabled={deleteCollection.isPending}
-          className="flex-row items-center gap-4 py-4 active:opacity-70"
-        >
-          <View className="w-10 h-10 rounded-full bg-red-50 items-center justify-center">
-            <Trash2 size={18} color="#ef4444" />
-          </View>
-          <View className="flex-1">
-            <Text className="text-red-600 font-medium text-base">
-              Delete Collection
-            </Text>
-            <Text className="text-stone-400 text-xs mt-0.5">
-              This action cannot be undone
-            </Text>
-          </View>
-          {deleteCollection.isPending && (
-            <ActivityIndicator size="small" color="#ef4444" />
-          )}
-        </Pressable>
-      </BottomSheetView>
-    </BottomSheetModal>
-  );
-});
-
 // ─── Main Screen ─────────────────────────────────────────
 export function CollectionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -226,8 +170,10 @@ export function CollectionDetailScreen() {
   const { data: savedArtworks, isLoading: loadingSaved } =
     useSavedArtworksByCollection(id);
 
+  const deleteCollection = useDeleteCollection();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const optionsRef = useRef<BottomSheetModal>(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const isLoading = loadingCollection || loadingSaved;
 
@@ -257,6 +203,19 @@ export function CollectionDetailScreen() {
 
   const artworkCount = savedArtworks?.length ?? 0;
 
+  const handleDelete = () => {
+    deleteCollection.mutate(id, {
+      onSuccess: () => {
+        setDeleteConfirmVisible(false);
+        setShowSuccessToast(true);
+        setTimeout(() => {
+          setShowSuccessToast(false);
+          router.back();
+        }, 1800);
+      },
+    });
+  };
+
   const navigateToArtwork = (item: SavedArtwork) => {
     if (item.artwork?.id) {
       router.push(`/artworks/${item.artwork.id}`);
@@ -266,7 +225,10 @@ export function CollectionDetailScreen() {
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View style={{ paddingTop: insets.top }} className="bg-stone-50/90 px-6 pb-4 flex-row justify-between items-center border-b border-stone-200/50">
+      <View
+        style={{ paddingTop: insets.top }}
+        className="bg-stone-50/90 px-6 pb-4 flex-row justify-between items-center border-b border-stone-200/50"
+      >
         <Pressable
           onPress={() => router.back()}
           className="p-2 -ml-2 rounded-full active:bg-stone-200/50"
@@ -281,7 +243,7 @@ export function CollectionDetailScreen() {
           {collection.name}
         </Text>
         <Pressable
-          onPress={() => optionsRef.current?.present()}
+          onPress={() => setDeleteConfirmVisible(true)}
           className="p-2 -mr-2 rounded-full active:bg-stone-200/50"
           hitSlop={8}
         >
@@ -390,11 +352,91 @@ export function CollectionDetailScreen() {
         }
       />
 
-      <OptionsSheet
-        ref={optionsRef}
-        collectionId={id}
-        onDeleted={() => router.back()}
-      />
+      {/* ── Success toast ── */}
+      {showSuccessToast && (
+        <Motion.View
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'timing', duration: 300 }}
+          style={{ top: insets.top + 12 }}
+          className="absolute left-0 right-0 z-120 items-center"
+        >
+          <View
+            className="bg-stone-900 flex-row items-center gap-2.5 px-5 py-3 rounded-full"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <View className="w-5 h-5 rounded-full bg-white/20 items-center justify-center">
+              <Check size={12} color="#fff" strokeWidth={3} />
+            </View>
+            <Text className="text-sm font-medium text-white tracking-wide">
+              Collection deleted
+            </Text>
+          </View>
+        </Motion.View>
+      )}
+
+      {/* ── Delete confirmation modal ── */}
+      <Modal
+        visible={deleteConfirmVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setDeleteConfirmVisible(false)}
+      >
+        <Pressable
+          onPress={() => setDeleteConfirmVisible(false)}
+          className="flex-1 bg-stone-900/40 items-center justify-center px-6"
+        >
+          <Pressable
+            onPress={() => {}}
+            className="w-full max-w-[320px] bg-white rounded-4xl p-7 items-center"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.15,
+              shadowRadius: 24,
+              elevation: 12,
+            }}
+          >
+            <Text className="font-serif text-2xl font-medium text-stone-900 text-center mb-3">
+              Delete Collection?
+            </Text>
+            <Text className="text-[15px] text-stone-400 text-center leading-6 mb-8">
+              This collection and all its saved artworks will be permanently
+              removed. This action cannot be undone.
+            </Text>
+            <View className="w-full gap-3">
+              <Pressable
+                onPress={handleDelete}
+                disabled={deleteCollection.isPending}
+                className="w-full py-4 bg-red-50 rounded-2xl items-center active:bg-red-100"
+              >
+                {deleteCollection.isPending ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <Text className="text-red-600 font-semibold text-[15px]">
+                    Delete
+                  </Text>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => setDeleteConfirmVisible(false)}
+                className="w-full py-4 bg-stone-100 rounded-2xl items-center active:bg-stone-200"
+              >
+                <Text className="text-stone-700 font-semibold text-[15px]">
+                  Cancel
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

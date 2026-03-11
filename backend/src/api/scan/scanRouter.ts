@@ -95,3 +95,14 @@ scanRouter.put(
   validateRequest(CorrectScanSchema),
   scanController.correctScan,
 );
+
+// DELETE /scans/:id
+scanRegistry.registerPath({
+  method: 'delete',
+  path: '/scans/{id}',
+  tags: ['Scan'],
+  request: { params: GetScanSchema.shape.params },
+  responses: createApiResponse(z.null(), 'Scan deleted'),
+});
+
+scanRouter.delete('/:id', validateRequest(GetScanSchema), scanController.deleteScan);

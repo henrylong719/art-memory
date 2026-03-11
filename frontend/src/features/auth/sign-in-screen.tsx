@@ -8,6 +8,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { Motion } from '@legendapp/motion';
 import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useLogin } from '@/lib/hooks/use-auth';
 
 export function SignInScreen() {
@@ -125,13 +126,16 @@ export function SignInScreen() {
           </View>
 
           {/* Forgot password */}
-          <View className="items-end mb-8">
+          <View className="items-end mb-6">
             <Pressable hitSlop={8}>
               <Text className="text-[13px] font-medium text-stone-500">
                 Forgot password?
               </Text>
             </Pressable>
           </View>
+
+          {/* Social login */}
+          <SocialLoginButtons />
 
           {/* Error */}
           {errorMessage ? (

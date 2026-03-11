@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Bookmark,
+  Check,
   ChevronLeft,
   Clock,
   ExternalLink,
@@ -44,6 +45,7 @@ import { renderBackdrop } from '@/components/ui/modal';
 import {
   useArtwork,
   useCollections,
+  useDeleteArtwork,
   useSaveArtwork,
   useSavedArtworks,
   useRemoveSavedArtwork,
@@ -65,11 +67,16 @@ export function ArtworkDetailScreen() {
   const saveArtwork = useSaveArtwork();
   const removeSavedArtwork = useRemoveSavedArtwork();
 
+  const deleteArtwork = useDeleteArtwork();
+
   const [imageAspect, setImageAspect] = useState<number | null>(null);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const scrollY = useSharedValue(0);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const lastTapRef = useRef(0);
 
   // Check if already saved
   const savedEntry = useMemo(
@@ -130,6 +137,19 @@ export function ArtworkDetailScreen() {
       { artworkId: id, collectionId },
       { onSuccess: () => bottomSheetRef.current?.dismiss() },
     );
+  };
+
+  const handleDelete = () => {
+    deleteArtwork.mutate(id, {
+      onSuccess: () => {
+        setDeleteConfirmVisible(false);
+        setShowSuccessToast(true);
+        setTimeout(() => {
+          setShowSuccessToast(false);
+          router.back();
+        }, 1800);
+      },
+    });
   };
 
   // ── Loading ──
@@ -226,7 +246,13 @@ export function ArtworkDetailScreen() {
         {/* Hero image */}
         <View style={{ height: heroHeight, overflow: 'hidden' }}>
           <Animated.View style={heroStyle}>
-            <Pressable onPress={() => setFullscreenVisible(true)}>
+            <Pressable onPress={() => {
+                const now = Date.now();
+                if (now - lastTapRef.current < 300) {
+                  setFullscreenVisible(true);
+                }
+                lastTapRef.current = now;
+              }}>
               <Image
                 source={artwork.imageUrl ?? ''}
                 style={{ width: '100%', height: heroHeight + 80 }}
@@ -400,6 +426,18 @@ export function ArtworkDetailScreen() {
               <ExternalLink size={18} color="#969696" />
             </Pressable>
           ) : null}
+
+          {/* Remove artwork */}
+          <View className="mt-12 pt-8 border-t border-neutral-200/60 items-center pb-8">
+            <Pressable
+              onPress={() => setDeleteConfirmVisible(true)}
+              className="px-6 py-2.5 rounded-full active:bg-red-50"
+            >
+              <Text className="text-sm font-medium text-charcoal-400">
+                Remove Artwork
+              </Text>
+            </Pressable>
+          </View>
         </Motion.View>
       </Animated.ScrollView>
 
@@ -440,6 +478,92 @@ export function ArtworkDetailScreen() {
         onSelect={handleSaveToCollection}
         isPending={saveArtwork.isPending}
       />
+
+      {/* ── Success toast ── */}
+      {showSuccessToast && (
+        <Motion.View
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'timing', duration: 300 }}
+          style={{ top: insets.top + 12 }}
+          className="absolute left-0 right-0 z-120 items-center"
+        >
+          <View
+            className="bg-charcoal-900 flex-row items-center gap-2.5 px-5 py-3 rounded-full"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
+          >
+            <View className="w-5 h-5 rounded-full bg-white/20 items-center justify-center">
+              <Check size={12} color="#fff" strokeWidth={3} />
+            </View>
+            <Text className="text-sm font-medium text-white tracking-wide">
+              Artwork removed
+            </Text>
+          </View>
+        </Motion.View>
+      )}
+
+      {/* ── Delete confirmation modal ── */}
+      <Modal
+        visible={deleteConfirmVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setDeleteConfirmVisible(false)}
+      >
+        <Pressable
+          onPress={() => setDeleteConfirmVisible(false)}
+          className="flex-1 bg-charcoal-900/40 items-center justify-center px-6"
+        >
+          <Pressable
+            onPress={() => {}}
+            className="w-full max-w-[320px] bg-white rounded-4xl p-7 items-center"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.15,
+              shadowRadius: 24,
+              elevation: 12,
+            }}
+          >
+            <Text className="font-serif text-2xl font-medium text-charcoal-900 text-center mb-3">
+              Remove Artwork?
+            </Text>
+            <Text className="text-[15px] text-charcoal-400 text-center leading-6 mb-8">
+              This artwork will be removed from your saved artworks or
+              collection. This action cannot be undone.
+            </Text>
+            <View className="w-full gap-3">
+              <Pressable
+                onPress={handleDelete}
+                disabled={deleteArtwork.isPending}
+                className="w-full py-4 bg-red-50 rounded-2xl items-center active:bg-red-100"
+              >
+                {deleteArtwork.isPending ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <Text className="text-red-600 font-semibold text-[15px]">
+                    Remove
+                  </Text>
+                )}
+              </Pressable>
+              <Pressable
+                onPress={() => setDeleteConfirmVisible(false)}
+                className="w-full py-4 bg-charcoal-50 rounded-2xl items-center active:bg-charcoal-100"
+              >
+                <Text className="text-charcoal-700 font-semibold text-[15px]">
+                  Cancel
+                </Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

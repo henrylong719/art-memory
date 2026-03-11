@@ -147,7 +147,7 @@ export function ScanHistoryScreen() {
         </View>
       ) : (
         <FlatList
-          data={scans ?? []}
+          data={scans?.filter((s) => s.artwork) ?? []}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingHorizontal: 24,

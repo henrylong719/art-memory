@@ -6,6 +6,7 @@ import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
+import { useDeleteScan } from '@/lib/hooks';
 
 export function ScanFallbackScreen() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export function ScanFallbackScreen() {
     scanImageUrl?: string;
     scanId?: string;
   }>();
+  const deleteScan = useDeleteScan();
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -100,7 +102,12 @@ export function ScanFallbackScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.replace('/(app)')}
+              onPress={() => {
+                if (scanId) {
+                  deleteScan.mutate(scanId);
+                }
+                router.replace('/(app)');
+              }}
               className="w-full py-4 rounded-2xl items-center active:bg-charcoal-50"
             >
               <Text className="text-charcoal-400 font-semibold text-lg">

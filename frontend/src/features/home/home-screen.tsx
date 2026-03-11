@@ -29,7 +29,7 @@ export function HomeScreen() {
   const artworks = useArtworks();
   const nearby = useNearbyMuseums();
 
-  const recentScans = scans.data?.slice(0, 6) ?? [];
+  const recentScans = scans.data?.filter((s) => s.artwork).slice(0, 6) ?? [];
   const featuredArtworks = artworks.data?.slice(0, 8) ?? [];
   const nearbyMuseum = nearby.data?.[0] ?? null;
 

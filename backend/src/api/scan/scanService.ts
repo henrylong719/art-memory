@@ -5,7 +5,7 @@ import { AiUsageLogRepository } from '@/api/scan/aiUsageLogRepository';
 import { ArtworkRepository } from '@/api/artwork/artworkRepository';
 import { ArtistRepository } from '@/api/artist/artistRepository';
 import { ServiceResponse } from '@/common/models/serviceResponse';
-import { uploadToS3 } from '@/common/services/s3';
+import { uploadToS3, deleteFromS3 } from '@/common/services/s3';
 import {
   identifyArtwork,
   extractLabel,
@@ -323,6 +323,52 @@ export class ScanService {
       logger.error(`Error correcting scan ${id}: ${(ex as Error).message}`);
       return ServiceResponse.failure(
         'An error occurred while correcting scan.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // ─── Delete Scan ────────────────────────────────────────
+
+  async deleteScan(id: string, userId: string) {
+    try {
+      const scan = await this.scanRepository.findById(id);
+      if (!scan) {
+        return ServiceResponse.failure(
+          'Scan not found',
+          null,
+          StatusCodes.NOT_FOUND,
+        );
+      }
+
+      if (scan.userId !== userId) {
+        return ServiceResponse.failure(
+          'Scan not found',
+          null,
+          StatusCodes.NOT_FOUND,
+        );
+      }
+
+      // Delete S3 images
+      try {
+        await deleteFromS3(scan.imageUrl);
+        if (scan.labelImageUrl) {
+          await deleteFromS3(scan.labelImageUrl);
+        }
+      } catch (ex) {
+        logger.error(
+          `Failed to delete S3 images for scan ${id}: ${(ex as Error).message}`,
+        );
+      }
+
+      await this.scanRepository.delete(id);
+
+      return ServiceResponse.success('Scan deleted', null);
+    } catch (ex) {
+      logger.error(`Error deleting scan ${id}: ${(ex as Error).message}`);
+      return ServiceResponse.failure(
+        'An error occurred while deleting scan.',
         null,
         StatusCodes.INTERNAL_SERVER_ERROR,
       );

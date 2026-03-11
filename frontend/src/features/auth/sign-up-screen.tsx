@@ -8,6 +8,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Motion } from '@legendapp/motion';
 
 import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useRegister } from '@/lib/hooks/use-auth';
 
 // TextInput is not wrapped with withUniwind so it doesn't support className.
@@ -176,6 +177,9 @@ export function SignUpScreen() {
               </View>
             </View>
           </View>
+
+          {/* Social login */}
+          <SocialLoginButtons />
 
           {/* Error */}
           {errorMessage ? (
