@@ -9,6 +9,7 @@ import {
   extractUsageInfo,
 } from '@/common/services/openai';
 import { logger } from '@/server';
+import { STORY_LIMITS } from '@/common/config/storyLimit';
 
 export class ArtworkService {
   private artworkRepository: ArtworkRepository;
@@ -279,13 +280,6 @@ export class ArtworkService {
     }
   }
 
-  // ── Story generation limits per plan (per day) ──
-  private static readonly STORY_LIMITS: Record<string, number> = {
-    FREE: 3,
-    MONTHLY: 20,
-    YEARLY: 50,
-  };
-
   // Minimum seconds between generations per user
   private static readonly COOLDOWN_SECONDS = 60;
 
@@ -339,8 +333,7 @@ export class ArtworkService {
         startOfDay,
       );
 
-      const dailyLimit =
-        ArtworkService.STORY_LIMITS[plan] ?? ArtworkService.STORY_LIMITS.FREE;
+      const dailyLimit = STORY_LIMITS[plan] ?? STORY_LIMITS.FREE;
 
       if (todayCount >= dailyLimit) {
         return ServiceResponse.failure(
