@@ -67,3 +67,15 @@ export function useLogout() {
     },
   });
 }
+
+export function useLogoutAll() {
+  return useMutation({
+    mutationFn: async () => {
+      await authApi.logoutAll();
+    },
+    onSettled: () => {
+      removeToken();
+      signOut();
+    },
+  });
+}

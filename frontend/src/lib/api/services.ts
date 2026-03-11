@@ -29,6 +29,9 @@ export const authApi = {
   logout: (refreshToken: string) =>
     client.post<ApiResponse<null>>('/auth/logout', { refreshToken }),
 
+  logoutAll: () =>
+    client.post<ApiResponse<null>>('/auth/logout-all'),
+
   socialLogin: (data: { provider: 'google' | 'facebook'; token: string }) =>
     client.post<ApiResponse<AuthResponse>>('/auth/social', data),
 };

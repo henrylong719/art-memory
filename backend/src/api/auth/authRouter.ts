@@ -9,6 +9,7 @@ import {
 } from '@/api/auth/authModel';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import { validateRequest } from '@/common/utils/httpHandlers';
+import { authenticate } from '@/common/middleware/authenticate';
 import { authController } from './authController';
 
 export const authRegistry = new OpenAPIRegistry();
@@ -110,3 +111,13 @@ authRouter.post(
   validateRequest(RefreshTokenSchema),
   authController.logout,
 );
+
+// POST /auth/logout-all (requires authentication)
+authRegistry.registerPath({
+  method: 'post',
+  path: '/auth/logout-all',
+  tags: ['Auth'],
+  responses: createApiResponse(AuthResponseSchema, 'Logged out of all devices'),
+});
+
+authRouter.post('/logout-all', authenticate, authController.logoutAll);

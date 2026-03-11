@@ -317,6 +317,21 @@ export class AuthService {
     }
   }
 
+  async logoutAll(userId: string): Promise<ServiceResponse<null>> {
+    try {
+      await this.authRepository.deleteAllUserRefreshTokens(userId);
+      return ServiceResponse.success('Logged out of all devices', null);
+    } catch (ex) {
+      const errorMessage = `Error during logout all: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred during logout.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // ─── Private helpers ───────────────────────────────────
 
   private async generateTokens(userId: string, email: string) {

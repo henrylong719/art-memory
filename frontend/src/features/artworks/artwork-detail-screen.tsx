@@ -23,6 +23,7 @@ import {
   Plus,
   Ruler,
   Share2,
+  Sparkles,
   X,
 } from 'lucide-react-native';
 import {
@@ -46,6 +47,7 @@ import {
   useArtwork,
   useCollections,
   useDeleteArtwork,
+  useGenerateStory,
   useSaveArtwork,
   useSavedArtworks,
   useRemoveSavedArtwork,
@@ -68,6 +70,7 @@ export function ArtworkDetailScreen() {
   const removeSavedArtwork = useRemoveSavedArtwork();
 
   const deleteArtwork = useDeleteArtwork();
+  const generateStory = useGenerateStory();
 
   const [imageAspect, setImageAspect] = useState<number | null>(null);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
@@ -359,16 +362,89 @@ export function ArtworkDetailScreen() {
           </View>
 
           {/* About */}
-          {artwork.description ? (
-            <View className="mb-8">
-              <Text className="font-serif text-xl font-semibold text-charcoal-900 mb-3">
-                About
-              </Text>
-              <Text className="text-[15px] leading-6 text-charcoal-500">
-                {artwork.description}
-              </Text>
-            </View>
-          ) : null}
+          <View className="mb-8">
+            <Text className="font-serif text-xl font-semibold text-charcoal-900 mb-3">
+              About
+            </Text>
+
+            {/* Has description */}
+            {artwork.description ? (
+              <View>
+                <Text className="text-[15px] leading-6 text-charcoal-500">
+                  {artwork.description}
+                </Text>
+                {artwork.description.length > 200 && (
+                  <View className="flex-row items-center gap-1.5 mt-3">
+                    <Sparkles size={12} color="#a8a29e" />
+                    <Text className="text-xs font-medium text-charcoal-400">
+                      AI Generated
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ) : generateStory.isPending ? (
+              /* Generating skeleton */
+              <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
+                <View className="w-12 h-12 bg-white rounded-full items-center justify-center mb-4"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                    elevation: 1,
+                  }}
+                >
+                  <ActivityIndicator size="small" color="#1c1917" />
+                </View>
+                <View className="w-full gap-3 mb-5 px-4 opacity-50">
+                  <View className="h-2.5 bg-neutral-200 rounded-full w-full" />
+                  <View className="h-2.5 bg-neutral-200 rounded-full w-[85%] self-center" />
+                  <View className="h-2.5 bg-neutral-200 rounded-full w-[60%] self-center" />
+                </View>
+                <View className="bg-neutral-200 px-5 py-2.5 rounded-xl">
+                  <Text className="text-sm font-medium text-charcoal-400">
+                    Generating...
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              /* No description — generate CTA */
+              <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
+                <View className="w-12 h-12 bg-white rounded-full items-center justify-center mb-3"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                    elevation: 1,
+                  }}
+                >
+                  <Sparkles size={20} color="#a8a29e" />
+                </View>
+                <Text className="text-charcoal-900 font-medium mb-1">
+                  No story available yet
+                </Text>
+                <Text className="text-charcoal-400 text-sm text-center mb-5 max-w-[200px] leading-5">
+                  Use AI to generate a short story and context for this artwork
+                </Text>
+                <Pressable
+                  onPress={() => generateStory.mutate(id)}
+                  className="bg-charcoal-900 px-5 py-2.5 rounded-xl active:bg-charcoal-800"
+                  style={{
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}
+                >
+                  <Text className="text-white text-sm font-medium">
+                    Generate Story
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
 
           {/* Details grid */}
           <View className="mb-8">

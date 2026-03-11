@@ -19,6 +19,8 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withSequence,
+  withDelay,
+  withSpring,
   withTiming,
   ZoomIn,
 } from 'react-native-reanimated';
@@ -130,6 +132,30 @@ export function CameraScreen() {
   const [artworkIsLandscape, setArtworkIsLandscape] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processingUri, setProcessingUri] = useState<string | null>(null);
+
+  // Frame bounce animation
+  const frameScale = useSharedValue(0.75);
+  const frameOpacity = useSharedValue(0);
+  const frameStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: frameScale.value }],
+    opacity: frameOpacity.value,
+  }));
+
+  const isFirstMount = useRef(true);
+
+  useEffect(() => {
+    // Delay on first mount so animation plays after screen transition
+    const delay = isFirstMount.current ? 400 : 0;
+    isFirstMount.current = false;
+
+    frameScale.value = 0.75;
+    frameOpacity.value = 0;
+    frameScale.value = withDelay(
+      delay,
+      withSpring(1, { damping: 18, stiffness: 140, mass: 0.8 }),
+    );
+    frameOpacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
+  }, [step, frameScale, frameOpacity]);
 
   // Scan line animation (replaces @legendapp/motion keyframe array)
   const scanLineY = useSharedValue(0);
@@ -434,11 +460,7 @@ export function CameraScreen() {
         />
 
         {/* Frame cutout */}
-        <Motion.View
-          key={`${step}`}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+        <Animated.View
           className={`relative border-2 rounded-xl ${
             isLandscape
               ? isArtworkStep
@@ -448,15 +470,13 @@ export function CameraScreen() {
                 ? 'w-[85%] aspect-3/4'
                 : 'w-[90%] aspect-4/5'
           }`}
-          style={{
-            borderColor: 'rgba(255,255,255,0.45)',
-          }}
+          style={[frameStyle, { borderColor: 'rgba(255,255,255,0.45)' }]}
         >
           <CornerMarker position="tl" />
           <CornerMarker position="tr" />
           <CornerMarker position="bl" />
           <CornerMarker position="br" />
-        </Motion.View>
+        </Animated.View>
 
         {/* Step indicator for combined mode */}
         {isCombined && (
@@ -489,7 +509,7 @@ export function CameraScreen() {
         <View
           style={{
             position: 'absolute',
-            bottom: isLandscape ? 12 : 50,
+            bottom: isLandscape ? 12 : 150,
             left: 0,
             right: 0,
             alignItems: 'center',

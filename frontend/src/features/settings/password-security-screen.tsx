@@ -9,14 +9,31 @@ import {
   Smartphone,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable } from 'react-native';
+import { ActivityIndicator, Alert, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScrollView, Text, View } from '@/components/ui';
+import { useLogoutAll } from '@/lib/hooks';
 
 export function PasswordSecurityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const logoutAll = useLogoutAll();
+
+  const handleLogoutAll = () => {
+    Alert.alert(
+      'Log Out of All Devices',
+      'This will end all active sessions including this one. You will need to log in again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Out All',
+          style: 'destructive',
+          onPress: () => logoutAll.mutate(),
+        },
+      ],
+    );
+  };
 
   return (
     <View className="flex-1 bg-stone-50">
@@ -158,10 +175,18 @@ export function PasswordSecurityScreen() {
                 </View>
               </View>
               <View className="h-px bg-stone-100 mx-5" />
-              <Pressable className="py-4 items-center active:bg-red-50">
-                <Text className="text-[14px] font-medium text-red-600">
-                  Log Out of All Devices
-                </Text>
+              <Pressable
+                onPress={handleLogoutAll}
+                disabled={logoutAll.isPending}
+                className="py-4 items-center active:bg-red-50"
+              >
+                {logoutAll.isPending ? (
+                  <ActivityIndicator size="small" color="#dc2626" />
+                ) : (
+                  <Text className="text-[14px] font-medium text-red-600">
+                    Log Out of All Devices
+                  </Text>
+                )}
               </Pressable>
             </View>
           </Motion.View>
