@@ -8,7 +8,6 @@ import {
   Dimensions,
   FlatList,
   Pressable,
-  StyleSheet,
   TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -178,8 +177,8 @@ export function ArtworksScreen({
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View className="bg-stone-50/90 px-6 pb-2 pt-16">
-        <View className="flex-row items-center gap-3 mb-6 mt-4">
+      <View className="bg-stone-50/90 px-6 pb-2" style={{ paddingTop: insets.top }}>
+        <View className="flex-row items-center gap-3 mb-6">
           {fromProfile && (
             <Pressable
               onPress={() => router.back()}

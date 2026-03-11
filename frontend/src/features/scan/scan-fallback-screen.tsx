@@ -1,6 +1,6 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { Motion } from '@legendapp/motion';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FileEdit, SearchX, X } from 'lucide-react-native';
 import { Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,11 @@ import { Image, Text, View } from '@/components/ui';
 export function ScanFallbackScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { imageUri, scanImageUrl, scanId } = useLocalSearchParams<{
+    imageUri?: string;
+    scanImageUrl?: string;
+    scanId?: string;
+  }>();
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -39,16 +44,14 @@ export function ScanFallbackScreen() {
             className="w-full rounded-[28px] overflow-hidden bg-charcoal-100 mb-8 mt-4"
             style={{ aspectRatio: 4 / 3 }}
           >
-            {/* 
-              TODO: Pass the scanned image URI via route params or a scan store.
-              For now we show a placeholder. Replace `source` with the actual URI.
-            */}
-            <Image
-              source="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=1080&auto=format&fit=crop"
-              className="w-full h-full"
-              contentFit="cover"
-              style={{ opacity: 0.9 }}
-            />
+            {imageUri && (
+              <Image
+                source={imageUri}
+                className="w-full h-full"
+                contentFit="cover"
+                style={{ opacity: 0.9 }}
+              />
+            )}
             <View className="absolute inset-0 bg-charcoal-900/10" />
 
             {/* Badge */}
@@ -71,7 +74,16 @@ export function ScanFallbackScreen() {
           {/* Actions */}
           <View className="gap-3 mt-auto">
             <Pressable
-              onPress={() => router.push('/scan/manual-entry')}
+              onPress={() => {
+                const params: Record<string, string> = {};
+                if (imageUri) params.imageUri = imageUri;
+                if (scanImageUrl) params.scanImageUrl = scanImageUrl;
+                if (scanId) params.scanId = scanId;
+                router.push({
+                  pathname: '/scan/manual-entry',
+                  params: Object.keys(params).length > 0 ? params : undefined,
+                });
+              }}
               className="w-full py-4 bg-charcoal-900 rounded-2xl flex-row items-center justify-center gap-2.5 active:bg-charcoal-800"
               style={{
                 shadowColor: '#1E1E1E',

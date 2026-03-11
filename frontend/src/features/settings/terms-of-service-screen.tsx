@@ -13,7 +13,7 @@ export function TermsOfServiceScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-stone-50 mt-16">
+    <View className="flex-1 bg-stone-50">
       <View
         style={{ paddingTop: insets.top }}
         className="bg-stone-50 px-6 pb-4 flex-row items-center gap-4 border-b border-stone-200/50"

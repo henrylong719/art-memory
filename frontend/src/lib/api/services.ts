@@ -151,6 +151,7 @@ export const savedArtworkApi = {
     artworkId?: string;
     collectionId?: string;
     personalNote?: string;
+    userPhotoUrl?: string;
     rating?: number;
     customTitle?: string;
     customArtist?: string;
@@ -184,4 +185,16 @@ export const museumApi = {
 
   getById: (id: string) =>
     client.get<ApiResponse<Museum>>(`/museums/${id}`),
+};
+
+// ─── Upload ─────────────────────────────────────────────
+
+export const uploadApi = {
+  image: (imageFile: { uri: string; type: string; name: string }) => {
+    const formData = new FormData();
+    formData.append('image', imageFile as unknown as Blob);
+    return client.post<ApiResponse<{ url: string }>>('/uploads/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };

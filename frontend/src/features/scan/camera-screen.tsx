@@ -3,16 +3,16 @@
 import { Motion, AnimatePresence } from '@legendapp/motion';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import * as Location from 'expo-location';
-import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Image as RNImage,
-  Platform,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -48,6 +48,60 @@ function CornerMarker({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
   );
 }
 
+// ─── Crop photo to viewfinder frame ──────────────────────
+const BAR_HEIGHT_PORTRAIT = 144; // h-36
+const BAR_HEIGHT_LANDSCAPE = 96; // h-24
+
+async function cropToFrame(
+  uri: string,
+  rawW: number,
+  rawH: number,
+  screenW: number,
+  screenH: number,
+  frameWidthFraction: number,
+  frameAspectWH: number,
+): Promise<{ uri: string; isLandscape: boolean }> {
+  // manipulateAsync normalises EXIF orientation.
+  // If the raw dims don't match the screen orientation, swap them so
+  // our coordinate math aligns with the post-EXIF pixel grid.
+  const screenIsPortrait = screenH > screenW;
+  const photoMatchesScreen = (rawH > rawW) === screenIsPortrait;
+  const photoW = photoMatchesScreen ? rawW : rawH;
+  const photoH = photoMatchesScreen ? rawH : rawW;
+
+  const bottomBarH = screenIsPortrait
+    ? BAR_HEIGHT_PORTRAIT
+    : BAR_HEIGHT_LANDSCAPE;
+
+  // Frame size on screen
+  const frameScreenW = screenW * frameWidthFraction;
+  const frameScreenH = frameScreenW / frameAspectWH;
+
+  // Frame position – centred in the viewfinder area (screen minus bottom bar)
+  const viewfinderH = screenH - bottomBarH;
+  const frameScreenX = (screenW - frameScreenW) / 2;
+  const frameScreenY = (viewfinderH - frameScreenH) / 2;
+
+  // Camera preview uses "cover" scaling
+  const scale = Math.max(screenW / photoW, screenH / photoH);
+  const offsetX = (photoW * scale - screenW) / 2;
+  const offsetY = (photoH * scale - screenH) / 2;
+
+  // Map frame screen rect → photo pixel rect
+  const originX = Math.max(0, Math.round((frameScreenX + offsetX) / scale));
+  const originY = Math.max(0, Math.round((frameScreenY + offsetY) / scale));
+  const width = Math.min(Math.round(frameScreenW / scale), photoW - originX);
+  const height = Math.min(Math.round(frameScreenH / scale), photoH - originY);
+
+  const result = await manipulateAsync(
+    uri,
+    [{ crop: { originX, originY, width, height } }],
+    { format: SaveFormat.JPEG, compress: 0.85 },
+  );
+
+  return { uri: result.uri, isLandscape: width > height };
+}
+
 // ─── Main Screen ─────────────────────────────────────────
 export function CameraScreen() {
   const router = useRouter();
@@ -62,39 +116,12 @@ export function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState(false);
 
-  // ── Auto-detect device orientation via accelerometer ──
-  const [frameOrientation, setFrameOrientation] = useState<
-    'portrait' | 'landscape'
-  >('portrait');
-
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-
-    Accelerometer.setUpdateInterval(400); // check ~2.5x per second
-
-    const subscription = Accelerometer.addListener(({ x, y }) => {
-      // |x| > |y| means device is tilted sideways (landscape hold)
-      // Add a threshold to avoid flickering near the boundary
-      const absX = Math.abs(x);
-      const absY = Math.abs(y);
-
-      if (absX > absY + 0.15) {
-        setFrameOrientation((prev) =>
-          prev !== 'landscape' ? 'landscape' : prev,
-        );
-      } else if (absY > absX + 0.15) {
-        setFrameOrientation((prev) =>
-          prev !== 'portrait' ? 'portrait' : prev,
-        );
-      }
-      // If within the dead zone (±0.15), keep the current orientation
-    });
-
-    return () => subscription.remove();
-  }, []);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const isLandscape = screenWidth > screenHeight;
 
   // Captured URIs
   const [artworkUri, setArtworkUri] = useState<string | null>(null);
+  const [artworkIsLandscape, setArtworkIsLandscape] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [processingUri, setProcessingUri] = useState<string | null>(null);
 
@@ -108,12 +135,14 @@ export function CameraScreen() {
     opacity: pulseOpacity.value,
   }));
 
+  const scanLineDistance = artworkIsLandscape ? 200 : 320;
+
   useEffect(() => {
     if (processing) {
       scanLineY.value = 0;
       scanLineY.value = withRepeat(
         withSequence(
-          withTiming(320, { duration: 1000 }),
+          withTiming(scanLineDistance, { duration: 1000 }),
           withTiming(0, { duration: 1000 }),
         ),
         -1,
@@ -128,7 +157,7 @@ export function CameraScreen() {
         false,
       );
     }
-  }, [processing, scanLineY, pulseOpacity]);
+  }, [processing, scanLineY, pulseOpacity, scanLineDistance]);
 
   // Scan mutations
   const scanArtwork = useScanArtwork();
@@ -196,10 +225,20 @@ export function CameraScreen() {
             params: { id: scanResult.artworkId },
           });
         } else {
-          router.replace('/scan/fallback');
+          router.replace({
+            pathname: '/scan/fallback',
+            params: {
+              imageUri: artUri,
+              scanImageUrl: scanResult.imageUrl,
+              scanId: scanResult.id,
+            },
+          });
         }
       } catch {
-        router.replace('/scan/fallback');
+        router.replace({
+          pathname: '/scan/fallback',
+          params: { imageUri: artUri },
+        });
       }
     },
     [isCombined, scanCombined, scanArtwork, getLocation, router],
@@ -218,21 +257,62 @@ export function CameraScreen() {
 
     if (!photo?.uri) return;
 
+    // Crop to the viewfinder frame area.
+    // In landscape the frame flips to a wide aspect ratio (4:3) sized by
+    // height percentage, so we need to compute the equivalent width fraction.
+    let frameWidthFraction: number;
+    let frameAspect: number;
+
+    if (isLandscape) {
+      const bottomBarH = 96; // h-24 in landscape
+      const viewfinderH = screenHeight - bottomBarH;
+      const heightPct = isArtworkStep ? 0.75 : 0.8;
+      const frameH = viewfinderH * heightPct;
+      const frameW = frameH * (4 / 3);
+      frameWidthFraction = frameW / screenWidth;
+      frameAspect = 4 / 3;
+    } else {
+      frameWidthFraction = isArtworkStep ? 0.75 : 0.85;
+      frameAspect = isArtworkStep ? 3 / 4 : 4 / 5;
+    }
+
+    let croppedUri: string;
+    let photoIsLandscape = false;
+    try {
+      const cropped = await cropToFrame(
+        photo.uri,
+        photo.width,
+        photo.height,
+        screenWidth,
+        screenHeight,
+        frameWidthFraction,
+        frameAspect,
+      );
+      croppedUri = cropped.uri;
+      photoIsLandscape = cropped.isLandscape;
+    } catch {
+      croppedUri = photo.uri;
+      photoIsLandscape = (photo.width ?? 0) > (photo.height ?? 0);
+    }
+
     if (isCombined && isArtworkStep) {
-      setArtworkUri(photo.uri);
+      setArtworkUri(croppedUri);
+      setArtworkIsLandscape(photoIsLandscape);
       setStep('details');
     } else if (isCombined && !isArtworkStep && artworkUri) {
-      await processScan(artworkUri, photo.uri);
+      await processScan(artworkUri, croppedUri);
     } else {
-      await processScan(photo.uri);
+      setArtworkIsLandscape(photoIsLandscape);
+      await processScan(croppedUri);
     }
-  }, [processing, isCombined, isArtworkStep, artworkUri, processScan]);
+  }, [processing, isCombined, isArtworkStep, artworkUri, processScan, screenWidth, screenHeight]);
 
   // ── Back ──
   const handleBack = () => {
     if (isCombined && !isArtworkStep) {
       setStep('artwork');
       setArtworkUri(null);
+      setArtworkIsLandscape(false);
     } else {
       router.back();
     }
@@ -321,7 +401,6 @@ export function CameraScreen() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.35)',
           }}
         />
 
@@ -333,33 +412,26 @@ export function CameraScreen() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.15)',
           }}
         />
 
         {/* Frame cutout */}
         <Motion.View
-          key={`${step}-${frameOrientation}`}
+          key={`${step}`}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-          className="relative border-2 rounded-xl"
+          className={`relative border-2 rounded-xl ${
+            isLandscape
+              ? isArtworkStep
+                ? 'h-[75%] aspect-4/3'
+                : 'h-[80%] aspect-4/3'
+              : isArtworkStep
+                ? 'w-[75%] aspect-3/4'
+                : 'w-[85%] aspect-4/5'
+          }`}
           style={{
             borderColor: 'rgba(255,255,255,0.45)',
-            width: isArtworkStep
-              ? frameOrientation === 'portrait'
-                ? '75%'
-                : '90%'
-              : frameOrientation === 'portrait'
-                ? '85%'
-                : '90%',
-            aspectRatio: isArtworkStep
-              ? frameOrientation === 'portrait'
-                ? 3 / 4
-                : 4 / 3
-              : frameOrientation === 'portrait'
-                ? 4 / 5
-                : 5 / 4,
           }}
         >
           <CornerMarker position="tl" />
@@ -399,7 +471,7 @@ export function CameraScreen() {
         <View
           style={{
             position: 'absolute',
-            bottom: 100,
+            bottom: isLandscape ? 12 : 100,
             left: 0,
             right: 0,
             alignItems: 'center',
@@ -429,7 +501,7 @@ export function CameraScreen() {
 
       {/* ── Bottom controls ── */}
       <View
-        className="h-36 bg-black items-center justify-center border-t border-white/10"
+        className={`${isLandscape ? 'h-24' : 'h-36'} bg-black items-center justify-center border-t border-white/10`}
         style={{ paddingBottom: insets.bottom }}
       >
         {/* Artwork preview thumbnail (shows during details step) */}
@@ -438,15 +510,30 @@ export function CameraScreen() {
             entering={ZoomIn.duration(250)}
             className="absolute left-6 top-0 bottom-0 justify-center"
           >
-            <View
-              className="w-14 h-14 rounded-xl overflow-hidden border-2"
-              style={{ borderColor: 'rgba(255,255,255,0.3)' }}
-            >
-              <Image
-                source={artworkUri}
-                className="w-full h-full"
-                contentFit="cover"
-              />
+            <View className="relative">
+              <View
+                className="w-14 h-14 rounded-xl overflow-hidden border-2"
+                style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+              >
+                <Image
+                  source={artworkUri}
+                  className="w-full h-full"
+                  contentFit="cover"
+                />
+              </View>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setArtworkUri(null);
+                  setArtworkIsLandscape(false);
+                  setStep('artwork');
+                }}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full items-center justify-center"
+                style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+                hitSlop={6}
+              >
+                <X size={12} color="#fff" />
+              </Pressable>
             </View>
           </Animated.View>
         )}
@@ -488,8 +575,8 @@ export function CameraScreen() {
             {/* Blurred image card */}
             <View
               style={{
-                width: 260,
-                aspectRatio: 3 / 4,
+                width: artworkIsLandscape ? 300 : 260,
+                aspectRatio: artworkIsLandscape ? 4 / 3 : 3 / 4,
                 borderRadius: 16,
                 overflow: 'hidden',
                 marginBottom: 28,
@@ -507,8 +594,25 @@ export function CameraScreen() {
               <View
                 style={{
                   ...StyleSheet.absoluteFillObject,
-                  backgroundColor: 'rgba(0,0,0,1)',
+                  backgroundColor: 'rgba(0,0,0,0.35)',
                 }}
+              />
+              {/* Scan line */}
+              <Animated.View
+                style={[
+                  scanLineStyle,
+                  {
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: 'rgba(255,255,255,0.5)',
+                    shadowColor: '#fff',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.8,
+                    shadowRadius: 8,
+                  },
+                ]}
               />
               {/* Spinner */}
               <View

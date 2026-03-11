@@ -86,15 +86,15 @@ export class ScanService {
     artworkFile: Express.Multer.File,
     options: { latitude?: number; longitude?: number },
   ) {
-    try {
-      // Step 1: Upload artwork image to S3
-      const imageUrl = await uploadToS3(
-        artworkFile.buffer,
-        artworkFile.originalname,
-        'scans/artworks',
-        artworkFile.mimetype,
-      );
+    // Step 1: Upload artwork image to S3 (outside try so a total failure is still possible)
+    const imageUrl = await uploadToS3(
+      artworkFile.buffer,
+      artworkFile.originalname,
+      'scans/artworks',
+      artworkFile.mimetype,
+    );
 
+    try {
       // Step 2: Send to OpenAI for identification
       const artworkBase64 = artworkFile.buffer.toString('base64');
       const { result: aiResult, rawResponse } = await identifyArtwork(
@@ -143,10 +143,20 @@ export class ScanService {
 
       await this.logFailedUsage(userId, 'openai/vision/artwork', errorMessage);
 
-      return ServiceResponse.failure(
-        'An error occurred while scanning artwork.',
-        null,
-        StatusCodes.INTERNAL_SERVER_ERROR,
+      // Still create a scan record so the image appears in scan history
+      const scan = await this.scanRepository.create({
+        userId,
+        scanType: 'ARTWORK',
+        imageUrl,
+        confidence: 0,
+        latitude: options.latitude,
+        longitude: options.longitude,
+      });
+
+      return ServiceResponse.success(
+        'Scan saved but identification failed',
+        scan,
+        StatusCodes.CREATED,
       );
     }
   }
@@ -160,23 +170,23 @@ export class ScanService {
     labelFile: Express.Multer.File,
     options: { latitude?: number; longitude?: number },
   ) {
-    try {
-      // Step 1: Upload both images to S3 in parallel
-      const [imageUrl, labelImageUrl] = await Promise.all([
-        uploadToS3(
-          artworkFile.buffer,
-          artworkFile.originalname,
-          'scans/artworks',
-          artworkFile.mimetype,
-        ),
-        uploadToS3(
-          labelFile.buffer,
-          labelFile.originalname,
-          'scans/labels',
-          labelFile.mimetype,
-        ),
-      ]);
+    // Step 1: Upload both images to S3 in parallel (outside try so images are always persisted)
+    const [imageUrl, labelImageUrl] = await Promise.all([
+      uploadToS3(
+        artworkFile.buffer,
+        artworkFile.originalname,
+        'scans/artworks',
+        artworkFile.mimetype,
+      ),
+      uploadToS3(
+        labelFile.buffer,
+        labelFile.originalname,
+        'scans/labels',
+        labelFile.mimetype,
+      ),
+    ]);
 
+    try {
       // Step 2: Send only the LABEL to OpenAI for text extraction
       const labelBase64 = labelFile.buffer.toString('base64');
       const { result: labelResult, rawResponse } = await extractLabel(
@@ -235,7 +245,7 @@ export class ScanService {
         imageUrl,
         labelImageUrl,
         artworkId,
-        confidence: labelResult.title ? 0.95 : 0.3, // Label OCR is high confidence
+        confidence: labelResult.title ? 0.95 : 0.3,
         rawAiResult: rawResponse as object,
         extractedText: labelResult.extractedText,
         latitude: options.latitude,
@@ -253,10 +263,21 @@ export class ScanService {
 
       await this.logFailedUsage(userId, 'openai/vision/label', errorMessage);
 
-      return ServiceResponse.failure(
-        'An error occurred while scanning.',
-        null,
-        StatusCodes.INTERNAL_SERVER_ERROR,
+      // Still create a scan record so the image appears in scan history
+      const scan = await this.scanRepository.create({
+        userId,
+        scanType: 'COMBINED',
+        imageUrl,
+        labelImageUrl,
+        confidence: 0,
+        latitude: options.latitude,
+        longitude: options.longitude,
+      });
+
+      return ServiceResponse.success(
+        'Scan saved but identification failed',
+        scan,
+        StatusCodes.CREATED,
       );
     }
   }

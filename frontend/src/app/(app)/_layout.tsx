@@ -1,13 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect } from 'react';
 
-import {
-  ScanLine,
-  Home,
-  LibraryBig,
-  LayoutGrid,
-  User,
-} from 'lucide-react-native';
+import { Home, LibraryBig, LayoutGrid, User } from 'lucide-react-native';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 import { setUser } from '@/features/auth/use-user-store';
 import { useMe } from '@/lib/hooks';
@@ -90,6 +84,7 @@ export default function TabLayout() {
     >
       {tabs.map((tab) => (
         <Tabs.Screen
+          key={tab.name}
           name={tab.name}
           options={{
             title: tab.title,
@@ -98,6 +93,7 @@ export default function TabLayout() {
           }}
         />
       ))}
+      <Tabs.Screen name="scan" options={{ href: null }} />
     </Tabs>
   );
 }

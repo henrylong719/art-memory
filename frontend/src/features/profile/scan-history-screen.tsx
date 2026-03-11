@@ -127,7 +127,7 @@ export function ScanHistoryScreen() {
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View className="bg-stone-50/90 px-6 pb-4 flex-row items-center gap-4 border-b border-stone-200/50 mt-16">
+      <View style={{ paddingTop: insets.top }} className="bg-stone-50/90 px-6 pb-4 flex-row items-center gap-4 border-b border-stone-200/50">
         <Pressable
           onPress={() => router.back()}
           className="p-2 -ml-2 rounded-full active:bg-stone-200/50"

@@ -30,9 +30,11 @@ function CollectionCard({
   index: number;
   onPress: () => void;
 }) {
+  const firstSaved = collection.savedArtworks?.[0];
   const coverImage =
     collection.coverUrl ??
-    collection.savedArtworks?.[0]?.artwork?.imageUrl ??
+    firstSaved?.artwork?.imageUrl ??
+    firstSaved?.userPhotoUrl ??
     null;
 
   return (
@@ -222,7 +224,7 @@ export function CollectionsScreen({
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-6 pt-16 pb-6">
+        <View className="px-6">
           {/* Header */}
           <View className="flex-row justify-between items-center mb-8">
             <View className="flex-row items-center gap-3">

@@ -46,7 +46,7 @@ function GridItem({
   const title = item.customTitle ?? item.artwork?.title ?? 'Untitled';
   const artist =
     item.customArtist ?? item.artwork?.artist?.name ?? 'Unknown Artist';
-  const imageUrl = item.artwork?.imageUrl;
+  const imageUrl = item.artwork?.imageUrl ?? item.userPhotoUrl;
 
   return (
     <Motion.View
@@ -104,7 +104,7 @@ function ListItem({
     item.customArtist ?? item.artwork?.artist?.name ?? 'Unknown Artist';
   const year = item.customYear ?? item.artwork?.year;
   const museum = item.artwork?.museum?.name;
-  const imageUrl = item.artwork?.imageUrl;
+  const imageUrl = item.artwork?.imageUrl ?? item.userPhotoUrl;
 
   return (
     <Motion.View
@@ -266,7 +266,7 @@ export function CollectionDetailScreen() {
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View className="bg-stone-50/90 px-6 pb-4 flex-row justify-between items-center border-b border-stone-200/50 mt-16">
+      <View style={{ paddingTop: insets.top }} className="bg-stone-50/90 px-6 pb-4 flex-row justify-between items-center border-b border-stone-200/50">
         <Pressable
           onPress={() => router.back()}
           className="p-2 -ml-2 rounded-full active:bg-stone-200/50"

@@ -21,9 +21,9 @@ export function ScanCard({
   return (
     <Pressable onPress={onPress} style={{ width: 128 }}>
       <View className="w-32 aspect-4/5 rounded-xl overflow-hidden bg-charcoal-100 mb-2.5">
-        {scan.artwork?.imageUrl ? (
+        {(scan.artwork?.imageUrl ?? scan.imageUrl) ? (
           <Image
-            source={{ uri: scan.artwork.imageUrl }}
+            source={{ uri: (scan.artwork?.imageUrl ?? scan.imageUrl)! }}
             className="w-full h-full"
             contentFit="cover"
             transition={300}
@@ -37,10 +37,10 @@ export function ScanCard({
         style={{ lineHeight: 18 }}
         numberOfLines={1}
       >
-        {scan.artwork?.title ?? 'Unknown artwork'}
+        {scan.userCorrectedTitle ?? scan.artwork?.title ?? 'Unknown artwork'}
       </Text>
       <Text className="text-[11px] text-charcoal-500 mt-0.5" numberOfLines={1}>
-        {scan.artwork?.artist?.name ?? '—'}
+        {scan.userCorrectedArtist ?? scan.artwork?.artist?.name ?? '—'}
       </Text>
     </Pressable>
   );

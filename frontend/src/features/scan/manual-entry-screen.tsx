@@ -1,7 +1,7 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { useState } from 'react';
 import { Motion } from '@legendapp/motion';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Check, X } from 'lucide-react-native';
 import {
   ActivityIndicator,
@@ -14,14 +14,29 @@ import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, ScrollView, Text, View } from '@/components/ui';
-import { useSaveArtwork } from '@/lib/hooks';
+import { uploadApi } from '@/lib/api/services';
+import { useCorrectScan, useSaveArtwork } from '@/lib/hooks';
+
+function toFilePayload(uri: string) {
+  const name = uri.split('/').pop() ?? 'photo.jpg';
+  const ext = name.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const type = ext === 'png' ? 'image/png' : 'image/jpeg';
+  return { uri, type, name };
+}
 
 export function ManualEntryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { imageUri, scanImageUrl, scanId } = useLocalSearchParams<{
+    imageUri?: string;
+    scanImageUrl?: string;
+    scanId?: string;
+  }>();
   const saveArtwork = useSaveArtwork();
+  const correctScan = useCorrectScan();
 
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     artist: '',
@@ -32,25 +47,43 @@ export function ManualEntryScreen() {
   const canSubmit =
     formData.title.trim().length > 0 &&
     formData.artist.trim().length > 0 &&
-    !saveArtwork.isPending;
+    !submitting;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
+    setSubmitting(true);
 
-    saveArtwork.mutate(
-      {
+    try {
+      let photoUrl = scanImageUrl;
+
+      if (!photoUrl && imageUri) {
+        const { data } = await uploadApi.image(toFilePayload(imageUri));
+        photoUrl = data.responseObject.url;
+      }
+
+      await saveArtwork.mutateAsync({
         customTitle: formData.title.trim(),
         customArtist: formData.artist.trim(),
         customYear: formData.year ? Number(formData.year) : undefined,
         customMedium: formData.medium.trim() || undefined,
-      },
-      {
-        onSuccess: () => {
-          setSuccess(true);
-          setTimeout(() => router.replace('/(app)/collections'), 1500);
-        },
-      },
-    );
+        userPhotoUrl: photoUrl || undefined,
+      });
+
+      if (scanId) {
+        correctScan.mutate({
+          id: scanId,
+          data: {
+            userCorrectedTitle: formData.title.trim(),
+            userCorrectedArtist: formData.artist.trim(),
+          },
+        });
+      }
+
+      setSuccess(true);
+      setTimeout(() => router.replace('/(app)/collections'), 1500);
+    } catch {
+      setSubmitting(false);
+    }
   };
 
   // ── Success state ──
@@ -124,11 +157,17 @@ export function ManualEntryScreen() {
             transition={{ type: 'timing', duration: 350 }}
             className="flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-neutral-200 mb-8"
           >
-            <Image
-              source="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=400&auto=format&fit=crop"
-              className="w-20 h-20 rounded-xl"
-              contentFit="cover"
-            />
+            {imageUri ? (
+              <Image
+                source={imageUri}
+                className="w-20 h-20 rounded-xl"
+                contentFit="cover"
+              />
+            ) : (
+              <View className="w-20 h-20 rounded-xl bg-charcoal-100 items-center justify-center">
+                <Text className="text-charcoal-400 text-xs">No image</Text>
+              </View>
+            )}
             <View>
               <Text className="text-sm font-semibold text-charcoal-900">
                 Custom Entry
@@ -220,7 +259,7 @@ export function ManualEntryScreen() {
                 : undefined
             }
           >
-            {saveArtwork.isPending ? (
+            {submitting ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text

@@ -6,6 +6,7 @@ import { StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { hydrateAuth } from '@/features/auth/use-auth-store';
@@ -84,6 +85,7 @@ export default function RootLayout() {
         {/* Scan flow (full-screen, no tab bar) */}
         {scanFlow.map((name) => (
           <Stack.Screen
+            key={name}
             name={`scan/${name}`}
             options={{ headerShown: false, animation: 'slide_from_bottom' }}
           />
@@ -92,6 +94,7 @@ export default function RootLayout() {
         {/* Profile sub-screens */}
         {profile_sub_screen.map((name) => (
           <Stack.Screen
+            key={name}
             name={`profile/${name}`}
             options={{ headerShown: false, animation: 'slide_from_right' }}
           />
@@ -105,16 +108,18 @@ function Providers({ children }: { children: ReactNode }) {
   const theme = useThemeConfig();
   return (
     <GestureHandlerRootView style={styles.container}>
-      <KeyboardProvider>
-        <ThemeProvider value={theme}>
-          <APIProvider>
-            <BottomSheetModalProvider>
-              {children}
-              <FlashMessage position="top" />
-            </BottomSheetModalProvider>
-          </APIProvider>
-        </ThemeProvider>
-      </KeyboardProvider>
+      <SafeAreaProvider>
+        <KeyboardProvider>
+          <ThemeProvider value={theme}>
+            <APIProvider>
+              <BottomSheetModalProvider>
+                {children}
+                <FlashMessage position="top" />
+              </BottomSheetModalProvider>
+            </APIProvider>
+          </ThemeProvider>
+        </KeyboardProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

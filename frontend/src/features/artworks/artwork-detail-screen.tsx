@@ -1,5 +1,12 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { forwardRef, useMemo, useRef, type ReactNode, type RefObject } from 'react';
+import {
+  forwardRef,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import type { Artwork } from '@/lib/api/types';
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
@@ -17,7 +24,13 @@ import {
   Share2,
   X,
 } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, Share, Platform } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  Share,
+  Platform,
+} from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedScrollHandler,
@@ -37,7 +50,8 @@ import {
 } from '@/lib/hooks';
 
 // ─── Constants ───────────────────────────────────────────
-const HERO_HEIGHT = 420;
+const HERO_HEIGHT_PORTRAIT = 420;
+const HERO_HEIGHT_LANDSCAPE = 280;
 const HEADER_HEIGHT = 56;
 
 // ─── Main Screen ─────────────────────────────────────────
@@ -51,6 +65,9 @@ export function ArtworkDetailScreen() {
   const saveArtwork = useSaveArtwork();
   const removeSavedArtwork = useRemoveSavedArtwork();
 
+  const [imageAspect, setImageAspect] = useState<number | null>(null);
+  const [fullscreenVisible, setFullscreenVisible] = useState(false);
+
   const scrollY = useSharedValue(0);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
@@ -60,6 +77,11 @@ export function ArtworkDetailScreen() {
     [savedArtworks, id],
   );
   const isSaved = !!savedEntry;
+
+  const imageIsLandscape = (imageAspect ?? 0) > 1;
+  const heroHeight = imageIsLandscape
+    ? HERO_HEIGHT_LANDSCAPE
+    : HERO_HEIGHT_PORTRAIT;
 
   // Scroll handler
   const scrollHandler = useAnimatedScrollHandler({
@@ -72,13 +94,14 @@ export function ArtworkDetailScreen() {
   const headerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       scrollY.value,
-      [HERO_HEIGHT - 140, HERO_HEIGHT - 80],
+      [heroHeight - 140, heroHeight - 80],
       [0, 1],
     ),
   }));
 
   // Animated hero parallax
   const heroStyle = useAnimatedStyle(() => ({
+    height: heroHeight + 80,
     transform: [{ translateY: scrollY.value * 0.4 }],
   }));
 
@@ -201,14 +224,20 @@ export function ArtworkDetailScreen() {
         contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
       >
         {/* Hero image */}
-        <View style={{ height: HERO_HEIGHT, overflow: 'hidden' }}>
-          <Animated.View style={[heroStyle, { height: HERO_HEIGHT + 80 }]}>
-            <Image
-              source={artwork.imageUrl ?? ''}
-              className="w-full h-full"
-              contentFit="cover"
-              transition={400}
-            />
+        <View style={{ height: heroHeight, overflow: 'hidden' }}>
+          <Animated.View style={heroStyle}>
+            <Pressable onPress={() => setFullscreenVisible(true)}>
+              <Image
+                source={artwork.imageUrl ?? ''}
+                style={{ width: '100%', height: heroHeight + 80 }}
+                contentFit={imageIsLandscape ? 'contain' : 'cover'}
+                transition={400}
+                onLoad={(e) => {
+                  const { width: w, height: h } = e.source;
+                  if (w && h) setImageAspect(w / h);
+                }}
+              />
+            </Pressable>
           </Animated.View>
           {/* Bottom fade */}
           <LinearGradient
@@ -373,6 +402,37 @@ export function ArtworkDetailScreen() {
           ) : null}
         </Motion.View>
       </Animated.ScrollView>
+
+      {/* ── Fullscreen image viewer ── */}
+      <Modal
+        visible={fullscreenVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setFullscreenVisible(false)}
+      >
+        <View className="flex-1 bg-black items-center justify-center">
+          {artwork.imageUrl && (
+            <Image
+              source={artwork.imageUrl}
+              className="w-full h-full"
+              contentFit="contain"
+            />
+          )}
+          <Pressable
+            onPress={() => setFullscreenVisible(false)}
+            className="absolute w-11 h-11 rounded-full items-center justify-center"
+            style={{
+              top: insets.top + 8,
+              right: 20,
+              backgroundColor: 'rgba(255,255,255,0.15)',
+            }}
+            hitSlop={8}
+          >
+            <X size={22} color="#fff" />
+          </Pressable>
+        </View>
+      </Modal>
 
       {/* ── Save to Collection bottom sheet ── */}
       <CollectionSheet

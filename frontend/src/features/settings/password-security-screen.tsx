@@ -19,7 +19,7 @@ export function PasswordSecurityScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-stone-50 mt-16">
+    <View className="flex-1 bg-stone-50">
       {/* Header */}
       <View
         style={{ paddingTop: insets.top }}

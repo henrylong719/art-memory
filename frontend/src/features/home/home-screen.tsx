@@ -51,7 +51,7 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <View className="flex-row justify-between items-center px-6 pt-16 pb-7">
+        <View className="flex-row justify-between items-center px-6 pb-7">
           <View>
             <Text className="text-xs font-semibold text-charcoal-500 tracking-widest uppercase mb-1">
               {greeting}

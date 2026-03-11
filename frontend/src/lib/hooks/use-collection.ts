@@ -79,6 +79,7 @@ export function useSaveArtwork() {
       artworkId?: string;
       collectionId?: string;
       personalNote?: string;
+      userPhotoUrl?: string;
       rating?: number;
       customTitle?: string;
       customArtist?: string;
