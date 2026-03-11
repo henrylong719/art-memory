@@ -20,6 +20,7 @@ import {
   ExternalLink,
   MapPin,
   Palette,
+  Pencil,
   Plus,
   Ruler,
   Share2,
@@ -229,14 +230,24 @@ export function ArtworkDetailScreen() {
           <ChevronLeft size={22} color="#fff" />
         </Pressable>
 
-        <Pressable
-          onPress={handleShare}
-          className="w-11 h-11 bg-black/30 rounded-full items-center justify-center"
-          style={{ backdropFilter: 'blur(12px)' }}
-          hitSlop={8}
-        >
-          <Share2 size={18} color="#fff" />
-        </Pressable>
+        <View className="flex-row gap-3">
+          <Pressable
+            onPress={() => router.push(`/artworks/${id}/edit`)}
+            className="w-11 h-11 bg-black/30 rounded-full items-center justify-center"
+            style={{ backdropFilter: 'blur(12px)' }}
+            hitSlop={8}
+          >
+            <Pencil size={18} color="#fff" />
+          </Pressable>
+          <Pressable
+            onPress={handleShare}
+            className="w-11 h-11 bg-black/30 rounded-full items-center justify-center"
+            style={{ backdropFilter: 'blur(12px)' }}
+            hitSlop={8}
+          >
+            <Share2 size={18} color="#fff" />
+          </Pressable>
+        </View>
       </View>
 
       {/* ── Scrollable content ── */}
@@ -249,13 +260,15 @@ export function ArtworkDetailScreen() {
         {/* Hero image */}
         <View style={{ height: heroHeight, overflow: 'hidden' }}>
           <Animated.View style={heroStyle}>
-            <Pressable onPress={() => {
+            <Pressable
+              onPress={() => {
                 const now = Date.now();
                 if (now - lastTapRef.current < 300) {
                   setFullscreenVisible(true);
                 }
                 lastTapRef.current = now;
-              }}>
+              }}
+            >
               <Image
                 source={artwork.imageUrl ?? ''}
                 style={{ width: '100%', height: heroHeight + 80 }}
@@ -385,7 +398,8 @@ export function ArtworkDetailScreen() {
             ) : generateStory.isPending ? (
               /* Generating skeleton */
               <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
-                <View className="w-12 h-12 bg-white rounded-full items-center justify-center mb-4"
+                <View
+                  className="w-12 h-12 bg-white rounded-full items-center justify-center mb-4"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },
@@ -410,7 +424,8 @@ export function ArtworkDetailScreen() {
             ) : (
               /* No description — generate CTA */
               <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
-                <View className="w-12 h-12 bg-white rounded-full items-center justify-center mb-3"
+                <View
+                  className="w-12 h-12 bg-white rounded-full items-center justify-center mb-3"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },

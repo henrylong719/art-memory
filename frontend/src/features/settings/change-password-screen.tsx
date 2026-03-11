@@ -87,7 +87,7 @@ export function ChangePasswordScreen() {
         </Text>
       </View>
 
-      {/* Success Toast */}
+      {/* Toast */}
       <AnimatePresence>
         {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
       </AnimatePresence>

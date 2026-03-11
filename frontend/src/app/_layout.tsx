@@ -63,7 +63,7 @@ export default function RootLayout() {
 
         {/* Artwork detail (shown above tabs) */}
         <Stack.Screen
-          name="artworks/[id]"
+          name="artworks"
           options={{ headerShown: false, animation: 'slide_from_bottom' }}
         />
 

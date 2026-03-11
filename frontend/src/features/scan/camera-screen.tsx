@@ -26,6 +26,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
 import { Image, Text, View } from '@/components/ui';
 import { useScanArtwork, useScanCombined } from '@/lib/hooks';
@@ -139,19 +140,6 @@ export function CameraScreen() {
   type PhysicalOrientation = 'portrait' | 'landscape-left' | 'landscape-right';
   const [physicalOrientation, setPhysicalOrientation] =
     useState<PhysicalOrientation>('portrait');
-  useEffect(() => {
-    Accelerometer.setUpdateInterval(300);
-    const subscription = Accelerometer.addListener(({ x, y }) => {
-      if (Math.abs(x) > Math.abs(y) + 0.15) {
-        // Phone tilted sideways
-        setPhysicalOrientation(x > 0 ? 'landscape-right' : 'landscape-left');
-      } else {
-        setPhysicalOrientation('portrait');
-      }
-    });
-    return () => subscription.remove();
-  }, []);
-
   // Captured URIs
   const [artworkUri, setArtworkUri] = useState<string | null>(null);
   const [artworkIsLandscape, setArtworkIsLandscape] = useState(false);
@@ -175,6 +163,20 @@ export function CameraScreen() {
   }));
 
   const isFirstMount = useRef(true);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    Accelerometer.setUpdateInterval(300);
+    const subscription = Accelerometer.addListener(({ x, y }) => {
+      if (Math.abs(x) > Math.abs(y) + 0.15) {
+        setPhysicalOrientation(x > 0 ? 'landscape-right' : 'landscape-left');
+      } else {
+        setPhysicalOrientation('portrait');
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     // Delay on first mount so animation plays after screen transition

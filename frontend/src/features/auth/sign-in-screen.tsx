@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';

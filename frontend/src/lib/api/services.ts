@@ -29,8 +29,7 @@ export const authApi = {
   logout: (refreshToken: string) =>
     client.post<ApiResponse<null>>('/auth/logout', { refreshToken }),
 
-  logoutAll: () =>
-    client.post<ApiResponse<null>>('/auth/logout-all'),
+  logoutAll: () => client.post<ApiResponse<null>>('/auth/logout-all'),
 
   socialLogin: (data: { provider: 'google' | 'facebook'; token: string }) =>
     client.post<ApiResponse<AuthResponse>>('/auth/social', data),
@@ -42,37 +41,46 @@ export const authApi = {
 // ─── User ────────────────────────────────────────────────
 
 export const userApi = {
-  getMe: () =>
-    client.get<ApiResponse<User>>('/users/me'),
+  getMe: () => client.get<ApiResponse<User>>('/users/me'),
 
-  updateMe: (data: Partial<Pick<User, 'firstName' | 'lastName' | 'avatarUrl' | 'preferredLanguage' | 'notificationsOn'>>) =>
-    client.patch<ApiResponse<User>>('/users/me', data),
+  updateMe: (
+    data: Partial<
+      Pick<
+        User,
+        | 'firstName'
+        | 'lastName'
+        | 'avatarUrl'
+        | 'preferredLanguage'
+        | 'notificationsOn'
+      >
+    >,
+  ) => client.patch<ApiResponse<User>>('/users/me', data),
 };
 
 // ─── Artist ──────────────────────────────────────────────
 
 export const artistApi = {
-  getAll: () =>
-    client.get<ApiResponse<Artist[]>>('/artists'),
+  getAll: () => client.get<ApiResponse<Artist[]>>('/artists'),
 
-  getById: (id: string) =>
-    client.get<ApiResponse<Artist>>(`/artists/${id}`),
+  getById: (id: string) => client.get<ApiResponse<Artist>>(`/artists/${id}`),
 
   search: (q: string, limit = 10) =>
-    client.get<ApiResponse<Artist[]>>('/artists/search', { params: { q, limit } }),
+    client.get<ApiResponse<Artist[]>>('/artists/search', {
+      params: { q, limit },
+    }),
 };
 
 // ─── Artwork ─────────────────────────────────────────────
 
 export const artworkApi = {
-  getAll: () =>
-    client.get<ApiResponse<Artwork[]>>('/artworks'),
+  getAll: () => client.get<ApiResponse<Artwork[]>>('/artworks'),
 
-  getById: (id: string) =>
-    client.get<ApiResponse<Artwork>>(`/artworks/${id}`),
+  getById: (id: string) => client.get<ApiResponse<Artwork>>(`/artworks/${id}`),
 
   search: (q: string, limit = 10) =>
-    client.get<ApiResponse<Artwork[]>>('/artworks/search', { params: { q, limit } }),
+    client.get<ApiResponse<Artwork[]>>('/artworks/search', {
+      params: { q, limit },
+    }),
 
   getByArtist: (artistId: string) =>
     client.get<ApiResponse<Artwork[]>>(`/artworks/artist/${artistId}`),
@@ -87,24 +95,33 @@ export const artworkApi = {
     medium?: string;
     imageUrl?: string;
     source?: string;
-  }) =>
-    client.post<ApiResponse<Artwork>>('/artworks', data),
+  }) => client.post<ApiResponse<Artwork>>('/artworks', data),
 
-  delete: (id: string) =>
-    client.delete<ApiResponse<null>>(`/artworks/${id}`),
+  update: (
+    id: string,
+    data: {
+      title?: string;
+      year?: number | null;
+      medium?: string | null;
+      description?: string | null;
+    },
+  ) => client.put<ApiResponse<Artwork>>(`/artworks/${id}`, data),
+
+  delete: (id: string) => client.delete<ApiResponse<null>>(`/artworks/${id}`),
 };
 
 // ─── Scan ────────────────────────────────────────────────
 
 export const scanApi = {
-  getAll: () =>
-    client.get<ApiResponse<Scan[]>>('/scans'),
+  getAll: () => client.get<ApiResponse<Scan[]>>('/scans'),
 
-  getById: (id: string) =>
-    client.get<ApiResponse<Scan>>(`/scans/${id}`),
+  getById: (id: string) => client.get<ApiResponse<Scan>>(`/scans/${id}`),
 
   // Mode 2: Artwork only
-  scanArtwork: (imageFile: { uri: string; type: string; name: string }, location?: { latitude: number; longitude: number }) => {
+  scanArtwork: (
+    imageFile: { uri: string; type: string; name: string },
+    location?: { latitude: number; longitude: number },
+  ) => {
     const formData = new FormData();
     formData.append('image', imageFile as unknown as Blob);
     if (location) {
@@ -134,18 +151,22 @@ export const scanApi = {
     });
   },
 
-  correct: (id: string, data: { userCorrectedTitle?: string; userCorrectedArtist?: string; artworkId?: string }) =>
-    client.put<ApiResponse<Scan>>(`/scans/${id}/correct`, data),
+  correct: (
+    id: string,
+    data: {
+      userCorrectedTitle?: string;
+      userCorrectedArtist?: string;
+      artworkId?: string;
+    },
+  ) => client.put<ApiResponse<Scan>>(`/scans/${id}/correct`, data),
 
-  delete: (id: string) =>
-    client.delete<ApiResponse<null>>(`/scans/${id}`),
+  delete: (id: string) => client.delete<ApiResponse<null>>(`/scans/${id}`),
 };
 
 // ─── Collection ──────────────────────────────────────────
 
 export const collectionApi = {
-  getAll: () =>
-    client.get<ApiResponse<Collection[]>>('/collections'),
+  getAll: () => client.get<ApiResponse<Collection[]>>('/collections'),
 
   getById: (id: string) =>
     client.get<ApiResponse<Collection>>(`/collections/${id}`),
@@ -153,8 +174,14 @@ export const collectionApi = {
   create: (data: { name: string; description?: string }) =>
     client.post<ApiResponse<Collection>>('/collections', data),
 
-  update: (id: string, data: { name?: string; description?: string | null; coverUrl?: string | null }) =>
-    client.put<ApiResponse<Collection>>(`/collections/${id}`, data),
+  update: (
+    id: string,
+    data: {
+      name?: string;
+      description?: string | null;
+      coverUrl?: string | null;
+    },
+  ) => client.put<ApiResponse<Collection>>(`/collections/${id}`, data),
 
   delete: (id: string) =>
     client.delete<ApiResponse<null>>(`/collections/${id}`),
@@ -163,11 +190,12 @@ export const collectionApi = {
 // ─── SavedArtwork ────────────────────────────────────────
 
 export const savedArtworkApi = {
-  getAll: () =>
-    client.get<ApiResponse<SavedArtwork[]>>('/saved-artworks'),
+  getAll: () => client.get<ApiResponse<SavedArtwork[]>>('/saved-artworks'),
 
   getByCollection: (collectionId: string) =>
-    client.get<ApiResponse<SavedArtwork[]>>(`/saved-artworks/collection/${collectionId}`),
+    client.get<ApiResponse<SavedArtwork[]>>(
+      `/saved-artworks/collection/${collectionId}`,
+    ),
 
   getById: (id: string) =>
     client.get<ApiResponse<SavedArtwork>>(`/saved-artworks/${id}`),
@@ -182,15 +210,16 @@ export const savedArtworkApi = {
     customArtist?: string;
     customYear?: number;
     customMedium?: string;
-  }) =>
-    client.post<ApiResponse<SavedArtwork>>('/saved-artworks', data),
+  }) => client.post<ApiResponse<SavedArtwork>>('/saved-artworks', data),
 
-  update: (id: string, data: {
-    collectionId?: string;
-    personalNote?: string | null;
-    rating?: number | null;
-  }) =>
-    client.put<ApiResponse<SavedArtwork>>(`/saved-artworks/${id}`, data),
+  update: (
+    id: string,
+    data: {
+      collectionId?: string;
+      personalNote?: string | null;
+      rating?: number | null;
+    },
+  ) => client.put<ApiResponse<SavedArtwork>>(`/saved-artworks/${id}`, data),
 
   remove: (id: string) =>
     client.delete<ApiResponse<null>>(`/saved-artworks/${id}`),
@@ -200,16 +229,19 @@ export const savedArtworkApi = {
 
 export const museumApi = {
   nearby: (latitude: number, longitude: number, radius = 5000) =>
-    client.get<ApiResponse<NearbyMuseum[]>>('/museums/nearby', { params: { latitude, longitude, radius } }),
+    client.get<ApiResponse<NearbyMuseum[]>>('/museums/nearby', {
+      params: { latitude, longitude, radius },
+    }),
 
   search: (q: string, latitude?: number, longitude?: number) =>
-    client.get<ApiResponse<NearbyMuseum[]>>('/museums/search', { params: { q, latitude, longitude } }),
+    client.get<ApiResponse<NearbyMuseum[]>>('/museums/search', {
+      params: { q, latitude, longitude },
+    }),
 
   getDetails: (placeId: string) =>
     client.get<ApiResponse<Museum>>(`/museums/place/${placeId}`),
 
-  getById: (id: string) =>
-    client.get<ApiResponse<Museum>>(`/museums/${id}`),
+  getById: (id: string) => client.get<ApiResponse<Museum>>(`/museums/${id}`),
 };
 
 // ─── Upload ─────────────────────────────────────────────
@@ -218,8 +250,12 @@ export const uploadApi = {
   image: (imageFile: { uri: string; type: string; name: string }) => {
     const formData = new FormData();
     formData.append('image', imageFile as unknown as Blob);
-    return client.post<ApiResponse<{ url: string }>>('/uploads/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return client.post<ApiResponse<{ url: string }>>(
+      '/uploads/image',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    );
   },
 };
