@@ -154,11 +154,12 @@ function MuseumCard({
   index: number;
   onPress: () => void;
 }) {
-  const distance = museum.distance != null
-    ? museum.distance < 1
-      ? `${Math.round(museum.distance * 1000)} m`
-      : `${museum.distance.toFixed(1)} km`
-    : null;
+  const distance =
+    museum.distance != null
+      ? museum.distance < 1
+        ? `${Math.round(museum.distance * 1000)} m`
+        : `${museum.distance.toFixed(1)} km`
+      : null;
 
   return (
     <Motion.View
@@ -388,7 +389,7 @@ export function DiscoverScreen() {
               <Text className="font-serif text-xl font-medium text-stone-900 mb-2 text-center">
                 Location access needed
               </Text>
-              <Text className="text-stone-500 text-sm text-center leading-5 max-w-[260px]">
+              <Text className="text-stone-500 text-sm text-center leading-5 max-w-65">
                 Enable location in your device settings to discover museums near
                 you, or use search above.
               </Text>

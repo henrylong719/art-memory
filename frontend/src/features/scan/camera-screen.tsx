@@ -650,7 +650,7 @@ export function CameraScreen() {
         <Pressable
           onPress={handleCapture}
           disabled={processing}
-          className={`w-20 h-20 rounded-full items-center justify-center p-[3px] border-[3px] ${
+          className={`w-20 h-20 rounded-full items-center justify-center p-0.75 border-[3px] ${
             !isArtworkStep && isCombined
               ? 'border-warning-400'
               : 'border-neutral-300'

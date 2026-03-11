@@ -35,7 +35,7 @@ export function SignInScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
       {/* Back button */}
-      <View className="px-4 pb-2 mt-16">
+      <View className="px-4 pb-2">
         <Pressable
           style={{ backgroundColor: 'transparent' }}
           onPress={() => router.back()}
