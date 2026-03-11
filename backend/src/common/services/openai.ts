@@ -273,11 +273,48 @@ export async function generateArtworkStory(artwork: {
 
 // ─── Usage tracking helper ───────────────────────────────
 
+// Pricing per 1M tokens (USD) — update when models change
+const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  'gpt-4o': { input: 2.5, output: 10.0 },
+  'gpt-4o-2024-11-20': { input: 2.5, output: 10.0 },
+  'gpt-4o-2024-08-06': { input: 2.5, output: 10.0 },
+  'gpt-4o-2024-05-13': { input: 5.0, output: 15.0 },
+  'gpt-4o-mini': { input: 0.15, output: 0.6 },
+  'gpt-4-turbo': { input: 10.0, output: 30.0 },
+  'gpt-4': { input: 30.0, output: 60.0 },
+  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+};
+
+function calculateCost(
+  model: string,
+  tokensIn: number | null,
+  tokensOut: number | null,
+): number | undefined {
+  // Try exact match first, then prefix match (e.g. 'gpt-4o-2025-...' → 'gpt-4o')
+  const pricing =
+    MODEL_PRICING[model] ||
+    Object.entries(MODEL_PRICING).find(([key]) => model.startsWith(key))?.[1];
+
+  if (!pricing || (!tokensIn && !tokensOut)) return undefined;
+
+  const inputCost = ((tokensIn ?? 0) / 1_000_000) * pricing.input;
+  const outputCost = ((tokensOut ?? 0) / 1_000_000) * pricing.output;
+
+  return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000; // 6 decimal places
+}
+
 export function extractUsageInfo(rawResponse: any) {
+  const model = rawResponse.model || env.OPENAI_MODEL;
+  const tokensIn = rawResponse.usage?.prompt_tokens || null;
+  const tokensOut = rawResponse.usage?.completion_tokens || null;
+  const durationMs = rawResponse.durationMs || null;
+  const costUsd = calculateCost(model, tokensIn, tokensOut);
+
   return {
-    model: rawResponse.model || env.OPENAI_MODEL,
-    tokensIn: rawResponse.usage?.prompt_tokens || null,
-    tokensOut: rawResponse.usage?.completion_tokens || null,
-    durationMs: rawResponse.durationMs || null,
+    model,
+    tokensIn,
+    tokensOut,
+    durationMs,
+    costUsd,
   };
 }

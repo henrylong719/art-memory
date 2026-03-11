@@ -92,12 +92,54 @@ export function useDeleteArtwork() {
   });
 }
 
+export type StoryMeta = {
+  used: number;
+  limit: number;
+  remaining: number;
+  cooldownSeconds: number;
+  plan: string;
+};
+
+export type StoryLimitError = {
+  type: 'cooldown' | 'daily_limit';
+  message: string;
+  cooldownRemaining?: number;
+  used?: number;
+  limit?: number;
+  plan?: string;
+};
+
 export function useGenerateStory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (artworkId: string) => {
-      const { data } = await artworkApi.generateStory(artworkId);
-      return data.responseObject;
+      try {
+        const { data } = await artworkApi.generateStory(artworkId);
+        return data.responseObject as typeof data.responseObject & {
+          _storyMeta?: StoryMeta;
+        };
+      } catch (error: any) {
+        // Extract structured error info from 429 responses
+        const responseData = error?.response?.data;
+        if (error?.response?.status === 429 && responseData?.responseObject) {
+          const obj = responseData.responseObject;
+          const limitError: StoryLimitError = obj.cooldownRemaining
+            ? {
+                type: 'cooldown',
+                message: responseData.message,
+                cooldownRemaining: obj.cooldownRemaining,
+              }
+            : {
+                type: 'daily_limit',
+                message: responseData.message,
+                used: obj.used,
+                limit: obj.limit,
+                plan: obj.plan,
+              };
+          throw limitError;
+        }
+        throw error;
+      }
     },
     onSuccess: (_, artworkId) => {
       queryClient.invalidateQueries({ queryKey: ['artworks', artworkId] });
