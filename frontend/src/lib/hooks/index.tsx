@@ -7,3 +7,4 @@ export * from './use-museum';
 export * from './use-scan';
 export * from './use-selected-theme';
 export * from './use-user';
+export * from './use-toast';

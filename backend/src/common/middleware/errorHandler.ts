@@ -29,15 +29,14 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   );
 
   if (err instanceof ZodError) {
-    const message = err.issues
-      .map((issue) => {
-        const field = issue.path.length > 0 ? issue.path.join('.') : 'body';
-        return `${field}: ${issue.message}`;
-      })
-      .join('; ');
+    const message =
+      err.issues
+        .map((issue) => issue.message)
+        .filter(Boolean)
+        .join('; ') || 'Invalid input.';
 
     const response = ServiceResponse.failure(
-      `Invalid input: ${message}`,
+      message,
       null,
       StatusCodes.BAD_REQUEST,
     );

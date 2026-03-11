@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
@@ -11,6 +11,10 @@ import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useLogin } from '@/lib/hooks/use-auth';
 
+import { AnimatePresence } from '@legendapp/motion';
+import Toast from '@/components/ui/toast';
+import { useToast } from '@/lib/hooks';
+
 export function SignInScreen() {
   const router = useRouter();
   const login = useLogin();
@@ -18,15 +22,28 @@ export function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const axiosError = login.error as AxiosError<{ message: string }> | null;
-  const errorMessage =
-    axiosError?.response?.data?.message ?? axiosError?.message ?? null;
+  const { toast, showToast } = useToast();
 
   const handleSubmit = () => {
-    if (!email.trim() || !password) return;
+    if (!email.trim() || !password || login.isPending) return;
+
     login.mutate(
       { email: email.trim().toLowerCase(), password },
-      { onSuccess: () => router.replace('/(app)') },
+      {
+        onSuccess: () => {
+          router.replace('/(app)');
+        },
+        onError: (error) => {
+          const axiosError = error as AxiosError<{ message?: string }>;
+          const message =
+            axiosError.response?.data?.message ||
+            axiosError.message ||
+            'Failed to sign in.';
+
+          console.log(axiosError.response?.data);
+          showToast(message, 'error');
+        },
+      },
     );
   };
 
@@ -34,6 +51,10 @@ export function SignInScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       {/* Back button */}
       <View className="px-4 pb-2">
         <Pressable
@@ -136,15 +157,6 @@ export function SignInScreen() {
 
           {/* Social login */}
           <SocialLoginButtons />
-
-          {/* Error */}
-          {errorMessage ? (
-            <View className="bg-red-50 rounded-xl p-3.5 mb-4 border border-red-200">
-              <Text className="text-red-600 text-[13px] leading-5">
-                {errorMessage}
-              </Text>
-            </View>
-          ) : null}
 
           {/* Spacer */}
           <View style={{ flex: 1, minHeight: 20 }} />

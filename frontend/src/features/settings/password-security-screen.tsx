@@ -136,7 +136,7 @@ export function PasswordSecurityScreen() {
                         </Text>
                       </View>
                     </View>
-                    <Text className="text-[13px] text-stone-400 mt-0.5 leading-snug max-w-[220px]">
+                    <Text className="text-[13px] text-stone-400 mt-0.5 leading-snug max-w-55">
                       Add an extra layer of security to your account.
                     </Text>
                   </View>

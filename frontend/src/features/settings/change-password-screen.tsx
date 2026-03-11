@@ -1,23 +1,21 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { Motion } from '@legendapp/motion';
+import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  TextInput,
-} from 'react-native';
+import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text, View } from '@/components/ui';
-import { useChangePassword } from '@/lib/hooks';
+import { useChangePassword, useToast } from '@/lib/hooks';
+import Toast from '../../components/ui/toast';
 
 export function ChangePasswordScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const changePassword = useChangePassword();
+
+  const { toast, showToast } = useToast();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -33,15 +31,15 @@ export function ChangePasswordScreen() {
     newPassword === confirmPassword;
 
   const handleSubmit = () => {
-    if (!isValid) return;
+    if (!isValid || changePassword.isPending) return;
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match.');
+      showToast('New passwords do not match.');
       return;
     }
 
     if (newPassword.length < 8) {
-      Alert.alert('Error', 'New password must be at least 8 characters.');
+      showToast('New passwords do not match.');
       return;
     }
 
@@ -49,14 +47,22 @@ export function ChangePasswordScreen() {
       { currentPassword, newPassword },
       {
         onSuccess: () => {
-          Alert.alert('Success', 'Your password has been changed.', [
-            { text: 'OK', onPress: () => router.back() },
-          ]);
+          showToast('Your password has been changed.', 'success');
+
+          setTimeout(() => {
+            router.back();
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+          }, 800);
         },
-        onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+
+        onError: (
+          error: Error & { response?: { data?: { message?: string } } },
+        ) => {
           const message =
             error.response?.data?.message || 'Failed to change password.';
-          Alert.alert('Error', message);
+          showToast(message, 'error');
         },
       },
     );
@@ -80,6 +86,11 @@ export function ChangePasswordScreen() {
           Change Password
         </Text>
       </View>
+
+      {/* Success Toast */}
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
 
       <View
         style={{
@@ -194,10 +205,7 @@ export function ChangePasswordScreen() {
                 autoComplete="new-password"
                 className="flex-1 py-4 text-[15px] text-stone-900"
               />
-              <Pressable
-                onPress={() => setShowConfirm((s) => !s)}
-                hitSlop={8}
-              >
+              <Pressable onPress={() => setShowConfirm((s) => !s)} hitSlop={8}>
                 {showConfirm ? (
                   <EyeOff size={20} color="#a8a29e" />
                 ) : (

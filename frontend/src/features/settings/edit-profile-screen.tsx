@@ -1,13 +1,14 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
-import { Camera, Check, ChevronLeft, Lock } from 'lucide-react-native';
-import * as React from 'react';
+import { Camera, ChevronLeft, Lock } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, ScrollView, Text, View } from '@/components/ui';
 import { useMe, useUpdateMe } from '@/lib/hooks';
+import { useEffect, useState } from 'react';
+import Toast from '../../components/ui/toast';
 
 export function EditProfileScreen() {
   const router = useRouter();
@@ -16,21 +17,21 @@ export function EditProfileScreen() {
   const updateMe = useUpdateMe();
 
   // Form state
-  const [firstName, setFirstName] = React.useState('');
-  const [lastName, setLastName] = React.useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
   // Track initial values to detect dirty state
-  const [initialValues, setInitialValues] = React.useState({
+  const [initialValues, setInitialValues] = useState({
     firstName: '',
     lastName: '',
   });
 
   // Save flow states
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [showSuccess, setShowSuccess] = React.useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Hydrate from API
-  React.useEffect(() => {
+  useEffect(() => {
     if (me) {
       const fn = me.firstName ?? '';
       const ln = me.lastName ?? '';
@@ -115,34 +116,7 @@ export function EditProfileScreen() {
 
       {/* Success Toast */}
       <AnimatePresence>
-        {showSuccess && (
-          <Motion.View
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ type: 'timing', duration: 300 }}
-            className="absolute z-20 self-center"
-            style={{ top: insets.top + 60 }}
-          >
-            <View
-              className="bg-stone-900 flex-row items-center gap-2.5 px-5 py-3 rounded-full"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.15,
-                shadowRadius: 12,
-                elevation: 6,
-              }}
-            >
-              <View className="w-5 h-5 rounded-full bg-white/20 items-center justify-center">
-                <Check size={12} color="#fff" strokeWidth={3} />
-              </View>
-              <Text className="text-[14px] font-medium text-white tracking-wide">
-                Profile updated
-              </Text>
-            </View>
-          </Motion.View>
-        )}
+        {showSuccess && <Toast text="Profile updated" />}
       </AnimatePresence>
 
       <ScrollView

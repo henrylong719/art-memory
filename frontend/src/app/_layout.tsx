@@ -34,6 +34,7 @@ const profile_sub_screen = [
   'privacy',
   'security',
   'terms',
+  'change-password',
 ] as const;
 
 hydrateAuth();

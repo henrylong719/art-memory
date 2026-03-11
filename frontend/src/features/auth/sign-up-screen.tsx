@@ -1,27 +1,17 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { Motion } from '@legendapp/motion';
+import { AnimatePresence, Motion } from '@legendapp/motion';
 
 import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useRegister } from '@/lib/hooks/use-auth';
-
-// TextInput is not wrapped with withUniwind so it doesn't support className.
-// Input styles are kept as plain objects; everything else uses Tailwind.
-const inputBase: object = {
-  backgroundColor: '#F5F5F5',
-  borderRadius: 14,
-  paddingVertical: 15,
-  paddingHorizontal: 16,
-  fontSize: 15,
-  color: '#1E1E1E',
-  borderWidth: 1.5,
-};
+import Toast from '@/components/ui/toast';
+import { useToast } from '@/lib/hooks';
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -32,12 +22,11 @@ export function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const axiosError = register.error as AxiosError<{ message: string }> | null;
-  const errorMessage =
-    axiosError?.response?.data?.message ?? axiosError?.message ?? null;
+  const { toast, showToast } = useToast();
 
   const handleSubmit = () => {
-    if (!email.trim() || !password) return;
+    if (!email.trim() || !password || register.isPending) return;
+
     register.mutate(
       {
         email: email.trim().toLowerCase(),
@@ -45,7 +34,19 @@ export function SignUpScreen() {
         firstName: firstName.trim() || undefined,
         lastName: lastName.trim() || undefined,
       },
-      { onSuccess: () => router.replace('/(app)') },
+      {
+        onSuccess: () => {
+          router.replace('/(app)');
+        },
+        onError: (error) => {
+          const axiosError = error as AxiosError<{ message?: string }>;
+          const message =
+            axiosError.response?.data?.message ||
+            axiosError.message ||
+            'Failed to create account.';
+          showToast(message, 'error');
+        },
+      },
     );
   };
 
@@ -53,6 +54,10 @@ export function SignUpScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       <View className="px-4 pb-2">
         <Pressable
           className="p-2 -ml-2"
@@ -180,15 +185,6 @@ export function SignUpScreen() {
 
           {/* Social login */}
           <SocialLoginButtons />
-
-          {/* Error */}
-          {errorMessage ? (
-            <View className="mx-6 mt-2 bg-danger-50 rounded-xl p-3.5 border border-danger-200">
-              <Text className="text-danger-600 text-[13px] leading-5">
-                {errorMessage}
-              </Text>
-            </View>
-          ) : null}
 
           <View className="flex-1 min-h-5" />
 
