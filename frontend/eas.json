@@ -42,8 +42,7 @@
       "distribution": "internal",
       "environment": "development",
       "ios": {
-        "image": "latest",
-        "simulator": true
+        "image": "latest"
       },
       "android": {
         "image": "latest"

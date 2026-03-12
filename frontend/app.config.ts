@@ -9,7 +9,7 @@ import 'tsx/cjs';
 import Env from './env';
 
 const EXPO_ACCOUNT_OWNER = 'henry_long';
-const EAS_PROJECT_ID = 'c3e1075b-6fe7-4686-aa49-35b46a229044';
+const EAS_PROJECT_ID = '3b52eed7-5c1b-4314-9812-d0a53c2f6955';
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
   enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
@@ -50,10 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       ITSAppUsesNonExemptEncryption: false,
       NSLocationWhenInUseUsageDescription:
         'ArtMemory uses your location to show museums and galleries near you.',
-      LSApplicationQueriesSchemes: [
-        'comgooglemaps',
-        'waze',
-      ],
+      LSApplicationQueriesSchemes: ['comgooglemaps', 'waze'],
       // Only allow insecure HTTP in development (for local API server).
       // Production/preview enforce HTTPS via default ATS policy.
       ...(Env.EXPO_PUBLIC_APP_ENV === 'development' && {
