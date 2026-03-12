@@ -54,10 +54,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'comgooglemaps',
         'waze',
       ],
-      NSAppTransportSecurity: {
-        NSAllowsArbitraryLoads: true,
-        NSAllowsLocalNetworking: true,
-      },
+      // Only allow insecure HTTP in development (for local API server).
+      // Production/preview enforce HTTPS via default ATS policy.
+      ...(Env.EXPO_PUBLIC_APP_ENV === 'development' && {
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true,
+          NSAllowsLocalNetworking: true,
+        },
+      }),
     },
   },
   experiments: {
@@ -130,7 +134,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
   extra: {
     eas: {
-      projectId: '3b52eed7-5c1b-4314-9812-d0a53c2f6955',
+      projectId: EAS_PROJECT_ID,
     },
   },
 });

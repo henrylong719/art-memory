@@ -12,7 +12,7 @@ export function SplashScreen() {
   const router = useRouter();
 
   return (
-    <View style={{ flex: 1 }} className="bg-stone-900">
+    <View className="flex-1 bg-stone-900">
       <StatusBar barStyle="light-content" />
 
       {/* Background */}
@@ -24,9 +24,9 @@ export function SplashScreen() {
       <View className="absolute inset-0 bg-stone-900/55" />
 
       {/* Content */}
-      <SafeAreaView style={{ flex: 1 }} className="px-6">
+      <SafeAreaView className="flex-1 px-6">
         {/* Title — centered in upper half */}
-        <View style={{ flex: 1 }} className="items-center justify-center">
+        <View className="flex-1 items-center justify-center">
           <Motion.View
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -53,7 +53,7 @@ export function SplashScreen() {
           className="w-full gap-3 pb-8 px-5"
         >
           <Pressable
-            className="rounded-2xl py-4 items-center bg-white"
+            className="rounded-2xl py-4 items-center bg-white active:bg-stone-100"
             onPress={() => router.push('/login')}
           >
             <Text className="text-stone-900 text-[15px] font-semibold">
@@ -61,8 +61,7 @@ export function SplashScreen() {
             </Text>
           </Pressable>
           <Pressable
-            className="rounded-2xl py-4 items-center"
-            style={{ backgroundColor: 'rgba(71,71,71,0.85)' }}
+            className="rounded-2xl py-4 items-center bg-white/15 active:bg-white/25"
             onPress={() => router.push('/sign-up')}
           >
             <Text className="text-white text-[15px] font-medium">

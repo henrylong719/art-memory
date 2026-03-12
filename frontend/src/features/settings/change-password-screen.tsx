@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text, View } from '@/components/ui';
 import { useChangePassword, useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 import Toast from '../../components/ui/toast';
 
 export function ChangePasswordScreen() {
@@ -39,7 +40,7 @@ export function ChangePasswordScreen() {
     }
 
     if (newPassword.length < 8) {
-      showToast('New passwords do not match.');
+      showToast('Your new password must be at least 8 characters.', 'error');
       return;
     }
 
@@ -60,9 +61,10 @@ export function ChangePasswordScreen() {
         onError: (
           error: Error & { response?: { data?: { message?: string } } },
         ) => {
-          const message =
-            error.response?.data?.message || 'Failed to change password.';
-          showToast(message, 'error');
+          showToast(
+            getErrorMessage(error, 'Failed to change password.'),
+            'error',
+          );
         },
       },
     );

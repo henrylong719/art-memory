@@ -1,6 +1,6 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { useEffect, useRef, useState } from 'react';
-import { Motion } from '@legendapp/motion';
+import { AnimatePresence, Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { Check, X } from 'lucide-react-native';
@@ -15,8 +15,10 @@ import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, ScrollView, Text, View } from '@/components/ui';
+import Toast from '@/components/ui/toast';
 import { uploadApi } from '@/lib/api/services';
-import { useCorrectScan, useCreateArtwork } from '@/lib/hooks';
+import { useCorrectScan, useCreateArtwork, useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 function toFilePayload(uri: string) {
   const name = uri.split('/').pop() ?? 'photo.jpg';
@@ -35,6 +37,7 @@ export function ManualEntryScreen() {
   }>();
   const createArtwork = useCreateArtwork();
   const correctScan = useCorrectScan();
+  const { toast, showToast } = useToast();
 
   // Capture location silently on mount
   const locationRef = useRef<{ latitude: number; longitude: number } | null>(
@@ -44,7 +47,13 @@ export function ManualEntryScreen() {
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
+        if (status !== 'granted') {
+          showToast(
+            "Location permission wasn't granted. We'll save this artwork without location.",
+            'error',
+          );
+          return;
+        }
         const pos = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
@@ -53,10 +62,13 @@ export function ManualEntryScreen() {
           longitude: pos.coords.longitude,
         };
       } catch {
-        // Location is optional — fail silently
+        showToast(
+          "We couldn't get your location. The artwork can still be saved.",
+          'error',
+        );
       }
     })();
-  }, []);
+  }, [showToast]);
 
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -96,7 +108,7 @@ export function ManualEntryScreen() {
       });
 
       if (scanId) {
-        correctScan.mutate({
+        await correctScan.mutateAsync({
           id: scanId,
           data: {
             userCorrectedTitle: formData.title.trim(),
@@ -116,7 +128,14 @@ export function ManualEntryScreen() {
           params: { id: artwork.id },
         });
       }, 1500);
-    } catch {
+    } catch (error) {
+      showToast(
+        getErrorMessage(
+          error,
+          "We couldn't save this artwork. Please try again.",
+        ),
+        'error',
+      );
       setSubmitting(false);
     }
   };
@@ -156,6 +175,10 @@ export function ManualEntryScreen() {
 
   return (
     <View className="flex-1 bg-neutral-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       {/* Top bar */}
       <View
         className="flex-row justify-between items-center px-5 bg-white/80 border-b border-neutral-200"

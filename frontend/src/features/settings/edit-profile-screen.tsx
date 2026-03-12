@@ -9,12 +9,15 @@ import { Image, ScrollView, Text, View } from '@/components/ui';
 import { useMe, useUpdateMe } from '@/lib/hooks';
 import { useEffect, useState } from 'react';
 import Toast from '../../components/ui/toast';
+import { useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 export function EditProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: me } = useMe();
   const updateMe = useUpdateMe();
+  const { toast, showToast } = useToast();
 
   // Form state
   const [firstName, setFirstName] = useState('');
@@ -28,8 +31,6 @@ export function EditProfileScreen() {
 
   // Save flow states
   const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
   // Hydrate from API
   useEffect(() => {
     if (me) {
@@ -54,7 +55,6 @@ export function EditProfileScreen() {
     if (!isDirty || isSaving) return;
 
     setIsSaving(true);
-    setShowSuccess(false);
 
     updateMe.mutate(
       {
@@ -64,20 +64,19 @@ export function EditProfileScreen() {
       {
         onSuccess: () => {
           setIsSaving(false);
-          setShowSuccess(true);
+          showToast('Profile updated.', 'success');
           // Update initial values so form is no longer dirty
           setInitialValues({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
           });
-
-          // Dismiss toast after a delay
-          setTimeout(() => {
-            setShowSuccess(false);
-          }, 2500);
         },
-        onError: () => {
+        onError: (error) => {
           setIsSaving(false);
+          showToast(
+            getErrorMessage(error, "We couldn't save your profile."),
+            'error',
+          );
         },
       },
     );
@@ -116,7 +115,7 @@ export function EditProfileScreen() {
 
       {/* Success Toast */}
       <AnimatePresence>
-        {showSuccess && <Toast text="Profile updated" />}
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
       </AnimatePresence>
 
       <ScrollView

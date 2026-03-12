@@ -57,7 +57,7 @@ enum Plan {
 
 model RefreshToken {
   id        String   @id @default(cuid())
-  token     String   @unique
+  tokenHash String   @unique /// SHA-256 hash of the raw refresh token; raw token is never stored
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime

@@ -1,6 +1,16 @@
 import { prisma } from '@/common/db/prisma';
 import crypto from 'node:crypto';
 
+/**
+ * Hash a raw refresh token with SHA-256.
+ * Refresh tokens are high-entropy random values, so a fast hash is sufficient
+ * (unlike passwords which need bcrypt). This prevents stolen DB data from
+ * being directly usable as bearer tokens.
+ */
+export function hashToken(raw: string): string {
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
 export class AuthRepository {
   async createUser(data: {
     email: string;
@@ -120,20 +130,31 @@ export class AuthRepository {
     });
   }
 
+  /**
+   * Creates a refresh token record. A random raw token is generated and
+   * returned, but only its SHA-256 hash is persisted in the database.
+   */
   async createRefreshToken(userId: string, expiresAt: Date) {
-    const token = crypto.randomBytes(64).toString('hex');
-    return prisma.refreshToken.create({
+    const rawToken = crypto.randomBytes(64).toString('hex');
+    const tokenHash = hashToken(rawToken);
+    await prisma.refreshToken.create({
       data: {
-        token,
+        tokenHash,
         userId,
         expiresAt,
       },
     });
+    return { token: rawToken };
   }
 
-  async findRefreshToken(token: string) {
+  /**
+   * Looks up a refresh token by hashing the raw value and matching against
+   * the stored hash.
+   */
+  async findRefreshToken(rawToken: string) {
+    const tokenHash = hashToken(rawToken);
     return prisma.refreshToken.findUnique({
-      where: { token },
+      where: { tokenHash },
       include: {
         user: {
           select: {
@@ -148,9 +169,10 @@ export class AuthRepository {
     });
   }
 
-  async deleteRefreshToken(token: string) {
+  async deleteRefreshToken(rawToken: string) {
+    const tokenHash = hashToken(rawToken);
     return prisma.refreshToken.deleteMany({
-      where: { token },
+      where: { tokenHash },
     });
   }
 

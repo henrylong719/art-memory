@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { Motion } from '@legendapp/motion';
+import { AnimatePresence, Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import {
   Bell,
@@ -20,12 +20,13 @@ import {
   User,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable, Switch } from 'react-native';
+import { ActivityIndicator, Pressable, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScrollView, Text, View } from '@/components/ui';
-import { signOut } from '@/features/auth/use-auth-store';
-import { useMe, useUpdateMe } from '@/lib/hooks';
+import Toast from '@/components/ui/toast';
+import { useLogout, useMe, useToast, useUpdateMe } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 // ─── Section ─────────────────────────────────────────────
 function Section({
@@ -163,6 +164,8 @@ export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { data: me } = useMe();
   const updateMe = useUpdateMe();
+  const logout = useLogout();
+  const { toast, showToast } = useToast();
 
   const [notifications, setNotifications] = React.useState(
     me?.notificationsOn ?? true,
@@ -177,15 +180,33 @@ export function SettingsScreen() {
 
   const handleToggleNotifications = (val: boolean) => {
     setNotifications(val);
-    updateMe.mutate({ notificationsOn: val });
+    updateMe.mutate(
+      { notificationsOn: val },
+      {
+        onError: (error) => {
+          setNotifications(!val);
+          showToast(
+            getErrorMessage(
+              error,
+              "We couldn't update your notification settings.",
+            ),
+            'error',
+          );
+        },
+      },
+    );
   };
 
   const handleLogout = () => {
-    signOut();
+    logout.mutate();
   };
 
   return (
     <View className="flex-1 bg-stone-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       {/* Header */}
       <View
         style={{ paddingTop: insets.top }}
@@ -241,6 +262,7 @@ export function SettingsScreen() {
               label="Notifications"
               value={notifications}
               onToggle={handleToggleNotifications}
+              disabled={updateMe.isPending}
             />
             <Divider />
             <ToggleRow
@@ -323,6 +345,7 @@ export function SettingsScreen() {
           >
             <Pressable
               onPress={handleLogout}
+              disabled={logout.isPending}
               className="bg-white rounded-3xl py-[18px] px-5 flex-row items-center justify-center gap-2 border border-stone-100 active:bg-red-50 active:border-red-100"
               style={{
                 shadowColor: '#000',
@@ -332,10 +355,16 @@ export function SettingsScreen() {
                 elevation: 1,
               }}
             >
-              <LogOut size={20} color="#dc2626" strokeWidth={2} />
-              <Text className="text-red-600 font-semibold text-[15px] tracking-tight">
-                Log Out
-              </Text>
+              {logout.isPending ? (
+                <ActivityIndicator size="small" color="#dc2626" />
+              ) : (
+                <>
+                  <LogOut size={20} color="#dc2626" strokeWidth={2} />
+                  <Text className="text-red-600 font-semibold text-[15px] tracking-tight">
+                    Log Out
+                  </Text>
+                </>
+              )}
             </Pressable>
           </Motion.View>
         </View>

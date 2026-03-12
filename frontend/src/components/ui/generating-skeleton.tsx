@@ -95,13 +95,13 @@ export function GeneratingSkeleton() {
       {/* Shimmer bars */}
       <View className="w-full gap-3 mb-5 px-4">
         <Animated.View style={bar1Style}>
-          <View className="h-2.5 bg-neutral-200 rounded-full w-full" />
+          <View className="h-2.5 bg-neutral-300 rounded-full w-full" />
         </Animated.View>
         <Animated.View style={bar2Style}>
-          <View className="h-2.5 bg-neutral-200 rounded-full w-[85%] self-center" />
+          <View className="h-2.5 bg-neutral-300 rounded-full w-[85%] self-center" />
         </Animated.View>
         <Animated.View style={bar3Style}>
-          <View className="h-2.5 bg-neutral-200 rounded-full w-[60%] self-center" />
+          <View className="h-2.5 bg-neutral-300 rounded-full w-[60%] self-center" />
         </Animated.View>
       </View>
 

@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { Motion } from '@legendapp/motion';
+import { AnimatePresence, Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import {
   ChevronLeft,
@@ -13,12 +13,15 @@ import { ActivityIndicator, Alert, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScrollView, Text, View } from '@/components/ui';
-import { useLogoutAll } from '@/lib/hooks';
+import Toast from '@/components/ui/toast';
+import { useLogoutAll, useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 export function PasswordSecurityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const logoutAll = useLogoutAll();
+  const { toast, showToast } = useToast();
 
   const handleLogoutAll = () => {
     Alert.alert(
@@ -29,7 +32,18 @@ export function PasswordSecurityScreen() {
         {
           text: 'Log Out All',
           style: 'destructive',
-          onPress: () => logoutAll.mutate(),
+          onPress: () =>
+            logoutAll.mutate(undefined, {
+              onError: (error) => {
+                showToast(
+                  getErrorMessage(
+                    error,
+                    "We couldn't log you out of your other devices.",
+                  ),
+                  'error',
+                );
+              },
+            }),
         },
       ],
     );
@@ -37,6 +51,10 @@ export function PasswordSecurityScreen() {
 
   return (
     <View className="flex-1 bg-stone-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       {/* Header */}
       <View
         style={{ paddingTop: insets.top }}

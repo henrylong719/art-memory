@@ -1,6 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useEffect, useRef, useState } from 'react';
-import type { AxiosError } from 'axios';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
@@ -12,6 +11,7 @@ import { SocialLoginButtons } from '@/features/auth/components/social-login-butt
 import { useRegister } from '@/lib/hooks/use-auth';
 import Toast from '@/components/ui/toast';
 import { useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 export function SignUpScreen() {
   const router = useRouter();
@@ -39,12 +39,7 @@ export function SignUpScreen() {
           router.replace('/(app)');
         },
         onError: (error) => {
-          const axiosError = error as AxiosError<{ message?: string }>;
-          const message =
-            axiosError.response?.data?.message ||
-            axiosError.message ||
-            'Failed to create account.';
-          showToast(message, 'error');
+          showToast(getErrorMessage(error, 'Failed to create account.'), 'error');
         },
       },
     );
@@ -53,15 +48,14 @@ export function SignUpScreen() {
   const isDisabled = !email.trim() || !password || register.isPending;
 
   return (
-    <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
+    <SafeAreaView className="flex-1 bg-stone-50">
       <AnimatePresence>
         {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
       </AnimatePresence>
 
       <View className="px-4 pb-2">
         <Pressable
-          className="p-2 -ml-2"
-          style={{ backgroundColor: 'transparent' }}
+          className="p-2 -ml-2 bg-transparent active:bg-stone-100 rounded-full"
           onPress={() => router.back()}
           hitSlop={8}
         >
@@ -97,22 +91,13 @@ export function SignUpScreen() {
 
           {/* Fields */}
           <View className="flex flex-col mb-10">
-            <View className="space-y-5 flex-row" style={{ gap: 12 }}>
+            <View className="flex-row mb-5 gap-3">
               <View className="flex-1">
                 <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                   First Name
                 </Text>
                 <TextInput
-                  style={{
-                    backgroundColor: '#fff',
-                    borderWidth: 1,
-                    borderColor: '#e7e5e4',
-                    borderRadius: 16,
-                    paddingVertical: 14,
-                    paddingHorizontal: 16,
-                    fontSize: 15,
-                    color: '#1c1917',
-                  }}
+                  className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
                   value={firstName}
                   onChangeText={setFirstName}
                   autoCapitalize="words"
@@ -125,16 +110,7 @@ export function SignUpScreen() {
                   Last Name
                 </Text>
                 <TextInput
-                  style={{
-                    backgroundColor: '#fff',
-                    borderWidth: 1,
-                    borderColor: '#e7e5e4',
-                    borderRadius: 16,
-                    paddingVertical: 14,
-                    paddingHorizontal: 16,
-                    fontSize: 15,
-                    color: '#1c1917',
-                  }}
+                  className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
                   value={lastName}
                   onChangeText={setLastName}
                   autoCapitalize="words"
@@ -145,11 +121,11 @@ export function SignUpScreen() {
             </View>
 
             <View className="mb-5">
-              <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                 Email
               </Text>
               <TextInput
-                className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
                 placeholder="name@example.com"
                 placeholderTextColor="#B0B0B0"
                 value={email}
@@ -162,11 +138,11 @@ export function SignUpScreen() {
             </View>
 
             <View>
-              <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                 Password
               </Text>
               <TextInput
-                className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
                 placeholder="••••••••"
                 placeholderTextColor="#B0B0B0"
                 value={password}
@@ -175,7 +151,7 @@ export function SignUpScreen() {
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit}
               />
-              <Text className="text-[11px] text-stone-300 mt-1.5 pl-1">
+              <Text className="text-[11px] text-stone-400 mt-1.5 pl-1">
                 Minimum 6 characters
               </Text>
             </View>
@@ -187,13 +163,7 @@ export function SignUpScreen() {
           {/* CTA */}
           <View className="space-y-6 pb-2">
             <Pressable
-              style={{
-                backgroundColor: isDisabled ? '#e7e5e4' : '#1c1917',
-                borderRadius: 16,
-                paddingVertical: 16,
-                alignItems: 'center',
-                marginBottom: 20,
-              }}
+              className={`rounded-2xl py-4 items-center mb-5 ${isDisabled ? 'bg-stone-200' : 'bg-stone-900 active:bg-stone-800'}`}
               onPress={handleSubmit}
               disabled={isDisabled}
             >
@@ -201,12 +171,7 @@ export function SignUpScreen() {
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text
-                  style={{
-                    color: isDisabled ? '#a8a29e' : '#ffffff',
-                    fontSize: 15,
-                    fontWeight: '600',
-                    letterSpacing: 0.3,
-                  }}
+                  className={`text-[15px] font-semibold tracking-wide ${isDisabled ? 'text-stone-400' : 'text-white'}`}
                 >
                   Create Account
                 </Text>

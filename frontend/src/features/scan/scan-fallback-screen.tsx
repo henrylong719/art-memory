@@ -1,12 +1,14 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { Motion } from '@legendapp/motion';
+import { AnimatePresence, Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FileEdit, SearchX, X } from 'lucide-react-native';
-import { Pressable } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
-import { useDeleteScan } from '@/lib/hooks';
+import Toast from '@/components/ui/toast';
+import { useDeleteScan, useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 export function ScanFallbackScreen() {
   const router = useRouter();
@@ -17,9 +19,34 @@ export function ScanFallbackScreen() {
     scanId?: string;
   }>();
   const deleteScan = useDeleteScan();
+  const { toast, showToast } = useToast();
+
+  const handleDiscard = () => {
+    if (!scanId) {
+      router.replace('/(app)');
+      return;
+    }
+
+    deleteScan.mutate(scanId, {
+      onSuccess: () => router.replace('/(app)'),
+      onError: (error) => {
+        showToast(
+          getErrorMessage(
+            error,
+            "We couldn't discard this scan. Please try again.",
+          ),
+          'error',
+        );
+      },
+    });
+  };
 
   return (
     <View className="flex-1 bg-neutral-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       {/* Top bar */}
       <View
         className="flex-row items-center px-5"
@@ -102,17 +129,17 @@ export function ScanFallbackScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => {
-                if (scanId) {
-                  deleteScan.mutate(scanId);
-                }
-                router.replace('/(app)');
-              }}
+              onPress={handleDiscard}
+              disabled={deleteScan.isPending}
               className="w-full py-4 rounded-2xl items-center active:bg-charcoal-50"
             >
-              <Text className="text-charcoal-400 font-semibold text-lg">
-                Discard
-              </Text>
+              {deleteScan.isPending ? (
+                <ActivityIndicator size="small" color="#a3a3a3" />
+              ) : (
+                <Text className="text-charcoal-400 font-semibold text-lg">
+                  Discard
+                </Text>
+              )}
             </Pressable>
           </View>
         </Motion.View>

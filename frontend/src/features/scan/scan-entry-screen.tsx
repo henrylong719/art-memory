@@ -3,15 +3,17 @@ import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { Image, ScanLine } from 'lucide-react-native';
 import { Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, View } from '@/components/ui';
 
 export function ScanEntryScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
     <View className="flex-1 bg-neutral-50">
       {/* Header */}
-      <View className="px-6 pt-16 pb-2">
+      <View className="px-6 pb-2" style={{ paddingTop: insets.top }}>
         <Text className="font-serif text-3xl font-medium text-stone-900">
           Scan
         </Text>

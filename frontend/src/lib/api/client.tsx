@@ -4,6 +4,7 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import Env from 'env';
 import { signOut } from '@/features/auth/use-auth-store';
+import { clearUser } from '@/features/auth/use-user-store';
 import { getToken, removeToken, setToken } from '@/lib/auth/utils';
 
 export const client = axios.create({
@@ -83,6 +84,7 @@ async function ensureFreshToken(): Promise<string | null> {
   } catch {
     removeToken();
     signOut();
+    clearUser();
     return null;
   }
 }

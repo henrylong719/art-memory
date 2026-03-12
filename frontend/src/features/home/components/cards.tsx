@@ -19,7 +19,7 @@ export function ScanCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={{ width: 128 }}>
+    <Pressable onPress={onPress} style={{ width: 128 }} className="active:opacity-80">
       <View className="w-32 aspect-4/5 rounded-xl overflow-hidden bg-charcoal-100 mb-2.5">
         {(scan.artwork?.imageUrl ?? scan.imageUrl) ? (
           <Image
@@ -54,7 +54,7 @@ export function ArtworkCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={{ width: 140 }}>
+    <Pressable onPress={onPress} style={{ width: 140 }} className="active:opacity-80">
       <View className="w-35 aspect-3/4 rounded-xl overflow-hidden bg-charcoal-100 mb-2.5">
         {artwork.imageUrl ? (
           <Image
@@ -92,7 +92,7 @@ export function MuseumCard({
 
   return (
     <Pressable
-      className="bg-white rounded-[20px] overflow-hidden border border-neutral-200"
+      className="bg-white rounded-[20px] overflow-hidden border border-neutral-200 active:opacity-90"
       onPress={onPress}
     >
       <View className="h-40 bg-charcoal-100 relative">

@@ -1,8 +1,9 @@
 import type { LoginInput, RegisterInput, SocialLoginInput } from '@/lib/api/types';
 import { useMutation } from '@tanstack/react-query';
 import { signIn, signOut } from '@/features/auth/use-auth-store';
-import { setUser } from '@/features/auth/use-user-store';
+import { clearUser, setUser } from '@/features/auth/use-user-store';
 import { authApi } from '@/lib/api/services';
+import { queryClient } from '@/lib/api/provider';
 import { getToken, removeToken } from '@/lib/auth/utils';
 
 export function useRegister() {
@@ -64,6 +65,8 @@ export function useLogout() {
     onSettled: () => {
       removeToken();
       signOut();
+      clearUser();
+      queryClient.clear();
     },
   });
 }
@@ -85,9 +88,11 @@ export function useLogoutAll() {
     mutationFn: async () => {
       await authApi.logoutAll();
     },
-    onSettled: () => {
+    onSuccess: () => {
       removeToken();
       signOut();
+      clearUser();
+      queryClient.clear();
     },
   });
 }

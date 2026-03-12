@@ -1,19 +1,17 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { useState } from 'react';
-import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
-import { Motion } from '@legendapp/motion';
+import { AnimatePresence, Motion } from '@legendapp/motion';
 import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import Toast from '@/components/ui/toast';
 import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useLogin } from '@/lib/hooks/use-auth';
-
-import { AnimatePresence } from '@legendapp/motion';
-import Toast from '@/components/ui/toast';
 import { useToast } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 export function SignInScreen() {
   const router = useRouter();
@@ -34,14 +32,7 @@ export function SignInScreen() {
           router.replace('/(app)');
         },
         onError: (error) => {
-          const axiosError = error as AxiosError<{ message?: string }>;
-          const message =
-            axiosError.response?.data?.message ||
-            axiosError.message ||
-            'Failed to sign in.';
-
-          console.log(axiosError.response?.data);
-          showToast(message, 'error');
+          showToast(getErrorMessage(error, 'Failed to sign in.'), 'error');
         },
       },
     );
@@ -50,7 +41,7 @@ export function SignInScreen() {
   const isDisabled = !email.trim() || !password || login.isPending;
 
   return (
-    <SafeAreaView style={{ flex: 1 }} className="bg-stone-50">
+    <SafeAreaView className="flex-1 bg-stone-50">
       <AnimatePresence>
         {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
       </AnimatePresence>
@@ -58,10 +49,9 @@ export function SignInScreen() {
       {/* Back button */}
       <View className="px-4 pb-2">
         <Pressable
-          style={{ backgroundColor: 'transparent' }}
           onPress={() => router.back()}
           hitSlop={8}
-          className="p-2 -ml-2"
+          className="p-2 -ml-2 bg-transparent active:bg-stone-100 rounded-full"
         >
           <ChevronLeft size={24} color="#1E1E1E" />
         </Pressable>
@@ -84,7 +74,7 @@ export function SignInScreen() {
             transition={{ type: 'timing', duration: 300 }}
             className="mb-8"
           >
-            <Text className="text-[32px] leading-tight font-medium text-stone-900 mb-3">
+            <Text className="font-serif text-[32px] leading-tight font-medium text-stone-900 mb-3">
               Welcome back
             </Text>
             <Text className="text-stone-500 text-[15px] leading-relaxed">
@@ -95,20 +85,11 @@ export function SignInScreen() {
           {/* Fields */}
           <View className="mb-4">
             <View className="mb-5">
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2 pl-1">
+              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                 Email
               </Text>
               <TextInput
-                style={{
-                  backgroundColor: '#fff',
-                  borderWidth: 1,
-                  borderColor: '#e7e5e4',
-                  borderRadius: 16,
-                  paddingVertical: 14,
-                  paddingHorizontal: 16,
-                  fontSize: 15,
-                  color: '#1c1917',
-                }}
+                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
                 placeholder="name@example.com"
                 placeholderTextColor="#a8a29e"
                 value={email}
@@ -121,20 +102,11 @@ export function SignInScreen() {
             </View>
 
             <View>
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2 pl-1">
+              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
                 Password
               </Text>
               <TextInput
-                style={{
-                  backgroundColor: '#fff',
-                  borderWidth: 1,
-                  borderColor: '#e7e5e4',
-                  borderRadius: 16,
-                  paddingVertical: 14,
-                  paddingHorizontal: 16,
-                  fontSize: 15,
-                  color: '#1c1917',
-                }}
+                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
                 placeholder="••••••••"
                 placeholderTextColor="#a8a29e"
                 value={password}
@@ -159,18 +131,12 @@ export function SignInScreen() {
           <SocialLoginButtons />
 
           {/* Spacer */}
-          <View style={{ flex: 1, minHeight: 20 }} />
+          <View className="flex-1 min-h-5" />
 
           {/* CTA */}
           <View className="pb-2">
             <Pressable
-              style={{
-                backgroundColor: isDisabled ? '#e7e5e4' : '#1c1917',
-                borderRadius: 16,
-                paddingVertical: 16,
-                alignItems: 'center',
-                marginBottom: 20,
-              }}
+              className={`rounded-2xl py-4 items-center mb-5 ${isDisabled ? 'bg-stone-200' : 'bg-stone-900 active:bg-stone-800'}`}
               onPress={handleSubmit}
               disabled={isDisabled}
             >
@@ -178,12 +144,7 @@ export function SignInScreen() {
                 <ActivityIndicator color="#ffffff" />
               ) : (
                 <Text
-                  style={{
-                    color: isDisabled ? '#a8a29e' : '#ffffff',
-                    fontSize: 15,
-                    fontWeight: '600',
-                    letterSpacing: 0.3,
-                  }}
+                  className={`text-[15px] font-semibold tracking-wide ${isDisabled ? 'text-stone-400' : 'text-white'}`}
                 >
                   Sign In
                 </Text>

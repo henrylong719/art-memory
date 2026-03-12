@@ -81,8 +81,8 @@ export function HomeScreen() {
           {scans.isLoading ? (
             <SkeletonRow count={3} width={128} height={160} />
           ) : recentScans.length === 0 ? (
-            <View className="px-6 py-5 items-center">
-              <Text className="text-[13px] text-charcoal-300 text-center leading-5">
+            <View className="mx-6 py-8 items-center bg-charcoal-50 rounded-2xl">
+              <Text className="text-[13px] text-charcoal-400 text-center leading-5">
                 No scans yet. Go scan your first artwork!
               </Text>
             </View>
@@ -145,8 +145,8 @@ export function HomeScreen() {
               />
             </View>
           ) : (
-            <View className="px-6 py-5 items-center">
-              <Text className="text-[13px] text-charcoal-300 text-center leading-5">
+            <View className="mx-6 py-8 items-center bg-charcoal-50 rounded-2xl">
+              <Text className="text-[13px] text-charcoal-400 text-center leading-5">
                 No museums found nearby.
               </Text>
             </View>
@@ -163,9 +163,9 @@ export function HomeScreen() {
           {artworks.isLoading ? (
             <SkeletonRow count={3} width={140} height={180} />
           ) : featuredArtworks.length === 0 ? (
-            <View className="px-6 py-5 items-center">
-              <Text className="text-[13px] text-charcoal-300 text-center leading-5">
-                No artworks in the database yet.
+            <View className="mx-6 py-8 items-center bg-charcoal-50 rounded-2xl">
+              <Text className="text-[13px] text-charcoal-400 text-center leading-5">
+                No artworks saved yet.
               </Text>
             </View>
           ) : (

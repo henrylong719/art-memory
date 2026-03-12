@@ -52,22 +52,11 @@ function FilterChips({
         <Pressable
           key={filter}
           onPress={() => onSelect(filter)}
-          className={`px-4 py-2 rounded-full ${
+          className={`px-4 py-2 rounded-full active:opacity-80 ${
             active === filter
               ? 'bg-stone-900'
               : 'bg-white border border-stone-200'
           }`}
-          style={
-            active === filter
-              ? {
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 2,
-                  elevation: 1,
-                }
-              : undefined
-          }
         >
           <Text
             className={`text-sm font-medium ${
@@ -211,13 +200,6 @@ export function ArtworksScreen({
           </View>
           <Pressable
             className="p-3.5 bg-stone-900 rounded-full active:bg-stone-800"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 1,
-            }}
           >
             <SlidersHorizontal size={20} color="#fff" />
           </Pressable>
@@ -245,9 +227,14 @@ export function ArtworksScreen({
           columnWrapperStyle={{ gap: GRID_GAP, marginBottom: GRID_GAP }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View className="py-20 items-center">
-              <Text className="text-stone-500 font-medium text-[15px]">
+            <View className="py-20 items-center px-6">
+              <Text className="font-serif text-xl font-medium text-stone-900 mb-2">
                 No artworks found
+              </Text>
+              <Text className="text-stone-400 text-sm text-center">
+                {isSearching
+                  ? 'Try a different search term'
+                  : 'Scan your first artwork to get started'}
               </Text>
             </View>
           }

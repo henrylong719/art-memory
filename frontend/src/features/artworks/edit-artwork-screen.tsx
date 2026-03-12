@@ -2,11 +2,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { AlertCircle, Camera, RefreshCw, Sparkles } from 'lucide-react-native';
+import { Camera, RefreshCw, Sparkles } from 'lucide-react-native';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   TextInput,
@@ -16,6 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image, ScrollView, Text, View } from '@/components/ui';
 import { GeneratingSkeleton } from '@/components/ui/generating-skeleton';
 import Toast from '@/components/ui/toast';
+import { ConfirmModal } from '@/features/artworks/components/confirm-modal';
+import { FormField } from '@/features/artworks/components/form-field';
 import {
   useArtwork,
   useUpdateArtwork,
@@ -24,6 +25,34 @@ import {
 } from '@/lib/hooks';
 import type { StoryLimitError } from '@/lib/hooks/use-artwork';
 
+// ─── Cooldown hook ───────────────────────────────────────
+function useCooldown() {
+  const [remaining, setRemaining] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (remaining > 0) {
+      intervalRef.current = setInterval(() => {
+        setRemaining((prev) => {
+          if (prev <= 1) {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [remaining]);
+
+  const start = useCallback((seconds: number) => setRemaining(seconds), []);
+
+  return { remaining, isActive: remaining > 0, start };
+}
+
+// ─── Main Screen ─────────────────────────────────────────
 export function EditArtworkScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -33,7 +62,7 @@ export function EditArtworkScreen() {
   const updateArtwork = useUpdateArtwork();
   const generateStory = useGenerateStory();
 
-  // ── Form state ──
+  // Form state
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [year, setYear] = useState('');
@@ -42,7 +71,7 @@ export function EditArtworkScreen() {
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
 
-  // ── Initial values for dirty tracking ──
+  // Initial values for dirty tracking
   const [initialValues, setInitialValues] = useState({
     title: '',
     artist: '',
@@ -53,52 +82,28 @@ export function EditArtworkScreen() {
     notes: '',
   });
 
-  // ── UI state ──
+  // UI state
   const [errors, setErrors] = useState<{ title?: string }>({});
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-
   const { toast, showToast } = useToast();
 
   const [aboutState, setAboutState] = useState<
     'available' | 'missing' | 'generating' | 'generated'
   >('missing');
 
-  // ── Cooldown & limit state ──
-  const [cooldownRemaining, setCooldownRemaining] = useState(0);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Cooldown & limit state
+  const cooldown = useCooldown();
   const [limitInfo, setLimitInfo] = useState<{
     used: number;
     limit: number;
     remaining: number;
   } | null>(null);
 
-  // Tick down cooldown every second
-  useEffect(() => {
-    if (cooldownRemaining > 0) {
-      cooldownRef.current = setInterval(() => {
-        setCooldownRemaining((prev) => {
-          if (prev <= 1) {
-            if (cooldownRef.current) clearInterval(cooldownRef.current);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (cooldownRef.current) clearInterval(cooldownRef.current);
-    };
-  }, [cooldownRemaining]);
-
-  const startCooldown = useCallback((seconds: number) => {
-    setCooldownRemaining(seconds);
-  }, []);
-
-  const isOnCooldown = cooldownRemaining > 0;
   const isAtLimit = limitInfo !== null && limitInfo.remaining <= 0;
-  const generateDisabled = generateStory.isPending || isOnCooldown || isAtLimit;
+  const generateDisabled =
+    generateStory.isPending || cooldown.isActive || isAtLimit;
 
-  // ── Hydrate form from API (only on initial load) ──
+  // Hydrate form from API (only on initial load)
   const hasHydrated = useRef(false);
 
   useEffect(() => {
@@ -111,7 +116,7 @@ export function EditArtworkScreen() {
         medium: artwork.medium ?? '',
         museum: artwork.museum?.name ?? '',
         description: artwork.description ?? '',
-        notes: '', // personal notes come from SavedArtwork, not Artwork
+        notes: '',
       };
       setTitle(vals.title);
       setArtist(vals.artist);
@@ -125,12 +130,9 @@ export function EditArtworkScreen() {
     }
   }, [artwork]);
 
-  // Track whether the description was changed by AI generation.
-  // This flag ensures Save stays enabled even if a query refetch
-  // causes initialValues and description to momentarily align.
+  // Track whether the description was changed by AI generation
   const [descriptionDirtyFromAI, setDescriptionDirtyFromAI] = useState(false);
 
-  // ── Dirty check ──
   const hasChanges =
     descriptionDirtyFromAI ||
     title !== initialValues.title ||
@@ -154,7 +156,6 @@ export function EditArtworkScreen() {
         }
         setAboutState('generated');
 
-        // Start cooldown from backend meta
         const meta = (result as any)?._storyMeta;
         if (meta) {
           setLimitInfo({
@@ -162,9 +163,9 @@ export function EditArtworkScreen() {
             limit: meta.limit,
             remaining: meta.remaining,
           });
-          startCooldown(meta.cooldownSeconds);
+          cooldown.start(meta.cooldownSeconds);
         } else {
-          startCooldown(60);
+          cooldown.start(60);
         }
       },
       onError: (error: any) => {
@@ -172,7 +173,7 @@ export function EditArtworkScreen() {
 
         const limitError = error as StoryLimitError;
         if (limitError?.type === 'cooldown') {
-          startCooldown(limitError.cooldownRemaining ?? 60);
+          cooldown.start(limitError.cooldownRemaining ?? 60);
           showToast(limitError.message, 'error');
         } else if (limitError?.type === 'daily_limit') {
           setLimitInfo({
@@ -197,7 +198,6 @@ export function EditArtworkScreen() {
   };
 
   const handleSave = () => {
-    // Validate
     if (!title.trim()) {
       setErrors({ title: 'Title is required' });
       return;
@@ -218,11 +218,8 @@ export function EditArtworkScreen() {
         onSuccess: () => {
           setDescriptionDirtyFromAI(false);
           showToast('Changes saved', 'success');
-          setTimeout(() => {
-            router.back();
-          }, 800);
+          setTimeout(() => router.back(), 800);
         },
-
         onError: (
           error: Error & { response?: { data?: { message?: string } } },
         ) => {
@@ -234,20 +231,18 @@ export function EditArtworkScreen() {
     );
   };
 
-  // ── Helper: generate button label ──
   const getGenerateLabel = () => {
-    if (isOnCooldown) return `Wait ${cooldownRemaining}s`;
+    if (cooldown.isActive) return `Wait ${cooldown.remaining}s`;
     if (isAtLimit) return 'Daily limit reached';
     return 'Generate Story';
   };
 
   const getRegenerateLabel = () => {
-    if (isOnCooldown) return `${cooldownRemaining}s`;
+    if (cooldown.isActive) return `${cooldown.remaining}s`;
     if (isAtLimit) return 'Limit reached';
     return 'Regenerate';
   };
 
-  // ── Loading ──
   if (isLoading || !artwork) {
     return (
       <View className="flex-1 bg-neutral-50 items-center justify-center">
@@ -258,7 +253,7 @@ export function EditArtworkScreen() {
 
   return (
     <View className="flex-1 bg-neutral-50">
-      {/* ── Header ── */}
+      {/* Header */}
       <View
         style={{ paddingTop: insets.top }}
         className="bg-neutral-50/95 px-6 pb-4 flex-row items-center justify-between border-b border-neutral-200/50 z-40"
@@ -298,7 +293,7 @@ export function EditArtworkScreen() {
         {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
       </AnimatePresence>
 
-      {/* ── Content ── */}
+      {/* Content */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -319,7 +314,7 @@ export function EditArtworkScreen() {
             transition={{ type: 'timing', duration: 400 }}
             className="gap-10"
           >
-            {/* ── Image Section ── */}
+            {/* Image Section */}
             <View className="items-center gap-4 mb-2">
               <View
                 className="w-32 h-32 rounded-2xl overflow-hidden bg-neutral-200"
@@ -358,166 +353,66 @@ export function EditArtworkScreen() {
               </Pressable>
             </View>
 
-            {/* ── Artwork Details Section ── */}
+            {/* Artwork Details Section */}
             <View className="gap-6">
               <Text className="font-serif text-xl font-semibold text-charcoal-900 mb-1">
                 Artwork Details
               </Text>
 
               <View className="gap-5">
-                {/* Title (Required) */}
-                <View className="gap-2">
-                  <Text className="text-[12px] font-semibold tracking-widest uppercase text-charcoal-400 ml-1">
-                    Title
-                  </Text>
-                  <View
-                    className={`bg-white rounded-2xl border px-4 py-3.5 ${
-                      errors.title
-                        ? 'border-red-300 bg-red-50/30'
-                        : 'border-neutral-200'
-                    }`}
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.03,
-                      shadowRadius: 4,
-                      elevation: 1,
-                    }}
-                  >
-                    <TextInput
-                      value={title}
-                      onChangeText={(text) => {
-                        setTitle(text);
-                        if (errors.title) setErrors({});
-                      }}
-                      placeholder="Artwork title"
-                      placeholderTextColor="#d6d3d1"
-                      className="text-[15px] font-medium text-charcoal-900"
-                    />
-                  </View>
-                  {errors.title && (
-                    <View className="flex-row items-center gap-1.5 ml-1 mt-0.5">
-                      <AlertCircle
-                        size={12}
-                        color="#7f1d1d"
-                        strokeWidth={2.5}
-                      />
-                      <Text className="text-[12px] font-medium text-red-900/70">
-                        {errors.title}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                <FormField
+                  label="Title"
+                  value={title}
+                  onChangeText={(text) => {
+                    setTitle(text);
+                    if (errors.title) setErrors({});
+                  }}
+                  placeholder="Artwork title"
+                  error={errors.title}
+                />
 
                 {/* Artist & Year Row */}
                 <View className="flex-row gap-4">
-                  <View className="flex-1 gap-2">
-                    <Text className="text-[12px] font-semibold tracking-widest uppercase text-charcoal-400 ml-1">
-                      Artist
-                    </Text>
-                    <View
-                      className="bg-white rounded-2xl border border-neutral-200 px-4 py-3.5"
-                      style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.03,
-                        shadowRadius: 4,
-                        elevation: 1,
-                      }}
-                    >
-                      <TextInput
-                        value={artist}
-                        onChangeText={setArtist}
-                        placeholder="Unknown"
-                        placeholderTextColor="#d6d3d1"
-                        className="text-[15px] text-charcoal-900"
-                      />
-                    </View>
+                  <View className="flex-1">
+                    <FormField
+                      label="Artist"
+                      value={artist}
+                      onChangeText={setArtist}
+                      placeholder="Unknown"
+                    />
                   </View>
-
-                  <View className="w-[100px] gap-2">
-                    <Text className="text-[12px] font-semibold tracking-widest uppercase text-charcoal-400 ml-1">
-                      Year
-                    </Text>
-                    <View
-                      className="bg-white rounded-2xl border border-neutral-200 px-4 py-3.5"
-                      style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.03,
-                        shadowRadius: 4,
-                        elevation: 1,
-                      }}
-                    >
-                      <TextInput
-                        value={year}
-                        onChangeText={setYear}
-                        placeholder="YYYY"
-                        placeholderTextColor="#d6d3d1"
-                        keyboardType="number-pad"
-                        maxLength={4}
-                        className="text-[15px] text-charcoal-900"
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                {/* Medium */}
-                <View className="gap-2">
-                  <Text className="text-[12px] font-semibold tracking-widest uppercase text-charcoal-400 ml-1">
-                    Medium
-                  </Text>
-                  <View
-                    className="bg-white rounded-2xl border border-neutral-200 px-4 py-3.5"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.03,
-                      shadowRadius: 4,
-                      elevation: 1,
-                    }}
-                  >
-                    <TextInput
-                      value={medium}
-                      onChangeText={setMedium}
-                      placeholder="e.g. Oil on canvas"
-                      placeholderTextColor="#d6d3d1"
-                      className="text-[15px] text-charcoal-900"
+                  <View className="w-[100px]">
+                    <FormField
+                      label="Year"
+                      value={year}
+                      onChangeText={setYear}
+                      placeholder="YYYY"
+                      keyboardType="number-pad"
+                      maxLength={4}
                     />
                   </View>
                 </View>
 
-                {/* Location / Museum */}
-                <View className="gap-2">
-                  <Text className="text-[12px] font-semibold tracking-widest uppercase text-charcoal-400 ml-1">
-                    Location
-                  </Text>
-                  <View
-                    className="bg-white rounded-2xl border border-neutral-200 px-4 py-3.5"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.03,
-                      shadowRadius: 4,
-                      elevation: 1,
-                    }}
-                  >
-                    <TextInput
-                      value={museum}
-                      onChangeText={setMuseum}
-                      placeholder="Museum or Gallery name"
-                      placeholderTextColor="#d6d3d1"
-                      className="text-[15px] text-charcoal-900"
-                    />
-                  </View>
-                </View>
+                <FormField
+                  label="Medium"
+                  value={medium}
+                  onChangeText={setMedium}
+                  placeholder="e.g. Oil on canvas"
+                />
+
+                <FormField
+                  label="Location"
+                  value={museum}
+                  onChangeText={setMuseum}
+                  placeholder="Museum or Gallery name"
+                />
               </View>
             </View>
 
             {/* Divider */}
             <View className="h-px bg-neutral-200/60 w-full" />
 
-            {/* ── About Section ── */}
+            {/* About Section */}
             <View className="gap-4">
               <Text className="font-serif text-xl font-semibold text-charcoal-900">
                 About
@@ -573,7 +468,6 @@ export function EditArtworkScreen() {
                     </Text>
                   </Pressable>
 
-                  {/* Remaining generations counter */}
                   {limitInfo && !isAtLimit && (
                     <Text className="text-charcoal-300 text-[11px] mt-2.5">
                       {limitInfo.remaining} of {limitInfo.limit} generations
@@ -637,7 +531,7 @@ export function EditArtworkScreen() {
             {/* Divider */}
             <View className="h-px bg-neutral-200/60 w-full" />
 
-            {/* ── Personal Memory Section ── */}
+            {/* Personal Memory Section */}
             <View className="gap-4">
               <View className="gap-1">
                 <Text className="font-serif text-xl font-semibold text-charcoal-900">
@@ -648,90 +542,31 @@ export function EditArtworkScreen() {
                 </Text>
               </View>
 
-              <View
-                className="bg-white rounded-2xl border border-neutral-200 px-4 py-3.5 min-h-[140px]"
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.03,
-                  shadowRadius: 4,
-                  elevation: 1,
-                }}
-              >
-                <TextInput
-                  value={notes}
-                  onChangeText={setNotes}
-                  placeholder="Add your memories..."
-                  placeholderTextColor="#d6d3d1"
-                  multiline
-                  textAlignVertical="top"
-                  className="min-h-[120px] text-[15px] leading-6 text-charcoal-900 pt-1"
-                />
-              </View>
+              <FormField
+                label=""
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Add your memories..."
+                multiline
+                minHeight={140}
+              />
             </View>
           </Motion.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* ── Unsaved Changes Modal ── */}
-      <Modal
+      {/* Unsaved Changes Modal */}
+      <ConfirmModal
         visible={showUnsavedModal}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setShowUnsavedModal(false)}
-      >
-        <Pressable
-          onPress={() => setShowUnsavedModal(false)}
-          className="flex-1 bg-charcoal-900/40 items-center justify-center px-6"
-        >
-          <Pressable
-            onPress={() => {}}
-            className="w-full max-w-[320px] bg-white rounded-4xl p-7 items-center"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.15,
-              shadowRadius: 24,
-              elevation: 12,
-            }}
-          >
-            <View className="w-12 h-12 bg-charcoal-50 rounded-full items-center justify-center mb-4">
-              <AlertCircle size={24} color="#a8a29e" strokeWidth={2} />
-            </View>
-
-            <Text className="font-serif text-2xl font-medium text-charcoal-900 text-center mb-3">
-              Discard changes?
-            </Text>
-            <Text className="text-[15px] text-charcoal-400 text-center leading-6 mb-8">
-              You have unsaved changes. Are you sure you want to leave without
-              saving?
-            </Text>
-
-            <View className="w-full gap-3">
-              <Pressable
-                onPress={() => {
-                  setShowUnsavedModal(false);
-                  router.back();
-                }}
-                className="w-full py-4 bg-red-50 rounded-2xl items-center active:bg-red-100"
-              >
-                <Text className="text-red-600 font-semibold text-[15px]">
-                  Discard Changes
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setShowUnsavedModal(false)}
-                className="w-full py-4 bg-charcoal-50 rounded-2xl items-center active:bg-charcoal-100"
-              >
-                <Text className="text-charcoal-700 font-semibold text-[15px]">
-                  Keep Editing
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        title="Discard changes?"
+        description="You have unsaved changes. Are you sure you want to leave without saving?"
+        confirmLabel="Discard Changes"
+        onConfirm={() => {
+          setShowUnsavedModal(false);
+          router.back();
+        }}
+        onCancel={() => setShowUnsavedModal(false)}
+      />
     </View>
   );
 }

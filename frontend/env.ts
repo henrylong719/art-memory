@@ -24,15 +24,15 @@ const EXPO_PUBLIC_APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV ??
   'development') as z.infer<typeof envSchema>['EXPO_PUBLIC_APP_ENV'];
 
 const BUNDLE_IDS = {
-  development: 'com.henrylong.artmemoryt',
-  preview: 'com.henrylong.preview',
-  production: 'com.obytes',
+  development: 'com.henrylong.artmemory.dev',
+  preview: 'com.henrylong.artmemory.preview',
+  production: 'com.henrylong.artmemory',
 } as const;
 
 const PACKAGES = {
-  development: 'com.henrylong.artmemory',
-  preview: 'com.obytes.preview',
-  production: 'com.obytes',
+  development: 'com.henrylong.artmemory.dev',
+  preview: 'com.henrylong.artmemory.preview',
+  production: 'com.henrylong.artmemory',
 } as const;
 
 const SCHEMES = {
@@ -85,5 +85,17 @@ function getValidatedEnv(env: z.infer<typeof envSchema>) {
 }
 
 const Env = STRICT_ENV_VALIDATION ? getValidatedEnv(_env) : _env;
+
+// Fail fast: API URL is required for preview/production even without strict validation.
+// In development, an empty URL will just cause visible request failures during dev.
+if (
+  !STRICT_ENV_VALIDATION &&
+  EXPO_PUBLIC_APP_ENV !== 'development' &&
+  !Env.EXPO_PUBLIC_API_URL
+) {
+  throw new Error(
+    `EXPO_PUBLIC_API_URL is required for ${EXPO_PUBLIC_APP_ENV} builds. Set it in your .env or EAS secrets.`,
+  );
+}
 
 export default Env;

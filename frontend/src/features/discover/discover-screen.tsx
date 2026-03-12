@@ -7,7 +7,6 @@ import {
   MapPin,
   Navigation,
   Search,
-  SlidersHorizontal,
   Star,
 } from 'lucide-react-native';
 import {
@@ -249,9 +248,12 @@ export function DiscoverScreen() {
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View className="bg-stone-50/90 px-6 pb-2 border-b border-stone-200/50 pt-16">
+      <View
+        className="bg-stone-50/90 px-6 pb-2 border-b border-stone-200/50"
+        style={{ paddingTop: insets.top }}
+      >
         {/* Title Row */}
-        <View className="flex-row items-center gap-4 mb-6 mt-2">
+        <View className="flex-row items-center gap-4 mb-6 mt-3">
           <Pressable
             onPress={() => router.back()}
             className="p-2 -ml-2 rounded-full active:bg-stone-200/50"
@@ -354,9 +356,17 @@ export function DiscoverScreen() {
             nearby.locationStatus !== 'requesting' &&
             museums &&
             museums.length === 0 && (
-              <View className="py-16 items-center">
-                <Text className="text-stone-500 font-medium text-[15px]">
-                  No museums found nearby
+              <View className="py-16 items-center px-4">
+                <View className="w-16 h-16 bg-stone-100 rounded-full items-center justify-center mb-4">
+                  <MapPin size={28} color="#a8a29e" />
+                </View>
+                <Text className="font-serif text-xl font-medium text-stone-900 mb-2 text-center">
+                  No museums found
+                </Text>
+                <Text className="text-stone-400 text-sm text-center max-w-60 leading-5">
+                  {isSearching
+                    ? 'Try a different search term'
+                    : 'No museums found in your area'}
                 </Text>
               </View>
             )}

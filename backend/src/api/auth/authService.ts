@@ -360,6 +360,10 @@ export class AuthService {
       const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
       await this.authRepository.updatePasswordHash(userId, newHash);
 
+      // Revoke all existing refresh tokens so other sessions must re-authenticate.
+      // This ensures a password change invalidates all active sessions.
+      await this.authRepository.deleteAllUserRefreshTokens(userId);
+
       return ServiceResponse.success('Password changed successfully', null);
     } catch (ex) {
       const errorMessage = `Error changing password: ${(ex as Error).message}`;

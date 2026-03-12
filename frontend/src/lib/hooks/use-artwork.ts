@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Artwork } from '@/lib/api/types';
 import { artworkApi } from '@/lib/api/services';
 
 export function useArtworks() {
@@ -147,7 +148,18 @@ export function useGenerateStory() {
         throw error;
       }
     },
-    onSuccess: (_, artworkId) => {
+    onSuccess: (result, artworkId) => {
+      const { _storyMeta: _ignoredMeta, ...updatedArtwork } = result;
+
+      queryClient.setQueryData(['artworks', artworkId], updatedArtwork);
+      queryClient.setQueryData(['artworks'], (existing: Artwork[] | undefined) =>
+        existing?.map(artwork =>
+          artwork.id === artworkId
+            ? { ...artwork, ...updatedArtwork }
+            : artwork,
+        ),
+      );
+
       queryClient.invalidateQueries({ queryKey: ['artworks', artworkId] });
     },
   });

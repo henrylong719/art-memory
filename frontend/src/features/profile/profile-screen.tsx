@@ -11,13 +11,13 @@ import {
   Settings,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Pressable } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, SafeAreaView, ScrollView, Text, View } from '@/components/ui';
-import { signOut } from '@/features/auth/use-auth-store';
 import {
   useCollections,
+  useLogout,
   useMe,
   useSavedArtworks,
   useScanHistory,
@@ -146,8 +146,10 @@ export function ProfileScreen() {
     ? new Date(me.createdAt).getFullYear().toString()
     : '';
 
+  const logout = useLogout();
+
   const handleLogout = () => {
-    signOut();
+    logout.mutate();
   };
 
   return (
@@ -185,13 +187,9 @@ export function ProfileScreen() {
                 {avatarUrl ? (
                   <Image
                     source={{ uri: avatarUrl }}
-                    className="w-20 h-20 rounded-full"
+                    className="w-20 h-20 rounded-full border border-stone-100"
                     contentFit="cover"
                     transition={300}
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#f5f5f4',
-                    }}
                   />
                 ) : (
                   <View className="w-20 h-20 rounded-full bg-stone-100 items-center justify-center border border-stone-200">
@@ -305,10 +303,17 @@ export function ProfileScreen() {
           >
             <Pressable
               onPress={handleLogout}
+              disabled={logout.isPending}
               className="flex-row items-center justify-center gap-2 py-4 active:opacity-70"
             >
-              <LogOut size={18} color="#a8a29e" />
-              <Text className="text-stone-400 font-medium">Log Out</Text>
+              {logout.isPending ? (
+                <ActivityIndicator size="small" color="#a8a29e" />
+              ) : (
+                <>
+                  <LogOut size={18} color="#a8a29e" />
+                  <Text className="text-stone-400 font-medium">Log Out</Text>
+                </>
+              )}
             </Pressable>
           </Motion.View>
         </View>

@@ -10,7 +10,6 @@ export function LoginScreen() {
   const signIn = useAuthStore.use.signIn();
 
   const onSubmit: LoginFormProps['onSubmit'] = (data) => {
-    console.log(data);
     signIn({ access: 'access-token', refresh: 'refresh-token' });
     router.push('/');
   };

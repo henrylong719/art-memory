@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { Text, View } from '@/components/ui';
 import { useSocialLogin } from '@/lib/hooks/use-auth';
+import { getErrorMessage } from '@/lib/utils';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -106,6 +107,8 @@ export function SocialLoginButtons() {
             { onSuccess: () => router.replace('/(app)') },
           );
         }
+      } else if (response?.type === 'error') {
+        socialLogin.reset();
       }
     },
     [socialLogin, router],
@@ -124,7 +127,7 @@ export function SocialLoginButtons() {
   return (
     <View>
       {/* Divider */}
-      <View className="flex-row items-center mb-6" style={{ gap: 16 }}>
+      <View className="flex-row items-center mb-6 gap-4">
         <View className="flex-1 h-px bg-stone-200" />
         <Text className="text-[12px] font-semibold text-stone-400 uppercase tracking-wider">
           Or continue with
@@ -133,40 +136,21 @@ export function SocialLoginButtons() {
       </View>
 
       {/* Social buttons */}
-      <View style={{ gap: 12 }} className="mb-8">
+      <View className="gap-3 mb-8">
         <Pressable
-          onPress={() => googlePromptAsync()}
-          disabled={!googleRequest || isPending}
-          style={{
-            backgroundColor: '#fff',
-            borderWidth: 1,
-            borderColor: '#e7e5e4',
-            borderRadius: 9999,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 12,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 1,
-            opacity: isPending ? 0.6 : 1,
+          onPress={() => {
+            socialLogin.reset();
+            googlePromptAsync();
           }}
+          disabled={!googleRequest || isPending}
+          className={`bg-white border border-stone-200 rounded-full py-3.5 flex-row items-center justify-center gap-3 active:bg-stone-50 ${isPending ? 'opacity-60' : ''}`}
         >
           {isPending && socialLogin.variables?.provider === 'google' ? (
             <ActivityIndicator size="small" color="#1c1917" />
           ) : (
             <>
               <GoogleIcon />
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: '500',
-                  color: '#44403c',
-                }}
-              >
+              <Text className="text-[15px] font-medium text-stone-700">
                 Google
               </Text>
             </>
@@ -174,38 +158,19 @@ export function SocialLoginButtons() {
         </Pressable>
 
         <Pressable
-          onPress={() => fbPromptAsync()}
-          disabled={!fbRequest || isPending}
-          style={{
-            backgroundColor: '#fff',
-            borderWidth: 1,
-            borderColor: '#e7e5e4',
-            borderRadius: 9999,
-            paddingVertical: 14,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 12,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 2,
-            elevation: 1,
-            opacity: isPending ? 0.6 : 1,
+          onPress={() => {
+            socialLogin.reset();
+            fbPromptAsync();
           }}
+          disabled={!fbRequest || isPending}
+          className={`bg-white border border-stone-200 rounded-full py-3.5 flex-row items-center justify-center gap-3 active:bg-stone-50 ${isPending ? 'opacity-60' : ''}`}
         >
           {isPending && socialLogin.variables?.provider === 'facebook' ? (
             <ActivityIndicator size="small" color="#1c1917" />
           ) : (
             <>
               <FacebookIcon />
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: '500',
-                  color: '#44403c',
-                }}
-              >
+              <Text className="text-[15px] font-medium text-stone-700">
                 Facebook
               </Text>
             </>
@@ -217,8 +182,10 @@ export function SocialLoginButtons() {
       {socialLogin.error ? (
         <View className="bg-red-50 rounded-xl p-3.5 mb-4 border border-red-200">
           <Text className="text-red-600 text-[13px] leading-5">
-            {(socialLogin.error as Error).message ??
-              'Social login failed. Please try again.'}
+            {getErrorMessage(
+              socialLogin.error,
+              'Social login failed. Please try again.',
+            )}
           </Text>
         </View>
       ) : null}

@@ -8,13 +8,18 @@ export interface JwtPayload {
 
 export function signAccessToken(payload: JwtPayload): string {
   const options: SignOptions = {
+    algorithm: 'HS256',
     expiresIn: parseDurationToMs(env.JWT_ACCESS_EXPIRES_IN) / 1000,
   };
   return jwt.sign(payload, env.JWT_SECRET, options);
 }
 
 export function verifyAccessToken(token: string): JwtPayload {
-  return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+  // Explicitly restrict to HS256 to prevent algorithm confusion attacks
+  // (e.g. "alg: none" or RS256 public-key substitution).
+  return jwt.verify(token, env.JWT_SECRET, {
+    algorithms: ['HS256'],
+  }) as JwtPayload;
 }
 
 /**

@@ -1,19 +1,11 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import {
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from 'react';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useMemo, useRef, useState } from 'react';
+import { AnimatePresence } from '@legendapp/motion';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Bookmark,
-  Check,
   ChevronLeft,
   Clock,
   ExternalLink,
@@ -21,20 +13,16 @@ import {
   Navigation,
   Palette,
   Pencil,
-  Plus,
   Ruler,
   Share2,
   Sparkles,
-  X,
 } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Linking,
-  Modal,
   Pressable,
   Share,
   Platform,
-  Image as RNImage,
 } from 'react-native';
 import Animated, {
   interpolate,
@@ -46,33 +34,31 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
 import { GeneratingSkeleton } from '@/components/ui/generating-skeleton';
-import { renderBackdrop } from '@/components/ui/modal';
+import Toast from '@/components/ui/toast';
+import { CollectionSheet } from '@/features/artworks/components/collection-sheet';
+import { ConfirmModal } from '@/features/artworks/components/confirm-modal';
+import { DetailCard } from '@/features/artworks/components/detail-card';
+import { FullscreenImageModal } from '@/features/artworks/components/fullscreen-image-modal';
+import { TagPill } from '@/features/artworks/components/tag-pill';
+import { useImageOrientation } from '@/features/artworks/hooks/use-image-orientation';
 import {
   useArtwork,
-  useCollections,
   useDeleteArtwork,
   useStoryGenerator,
   useSaveArtwork,
   useSavedArtworks,
   useRemoveSavedArtwork,
+  useToast,
 } from '@/lib/hooks';
+import { getErrorMessage } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────
 const HERO_HEIGHT_PORTRAIT = 420;
 const HERO_HEIGHT_LANDSCAPE = 280;
 const HEADER_HEIGHT = 56;
 
-/** Convert a numeric size to a web-safe CSS value (px string on web, number on native). */
 const px = (v: number) =>
   Platform.OS === 'web' ? (`${v}px` as unknown as number) : v;
-
-type ImageOrientation = 'portrait' | 'landscape' | 'square';
-
-function getImageOrientation(width: number, height: number): ImageOrientation {
-  if (width > height) return 'landscape';
-  if (height > width) return 'portrait';
-  return 'square';
-}
 
 // ─── Main Screen ─────────────────────────────────────────
 export function ArtworkDetailScreen() {
@@ -84,15 +70,13 @@ export function ArtworkDetailScreen() {
   const { data: savedArtworks } = useSavedArtworks();
   const saveArtwork = useSaveArtwork();
   const removeSavedArtwork = useRemoveSavedArtwork();
-
   const deleteArtwork = useDeleteArtwork();
   const storyGen = useStoryGenerator({ artworkId: id });
 
-  const [imageOrientation, setImageOrientation] =
-    useState<ImageOrientation | null>(null);
+  const imageOrientation = useImageOrientation(artwork?.imageUrl);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const { toast, showToast } = useToast();
 
   const scrollY = useSharedValue(0);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -108,21 +92,6 @@ export function ArtworkDetailScreen() {
   const heroHeight = imageIsLandscape
     ? HERO_HEIGHT_LANDSCAPE
     : HERO_HEIGHT_PORTRAIT;
-
-  useEffect(() => {
-    if (!artwork?.imageUrl || typeof artwork.imageUrl !== 'string') return;
-
-    RNImage.getSize(
-      artwork.imageUrl,
-      (width, height) => {
-        setImageOrientation(getImageOrientation(width, height));
-      },
-      (err) => {
-        console.log('Failed to get image size:', err);
-        setImageOrientation('portrait');
-      },
-    );
-  }, [artwork?.imageUrl]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -149,14 +118,29 @@ export function ArtworkDetailScreen() {
         message: `${artwork.title} by ${artwork.artist?.name ?? 'Unknown Artist'} — shared from ArtMemory`,
         url: artwork.wikiUrl ?? undefined,
       });
-    } catch {
-      // user cancelled
+    } catch (error) {
+      if (error instanceof Error && error.message?.toLowerCase().includes('cancel')) {
+        return;
+      }
+      showToast("We couldn't open the share sheet. Please try again.", 'error');
     }
   };
 
   const handleSaveToggle = () => {
+    if (saveArtwork.isPending || removeSavedArtwork.isPending) return;
+
     if (isSaved && savedEntry) {
-      removeSavedArtwork.mutate(savedEntry.id);
+      removeSavedArtwork.mutate(savedEntry.id, {
+        onSuccess: () => showToast('Removed from your saved artworks.', 'success'),
+        onError: (error) =>
+          showToast(
+            getErrorMessage(
+              error,
+              "We couldn't remove this artwork right now.",
+            ),
+            'error',
+          ),
+      });
     } else {
       bottomSheetRef.current?.present();
     }
@@ -165,7 +149,17 @@ export function ArtworkDetailScreen() {
   const handleSaveToCollection = (collectionId: string) => {
     saveArtwork.mutate(
       { artworkId: id, collectionId },
-      { onSuccess: () => bottomSheetRef.current?.dismiss() },
+      {
+        onSuccess: () => {
+          bottomSheetRef.current?.dismiss();
+          showToast('Artwork saved to your collection.', 'success');
+        },
+        onError: (error) =>
+          showToast(
+            getErrorMessage(error, "We couldn't save this artwork."),
+            'error',
+          ),
+      },
     );
   };
 
@@ -174,6 +168,13 @@ export function ArtworkDetailScreen() {
       onSuccess: () => {
         setDeleteConfirmVisible(false);
         router.dismissAll();
+      },
+      onError: (error) => {
+        setDeleteConfirmVisible(false);
+        showToast(
+          getErrorMessage(error, "We couldn't remove this artwork."),
+          'error',
+        );
       },
     });
   };
@@ -210,6 +211,10 @@ export function ArtworkDetailScreen() {
 
   return (
     <View className="flex-1 bg-neutral-50">
+      <AnimatePresence>
+        {toast.visible && <Toast text={toast.text} variant={toast.variant} />}
+      </AnimatePresence>
+
       <Animated.View
         style={[
           headerStyle,
@@ -327,14 +332,19 @@ export function ArtworkDetailScreen() {
             </Text>
             <Pressable
               onPress={handleSaveToggle}
+              disabled={saveArtwork.isPending || removeSavedArtwork.isPending}
               className="mt-1 h-11 w-11 items-center justify-center rounded-full bg-charcoal-50"
               hitSlop={8}
             >
-              <Bookmark
-                size={20}
-                color={isSaved ? '#1E1E1E' : '#7D7D7D'}
-                fill={isSaved ? '#1E1E1E' : 'none'}
-              />
+              {saveArtwork.isPending || removeSavedArtwork.isPending ? (
+                <ActivityIndicator size="small" color="#1E1E1E" />
+              ) : (
+                <Bookmark
+                  size={20}
+                  color={isSaved ? '#1E1E1E' : '#7D7D7D'}
+                  fill={isSaved ? '#1E1E1E' : 'none'}
+                />
+              )}
             </Pressable>
           </View>
 
@@ -363,6 +373,7 @@ export function ArtworkDetailScreen() {
             ) : null}
           </View>
 
+          {/* About Section */}
           <View className="mb-8">
             <Text className="mb-3 font-serif text-xl font-semibold text-charcoal-900">
               About
@@ -434,6 +445,7 @@ export function ArtworkDetailScreen() {
             )}
           </View>
 
+          {/* Details Section */}
           <View className="mb-8">
             <Text className="mb-4 font-serif text-xl font-semibold text-charcoal-900">
               Details
@@ -470,6 +482,7 @@ export function ArtworkDetailScreen() {
             </View>
           </View>
 
+          {/* Location Map */}
           {artwork.latitude != null && artwork.longitude != null && (
             <View className="mb-8">
               <Text className="mb-3 font-serif text-xl font-semibold text-charcoal-900">
@@ -482,7 +495,11 @@ export function ArtworkDetailScreen() {
                     android: `geo:${artwork.latitude},${artwork.longitude}?q=${artwork.latitude},${artwork.longitude}`,
                     default: `https://maps.google.com/?q=${artwork.latitude},${artwork.longitude}`,
                   });
-                  if (url) Linking.openURL(url).catch(() => {});
+                  if (!url) return;
+
+                  Linking.openURL(url).catch(() => {
+                    showToast("We couldn't open your maps app.", 'error');
+                  });
                 }}
                 className="overflow-hidden rounded-2xl border border-neutral-200 active:opacity-90"
               >
@@ -512,8 +529,17 @@ export function ArtworkDetailScreen() {
             </View>
           )}
 
+          {/* Wiki Link */}
           {artwork.wikiUrl ? (
-            <Pressable className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-white px-5 py-4">
+            <Pressable
+              onPress={() => {
+                if (!artwork.wikiUrl) return;
+                Linking.openURL(artwork.wikiUrl).catch(() => {
+                  showToast("We couldn't open that link.", 'error');
+                });
+              }}
+              className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-white px-5 py-4 active:bg-neutral-50"
+            >
               <View>
                 <Text className="text-sm font-semibold text-charcoal-900">
                   Learn more
@@ -526,10 +552,11 @@ export function ArtworkDetailScreen() {
             </Pressable>
           ) : null}
 
-          <View className="items-center border-t border-neutral-200/60 pb-8">
+          {/* Delete Action */}
+          <View className="items-center border-t border-neutral-200/60 mt-6 pt-6 pb-8">
             <Pressable
               onPress={() => setDeleteConfirmVisible(true)}
-              className="rounded-full px-6 py-2.5 active:bg-red-100"
+              className="rounded-full px-6 py-2.5 active:bg-red-50"
             >
               <Text className="text-sm font-medium text-red-400">
                 Remove Artwork
@@ -539,35 +566,12 @@ export function ArtworkDetailScreen() {
         </Motion.View>
       </Animated.ScrollView>
 
-      <Modal
+      <FullscreenImageModal
         visible={fullscreenVisible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setFullscreenVisible(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black">
-          {artwork.imageUrl && (
-            <Image
-              source={artwork.imageUrl}
-              className="h-full w-full"
-              contentFit="contain"
-            />
-          )}
-          <Pressable
-            onPress={() => setFullscreenVisible(false)}
-            className="absolute h-11 w-11 items-center justify-center rounded-full"
-            style={{
-              top: insets.top + 8,
-              right: 20,
-              backgroundColor: 'rgba(255,255,255,0.15)',
-            }}
-            hitSlop={8}
-          >
-            <X size={22} color="#fff" />
-          </Pressable>
-        </View>
-      </Modal>
+        imageUrl={artwork.imageUrl}
+        topInset={insets.top}
+        onClose={() => setFullscreenVisible(false)}
+      />
 
       <CollectionSheet
         ref={bottomSheetRef}
@@ -575,209 +579,15 @@ export function ArtworkDetailScreen() {
         isPending={saveArtwork.isPending}
       />
 
-      {showSuccessToast && (
-        <Motion.View
-          initial={{ opacity: 0, y: -20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: 'timing', duration: 300 }}
-          style={{ top: insets.top + 12 }}
-          className="absolute left-0 right-0 z-120 items-center"
-        >
-          <View className="flex-row items-center gap-2.5 rounded-full bg-charcoal-900 px-5 py-3">
-            <View className="h-5 w-5 items-center justify-center rounded-full bg-white/20">
-              <Check size={12} color="#fff" strokeWidth={3} />
-            </View>
-            <Text className="text-sm font-medium tracking-wide text-white">
-              Artwork removed
-            </Text>
-          </View>
-        </Motion.View>
-      )}
-
-      <Modal
+      <ConfirmModal
         visible={deleteConfirmVisible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setDeleteConfirmVisible(false)}
-      >
-        <Pressable
-          onPress={() => setDeleteConfirmVisible(false)}
-          className="flex-1 items-center justify-center bg-charcoal-900/40 px-6"
-        >
-          <Pressable
-            onPress={() => {}}
-            className="w-full max-w-[320px] items-center rounded-4xl bg-white p-7"
-          >
-            <Text className="mb-3 text-center font-serif text-2xl font-medium text-charcoal-900">
-              Remove Artwork?
-            </Text>
-            <Text className="mb-8 text-center text-[15px] leading-6 text-charcoal-400">
-              This artwork will be removed from your saved artworks or
-              collection. This action cannot be undone.
-            </Text>
-            <View className="w-full gap-3">
-              <Pressable
-                onPress={handleDelete}
-                disabled={deleteArtwork.isPending}
-                className="w-full items-center rounded-2xl bg-red-50 py-4 active:bg-red-100"
-              >
-                {deleteArtwork.isPending ? (
-                  <ActivityIndicator size="small" color="#DC2626" />
-                ) : (
-                  <Text className="text-[15px] font-semibold text-red-600">
-                    Remove
-                  </Text>
-                )}
-              </Pressable>
-              <Pressable
-                onPress={() => setDeleteConfirmVisible(false)}
-                className="w-full items-center rounded-2xl bg-charcoal-50 py-4 active:bg-charcoal-100"
-              >
-                <Text className="text-[15px] font-semibold text-charcoal-700">
-                  Cancel
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        title="Remove Artwork?"
+        description="This artwork will be removed from your saved artworks or collection. This action cannot be undone."
+        confirmLabel="Remove"
+        isPending={deleteArtwork.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmVisible(false)}
+      />
     </View>
   );
 }
-
-function TagPill({ icon, label }: { icon?: ReactNode; label: string }) {
-  return (
-    <View className="flex-row items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-2">
-      {icon}
-      <Text className="text-sm font-semibold text-charcoal-700">{label}</Text>
-    </View>
-  );
-}
-
-function DetailCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View className="w-[48%] rounded-2xl border border-neutral-200 bg-white px-4 py-3.5">
-      <View className="mb-1.5 flex-row items-center gap-1.5">
-        {icon}
-        <Text className="text-xs font-semibold uppercase tracking-wider text-charcoal-400">
-          {label}
-        </Text>
-      </View>
-      <Text className="text-sm font-semibold text-charcoal-800">{value}</Text>
-    </View>
-  );
-}
-
-const CollectionSheet = forwardRef<
-  BottomSheetModal,
-  {
-    onSelect: (id: string) => void;
-    isPending: boolean;
-    onCreateNew?: () => void;
-  }
->(({ onSelect, isPending, onCreateNew }, ref) => {
-  const { data: collections, isLoading } = useCollections();
-  const snapPoints = useMemo(() => ['55%'], []);
-
-  return (
-    <BottomSheetModal
-      ref={ref}
-      index={0}
-      snapPoints={snapPoints}
-      backdropComponent={renderBackdrop}
-      enableDynamicSizing={false}
-      handleComponent={() => (
-        <View className="items-center pb-2 pt-3">
-          <View className="h-1.5 w-12 rounded-full bg-stone-200" />
-        </View>
-      )}
-    >
-      <BottomSheetView className="flex-1 px-6 pb-8">
-        <View className="mb-6 flex-row items-center justify-between">
-          <Text className="font-serif text-2xl font-medium text-stone-900">
-            Save to Collection
-          </Text>
-          <Pressable
-            onPress={() =>
-              (ref as RefObject<BottomSheetModal>)?.current?.dismiss()
-            }
-            className="rounded-full bg-stone-100 p-2"
-            hitSlop={8}
-          >
-            <X size={20} color="#1c1917" />
-          </Pressable>
-        </View>
-
-        {isLoading ? (
-          <ActivityIndicator size="small" color="#1c1917" className="mt-4" />
-        ) : (
-          <View className="mb-6 gap-3">
-            {collections?.map((collection) => {
-              const coverImage =
-                collection.coverUrl ??
-                collection.savedArtworks?.[0]?.artwork?.imageUrl ??
-                null;
-
-              return (
-                <Pressable
-                  key={collection.id}
-                  onPress={() => onSelect(collection.id)}
-                  disabled={isPending}
-                  className="flex-row items-center rounded-2xl border border-transparent p-3 active:border-stone-200 active:bg-stone-50"
-                >
-                  <View className="mr-4 h-16 w-16 overflow-hidden rounded-xl bg-stone-100">
-                    {coverImage ? (
-                      <Image
-                        source={{ uri: coverImage }}
-                        className="h-full w-full"
-                        contentFit="cover"
-                        transition={200}
-                      />
-                    ) : (
-                      <View className="h-full w-full items-center justify-center">
-                        <Bookmark size={16} color="#a8a29e" />
-                      </View>
-                    )}
-                  </View>
-                  <View className="flex-1">
-                    <Text
-                      className="text-[15px] font-medium text-stone-900"
-                      numberOfLines={1}
-                    >
-                      {collection.name}
-                    </Text>
-                    <Text className="mt-1 text-xs text-stone-500">
-                      {collection._count.savedArtworks} artwork
-                      {collection._count.savedArtworks === 1 ? '' : 's'}
-                      {collection.isDefault ? ' · Default' : ''}
-                    </Text>
-                  </View>
-                  <View className="h-6 w-6 rounded-full border border-stone-300" />
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-
-        <Pressable
-          onPress={onCreateNew}
-          className="flex-row items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-200 py-4 active:border-stone-300 active:bg-stone-50"
-        >
-          <Plus size={20} color="#57534e" />
-          <Text className="font-medium text-stone-600">
-            Create New Collection
-          </Text>
-        </Pressable>
-      </BottomSheetView>
-    </BottomSheetModal>
-  );
-});
