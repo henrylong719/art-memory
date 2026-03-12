@@ -262,11 +262,13 @@ function MuseumCard({
           </View>
           <Pressable
             onPress={() => openMapsForMuseum(museum)}
-            className="flex-row items-center gap-1.5 bg-stone-600 px-3.5 py-2 rounded-full active:bg-stone-800"
+            className="flex-row items-center gap-1.5 bg-stone-100 px-3.5 py-2 rounded-full active:bg-stone-800"
             hitSlop={4}
           >
-            <Navigation size={13} color="#fff" fill="#fff" />
-            <Text className="text-white text-xs font-semibold">Directions</Text>
+            <Navigation size={13} color="#57534e" />
+            <Text className="text-stone-600 text-xs font-semibold">
+              Directions
+            </Text>
           </Pressable>
         </View>
       </View>

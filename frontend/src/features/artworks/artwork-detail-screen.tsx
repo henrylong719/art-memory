@@ -176,7 +176,7 @@ export function ArtworkDetailScreen() {
         setShowSuccessToast(true);
         setTimeout(() => {
           setShowSuccessToast(false);
-          router.back();
+          router.dismissAll();
         }, 1800);
       },
     });
@@ -323,7 +323,7 @@ export function ArtworkDetailScreen() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'timing', duration: 350, delay: 100 }}
-          className="-mt-2 px-6"
+          className="-mt-5 rounded-t-3xl bg-neutral-50 px-6 pt-6"
         >
           <View className="mb-1 flex-row items-start justify-between gap-3">
             <Text className="flex-1 shrink font-serif text-[28px] font-semibold leading-8.5 text-charcoal-900">
@@ -530,12 +530,12 @@ export function ArtworkDetailScreen() {
             </Pressable>
           ) : null}
 
-          <View className="mt-12 items-center border-t border-neutral-200/60 pb-8 pt-8">
+          <View className="items-center border-t border-neutral-200/60 pb-8">
             <Pressable
               onPress={() => setDeleteConfirmVisible(true)}
-              className="rounded-full px-6 py-2.5 active:bg-red-50"
+              className="rounded-full px-6 py-2.5 active:bg-red-100"
             >
-              <Text className="text-sm font-medium text-charcoal-400">
+              <Text className="text-sm font-medium text-red-400">
                 Remove Artwork
               </Text>
             </Pressable>

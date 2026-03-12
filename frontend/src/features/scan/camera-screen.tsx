@@ -4,10 +4,18 @@ import { Motion, AnimatePresence } from '@legendapp/motion';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
+import {
+  Camera,
+  ImageUp,
+  ScanText,
+  X,
+  Zap,
+  ZapOff,
+} from 'lucide-react-native';
 import {
   ActivityIndicator,
   Image as RNImage,

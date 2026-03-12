@@ -8,6 +8,7 @@ import {
   Clock,
   Globe,
   MapPin,
+  Navigation,
   Phone,
   Share2,
 } from 'lucide-react-native';
@@ -398,7 +399,13 @@ export function MuseumDetailScreen() {
             </Text>
           ) : null}
 
-          {/* Info Cards Grid */}
+          {/* Info Cards */}
+          {(todayHours || museum.phone) && (
+            <Text className="mb-3 font-serif text-xl font-medium text-stone-900">
+              Info
+            </Text>
+          )}
+
           <View className="flex-row gap-4 mb-4">
             {todayHours && (
               <InfoCard
@@ -407,17 +414,6 @@ export function MuseumDetailScreen() {
                 subtitle={todayHours}
               />
             )}
-            {museum.websiteUrl && (
-              <InfoCard
-                icon={<Globe size={20} color="#a8a29e" />}
-                title="Website"
-                subtitle="Visit website"
-                onPress={handleOpenWebsite}
-              />
-            )}
-          </View>
-
-          <View className="flex-col gap-4 mb-4">
             {museum.phone && (
               <InfoCard
                 icon={<Phone size={20} color="#a8a29e" />}
@@ -426,14 +422,66 @@ export function MuseumDetailScreen() {
                 onPress={handleCall}
               />
             )}
+          </View>
 
-            {museum.address && (
+          <View className="flex-col gap-4 mb-4">
+            {museum.websiteUrl && (
               <InfoCard
-                icon={<MapPin size={20} color="#a8a29e" />}
-                title="Directions"
-                subtitle={museum.address}
-                onPress={handleOpenMaps}
+                icon={<Globe size={20} color="#a8a29e" />}
+                title={museum.name}
+                subtitle="Visit website"
+                onPress={handleOpenWebsite}
               />
+            )}
+
+            {museum.latitude != null && museum.longitude != null && (
+              <Text className="mb-3 mt-2 font-serif text-xl font-medium text-stone-900">
+                Location
+              </Text>
+            )}
+
+            {museum.latitude != null && museum.longitude != null && (
+              <Pressable
+                onPress={handleOpenMaps}
+                className="overflow-hidden rounded-2xl border border-stone-100 active:opacity-90"
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.03,
+                  shadowRadius: 4,
+                  elevation: 1,
+                }}
+              >
+                <Image
+                  source={{
+                    uri: `https://maps.googleapis.com/maps/api/staticmap?center=${museum.latitude},${museum.longitude}&zoom=15&size=600x300&scale=2&markers=color:0x1c1917%7C${museum.latitude},${museum.longitude}&style=feature:poi%7Cvisibility:off&key=${process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY}`,
+                  }}
+                  className="h-40 w-full"
+                  contentFit="cover"
+                  transition={300}
+                />
+                <View className="flex-row items-center justify-between bg-white px-4 py-3">
+                  <View className="flex-1 mr-3">
+                    <Text
+                      className="text-sm font-semibold text-stone-900 mb-0.5"
+                      numberOfLines={1}
+                    >
+                      {museum.address ?? 'Get Directions'}
+                    </Text>
+                    {locationText ? (
+                      <Text className="text-xs text-stone-500">
+                        {locationText}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <View className="flex-row items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1.5">
+                    <Navigation size={12} color="#57534e" />
+                    <Text className="text-xs font-semibold text-stone-600">
+                      Directions
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
             )}
           </View>
         </Motion.View>
