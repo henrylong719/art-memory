@@ -242,12 +242,12 @@ export function SettingsScreen() {
               onPress={() => router.push('/profile/edit')}
             />
             <Divider />
-            <ActionRow
+            {/* <ActionRow
               icon={<Mail size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Email"
               value={me?.email ?? ''}
             />
-            <Divider />
+            <Divider /> */}
             <ActionRow
               icon={<Shield size={20} color="#a8a29e" strokeWidth={1.5} />}
               label="Password & Security"

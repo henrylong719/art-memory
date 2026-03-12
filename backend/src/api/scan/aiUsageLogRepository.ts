@@ -3,6 +3,7 @@ import { prisma } from '@/common/db/prisma';
 export class AiUsageLogRepository {
   async create(data: {
     userId: string;
+    artworkId?: string;
     endpoint: string;
     model: string;
     tokensIn?: number | null;
@@ -30,11 +31,15 @@ export class AiUsageLogRepository {
   }
 
   /**
-   * Get the most recent successful log entry for a user + endpoint.
+   * Get the most recent successful story generation for a user + artwork + endpoint.
    */
-  async findLatest(userId: string, endpoint: string) {
+  async findLatestForArtwork(
+    userId: string,
+    artworkId: string,
+    endpoint: string,
+  ) {
     return prisma.aiUsageLog.findFirst({
-      where: { userId, endpoint, success: true },
+      where: { userId, artworkId, endpoint, success: true },
       orderBy: { createdAt: 'desc' },
     });
   }

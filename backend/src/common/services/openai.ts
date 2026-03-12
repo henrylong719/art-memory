@@ -218,7 +218,7 @@ Given the following artwork details, write a rich, engaging description that cov
 - Any interesting stories or facts about the artwork
 
 Write in a warm, accessible tone that would engage a museum visitor.
-The description should be 2-3 paragraphs (150-250 words).
+The description should be 1-3 paragraphs (100-150 words).
 
 Do NOT invent specific quotes or fabricate historical events.
 Stick to well-established art historical facts.
@@ -246,7 +246,7 @@ export async function generateArtworkStory(artwork: {
 
   const response = await openai.chat.completions.create({
     model: env.OPENAI_MODEL,
-    max_tokens: 800,
+    max_tokens: 320,
     messages: [
       {
         role: 'user',

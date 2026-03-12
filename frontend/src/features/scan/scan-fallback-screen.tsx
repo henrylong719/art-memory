@@ -113,7 +113,7 @@ export function ScanFallbackScreen() {
                   params: Object.keys(params).length > 0 ? params : undefined,
                 });
               }}
-              className="w-full py-4 bg-charcoal-900 rounded-2xl flex-row items-center justify-center gap-2.5 active:bg-charcoal-800"
+              className="w-full py-3 bg-charcoal-900 rounded-2xl flex-row items-center justify-center gap-2.5 active:bg-charcoal-800"
               style={{
                 shadowColor: '#1E1E1E',
                 shadowOffset: { width: 0, height: 8 },
@@ -122,7 +122,7 @@ export function ScanFallbackScreen() {
                 elevation: 8,
               }}
             >
-              <FileEdit size={20} color="#fff" />
+              <FileEdit size={10} color="#fff" />
               <Text className="text-white font-semibold text-lg">
                 Enter Details Manually
               </Text>
@@ -131,7 +131,7 @@ export function ScanFallbackScreen() {
             <Pressable
               onPress={handleDiscard}
               disabled={deleteScan.isPending}
-              className="w-full py-4 rounded-2xl items-center active:bg-charcoal-50"
+              className="w-full py-3 rounded-2xl items-center active:bg-charcoal-50"
             >
               {deleteScan.isPending ? (
                 <ActivityIndicator size="small" color="#a3a3a3" />

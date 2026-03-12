@@ -18,6 +18,15 @@ export const client = axios.create({
 let isRefreshing = false;
 let refreshPromise: Promise<TokenType> | null = null;
 
+function shouldSignOutOnRefreshError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+  return status === 401 || status === 403;
+}
+
 /**
  * Returns true if the access token will expire within the given buffer (ms).
  * Defaults to 60 seconds — enough time to complete a request before expiry.
@@ -81,11 +90,17 @@ async function ensureFreshToken(): Promise<string | null> {
   try {
     const newTokens = await refreshPromise!;
     return newTokens.access;
-  } catch {
-    removeToken();
-    signOut();
-    clearUser();
-    return null;
+  } catch (error) {
+    if (shouldSignOutOnRefreshError(error)) {
+      removeToken();
+      signOut();
+      clearUser();
+      return null;
+    }
+
+    // Preserve the session on transient refresh failures (network/server).
+    // The request may still fail, but the user should not be logged out.
+    return token.access;
   }
 }
 
@@ -182,9 +197,14 @@ client.interceptors.response.use(
       return client(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
-      // Refresh failed — sign out the user
-      removeToken();
-      signOut();
+
+      // Only sign out when the refresh token is actually invalid.
+      if (shouldSignOutOnRefreshError(refreshError)) {
+        removeToken();
+        signOut();
+        clearUser();
+      }
+
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

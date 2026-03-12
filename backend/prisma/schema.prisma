@@ -309,6 +309,7 @@ model Museum {
 model AiUsageLog {
   id         String  @id @default(cuid())
   userId     String
+  artworkId  String?
   endpoint   String // e.g. "openai/vision", "openai/ocr"
   model      String
   tokensIn   Int?
@@ -321,6 +322,7 @@ model AiUsageLog {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  @@index([userId, artworkId, endpoint, createdAt])
   @@index([createdAt])
   @@map("ai_usage_logs")
 }

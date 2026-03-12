@@ -307,8 +307,9 @@ export class ArtworkService {
       const plan = user?.plan ?? 'FREE';
 
       // ── Cooldown check ──
-      const latestLog = await this.aiUsageLogRepository.findLatest(
+      const latestLog = await this.aiUsageLogRepository.findLatestForArtwork(
         userId,
+        id,
         ArtworkService.STORY_ENDPOINT,
       );
 
@@ -368,6 +369,7 @@ export class ArtworkService {
       const usageInfo = extractUsageInfo(rawResponse);
       await this.aiUsageLogRepository.create({
         userId,
+        artworkId: id,
         endpoint: ArtworkService.STORY_ENDPOINT,
         model: usageInfo.model,
         tokensIn: usageInfo.tokensIn,
