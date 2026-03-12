@@ -54,7 +54,11 @@ export function useScanCombined() {
       labelFile: { uri: string; type: string; name: string };
       location?: { latitude: number; longitude: number };
     }) => {
-      const { data } = await scanApi.scanCombined(artworkFile, labelFile, location);
+      const { data } = await scanApi.scanCombined(
+        artworkFile,
+        labelFile,
+        location,
+      );
       return data.responseObject;
     },
     onSuccess: () => {
@@ -84,7 +88,11 @@ export function useCorrectScan() {
       data,
     }: {
       id: string;
-      data: { userCorrectedTitle?: string; userCorrectedArtist?: string; artworkId?: string };
+      data: {
+        userCorrectedTitle?: string;
+        userCorrectedArtist?: string;
+        artworkId?: string;
+      };
     }) => {
       const { data: response } = await scanApi.correct(id, data);
       return response.responseObject;

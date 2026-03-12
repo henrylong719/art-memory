@@ -177,7 +177,10 @@ export function ArtworksScreen({
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
-      <View className="bg-stone-50/90 px-6 pb-2" style={{ paddingTop: insets.top }}>
+      <View
+        className="bg-stone-50/90 px-6 pb-2"
+        style={{ paddingTop: insets.top }}
+      >
         <View className="flex-row items-center gap-3 mb-6">
           {fromProfile && (
             <Pressable

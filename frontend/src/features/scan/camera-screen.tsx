@@ -9,14 +9,7 @@ import * as Location from 'expo-location';
 import * as MediaLibrary from 'expo-media-library';
 import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Camera,
-  ImageUp,
-  ScanText,
-  X,
-  Zap,
-  ZapOff,
-} from 'lucide-react-native';
+import { Camera, ImageUp, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Image as RNImage,

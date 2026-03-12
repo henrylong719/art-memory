@@ -92,58 +92,6 @@ async function openMapsForMuseum(museum: NearbyMuseum) {
   }
 }
 
-// ─── Category Chips ──────────────────────────────────────
-const CATEGORIES = ['All', 'Art Museums', 'Modern Art', 'Contemporary'];
-
-function CategoryChips({
-  active,
-  onSelect,
-}: {
-  active: string;
-  onSelect: (cat: string) => void;
-}) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{
-        paddingHorizontal: 24,
-        gap: 8,
-        paddingBottom: 8,
-      }}
-    >
-      {CATEGORIES.map((cat) => (
-        <Pressable
-          key={cat}
-          onPress={() => onSelect(cat)}
-          className={`px-4 py-2 rounded-full ${
-            active === cat ? 'bg-stone-900' : 'bg-white border border-stone-200'
-          }`}
-          style={
-            active === cat
-              ? {
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 2,
-                  elevation: 1,
-                }
-              : undefined
-          }
-        >
-          <Text
-            className={`text-sm font-medium ${
-              active === cat ? 'text-white' : 'text-stone-600'
-            }`}
-          >
-            {cat}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
-  );
-}
-
 // ─── Museum Card ─────────────────────────────────────────
 function MuseumCard({
   museum,
@@ -334,22 +282,7 @@ export function DiscoverScreen() {
               returnKeyType="search"
             />
           </View>
-          <Pressable
-            className="p-3.5 bg-stone-900 rounded-full active:bg-stone-800"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 1,
-            }}
-          >
-            <SlidersHorizontal size={20} color="#fff" />
-          </Pressable>
         </View>
-
-        {/* Categories */}
-        <CategoryChips active={activeCategory} onSelect={setActiveCategory} />
       </View>
 
       {/* Content */}

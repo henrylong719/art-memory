@@ -12,7 +12,24 @@ import type {
   Scan,
   User,
 } from './types';
+import { Platform } from 'react-native';
 import { client } from './client';
+
+type FilePayload = { uri: string; type: string; name: string };
+
+async function appendFile(
+  formData: FormData,
+  fieldName: string,
+  file: FilePayload,
+) {
+  if (Platform.OS === 'web') {
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+    formData.append(fieldName, new File([blob], file.name, { type: file.type }));
+  } else {
+    formData.append(fieldName, file as unknown as Blob);
+  }
+}
 
 // ─── Auth ────────────────────────────────────────────────
 
@@ -120,12 +137,12 @@ export const scanApi = {
   getById: (id: string) => client.get<ApiResponse<Scan>>(`/scans/${id}`),
 
   // Mode 2: Artwork only
-  scanArtwork: (
-    imageFile: { uri: string; type: string; name: string },
+  scanArtwork: async (
+    imageFile: FilePayload,
     location?: { latitude: number; longitude: number },
   ) => {
     const formData = new FormData();
-    formData.append('image', imageFile as unknown as Blob);
+    await appendFile(formData, 'image', imageFile);
     if (location) {
       formData.append('latitude', String(location.latitude));
       formData.append('longitude', String(location.longitude));
@@ -136,14 +153,14 @@ export const scanApi = {
   },
 
   // Mode 1: Artwork + Label combined
-  scanCombined: (
-    artworkFile: { uri: string; type: string; name: string },
-    labelFile: { uri: string; type: string; name: string },
+  scanCombined: async (
+    artworkFile: FilePayload,
+    labelFile: FilePayload,
     location?: { latitude: number; longitude: number },
   ) => {
     const formData = new FormData();
-    formData.append('artwork', artworkFile as unknown as Blob);
-    formData.append('label', labelFile as unknown as Blob);
+    await appendFile(formData, 'artwork', artworkFile);
+    await appendFile(formData, 'label', labelFile);
     if (location) {
       formData.append('latitude', String(location.latitude));
       formData.append('longitude', String(location.longitude));
@@ -249,9 +266,9 @@ export const museumApi = {
 // ─── Upload ─────────────────────────────────────────────
 
 export const uploadApi = {
-  image: (imageFile: { uri: string; type: string; name: string }) => {
+  image: async (imageFile: FilePayload) => {
     const formData = new FormData();
-    formData.append('image', imageFile as unknown as Blob);
+    await appendFile(formData, 'image', imageFile);
     return client.post<ApiResponse<{ url: string }>>(
       '/uploads/image',
       formData,

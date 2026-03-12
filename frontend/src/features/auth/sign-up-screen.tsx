@@ -96,97 +96,93 @@ export function SignUpScreen() {
           </Motion.View>
 
           {/* Fields */}
-          <View className="flex flex-col flex-1">
-            <View className="space-y-5 mb-6">
-              <View className="flex-row mb-5" style={{ gap: 12 }}>
-                <View className="flex-1">
-                  <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                    First Name
-                  </Text>
-                  <TextInput
-                    style={{
-                      backgroundColor: '#fff',
-                      borderWidth: 1,
-                      borderColor: '#e7e5e4',
-                      borderRadius: 16,
-                      paddingVertical: 14,
-                      paddingHorizontal: 16,
-                      fontSize: 15,
-                      color: '#1c1917',
-                    }}
-                    value={firstName}
-                    onChangeText={setFirstName}
-                    autoCapitalize="words"
-                    returnKeyType="next"
-                    placeholderTextColor="#B0B0B0"
-                  />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                    Last Name
-                  </Text>
-                  <TextInput
-                    style={{
-                      backgroundColor: '#fff',
-                      borderWidth: 1,
-                      borderColor: '#e7e5e4',
-                      borderRadius: 16,
-                      paddingVertical: 14,
-                      paddingHorizontal: 16,
-                      fontSize: 15,
-                      color: '#1c1917',
-                    }}
-                    value={lastName}
-                    onChangeText={setLastName}
-                    autoCapitalize="words"
-                    returnKeyType="next"
-                    placeholderTextColor="#B0B0B0"
-                  />
-                </View>
-              </View>
-
-              <View className="mb-5">
-                <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                  Email
+          <View className="flex flex-col mb-10">
+            <View className="space-y-5 flex-row" style={{ gap: 12 }}>
+              <View className="flex-1">
+                <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                  First Name
                 </Text>
                 <TextInput
-                  className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
-                  placeholder="name@example.com"
-                  placeholderTextColor="#B0B0B0"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                  style={{
+                    backgroundColor: '#fff',
+                    borderWidth: 1,
+                    borderColor: '#e7e5e4',
+                    borderRadius: 16,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                    fontSize: 15,
+                    color: '#1c1917',
+                  }}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
                   returnKeyType="next"
+                  placeholderTextColor="#B0B0B0"
                 />
               </View>
-
-              <View>
-                <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                  Password
+              <View className="flex-1">
+                <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                  Last Name
                 </Text>
                 <TextInput
-                  className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
-                  placeholder="••••••••"
+                  style={{
+                    backgroundColor: '#fff',
+                    borderWidth: 1,
+                    borderColor: '#e7e5e4',
+                    borderRadius: 16,
+                    paddingVertical: 14,
+                    paddingHorizontal: 16,
+                    fontSize: 15,
+                    color: '#1c1917',
+                  }}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                  returnKeyType="next"
                   placeholderTextColor="#B0B0B0"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit}
                 />
-                <Text className="text-[11px] text-stone-300 mt-1.5 pl-1">
-                  Minimum 6 characters
-                </Text>
               </View>
+            </View>
+
+            <View className="mb-5">
+              <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                Email
+              </Text>
+              <TextInput
+                className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                placeholder="name@example.com"
+                placeholderTextColor="#B0B0B0"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
+              />
+            </View>
+
+            <View>
+              <Text className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
+                Password
+              </Text>
+              <TextInput
+                className="w-full bg-white border border-stone-200 rounded-2xl py-3.75 px-4 text-[15px] text-stone-900 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-400 transition-all placeholder:text-stone-400"
+                placeholder="••••••••"
+                placeholderTextColor="#B0B0B0"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+              />
+              <Text className="text-[11px] text-stone-300 mt-1.5 pl-1">
+                Minimum 6 characters
+              </Text>
             </View>
           </View>
 
           {/* Social login */}
           <SocialLoginButtons />
-
-          <View className="flex-1 min-h-5" />
 
           {/* CTA */}
           <View className="space-y-6 pb-2">

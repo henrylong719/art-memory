@@ -54,6 +54,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'comgooglemaps',
         'waze',
       ],
+      NSAppTransportSecurity: {
+        NSAllowsArbitraryLoads: true,
+        NSAllowsLocalNetworking: true,
+      },
     },
   },
   experiments: {
