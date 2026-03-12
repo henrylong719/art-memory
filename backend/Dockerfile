@@ -19,6 +19,7 @@ RUN pnpm run build
 # Final stage - run with the full node_modules from build so Prisma CLI is available
 FROM node:23.11.1-slim AS runner
 WORKDIR /app
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/prisma ./prisma
@@ -33,5 +34,5 @@ USER node
 # Expose port 8080
 EXPOSE 8080
 
-# Start the server
-CMD ["./docker-entrypoint.sh"]
+# Force all runtime starts through our entrypoint, even if Railway sets a custom command.
+ENTRYPOINT ["./docker-entrypoint.sh"]
