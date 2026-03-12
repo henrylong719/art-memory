@@ -114,6 +114,7 @@ export type Artwork = {
   updatedAt: string;
   artist: ArtworkArtist | null;
   museum: ArtworkMuseum | null;
+  scanConfidence: number | null;
 };
 
 // ─── Scan ────────────────────────────────────────────────

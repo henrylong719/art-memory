@@ -122,7 +122,7 @@ export function ScanFallbackScreen() {
                 elevation: 8,
               }}
             >
-              <FileEdit size={10} color="#fff" />
+              <FileEdit size={20} color="#fff" />
               <Text className="text-white font-semibold text-lg">
                 Enter Details Manually
               </Text>

@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import {
@@ -235,7 +235,29 @@ export function DiscoverScreen() {
   const searchResults = useMuseumSearch(searchQuery, nearby.coords);
 
   const isSearching = searchQuery.length > 0;
-  const museums = isSearching ? searchResults.data : nearby.data;
+
+  // Merge nearby matches with API search results so local museums always appear
+  const museums = useMemo(() => {
+    if (!isSearching) return nearby.data;
+
+    const query = searchQuery.toLowerCase();
+    const nearbyMatches = (nearby.data ?? []).filter(
+      (m) =>
+        m.name.toLowerCase().includes(query) ||
+        m.address.toLowerCase().includes(query),
+    );
+    const apiResults = searchResults.data ?? [];
+
+    // Deduplicate by placeId — nearby matches come first
+    const seen = new Set(nearbyMatches.map((m) => m.placeId));
+    const merged = [
+      ...nearbyMatches,
+      ...apiResults.filter((m) => !seen.has(m.placeId)),
+    ];
+
+    return merged.length > 0 ? merged : apiResults;
+  }, [isSearching, searchQuery, nearby.data, searchResults.data]);
+
   const isLoading = isSearching ? searchResults.isLoading : nearby.isLoading;
 
   // Derive a location label from coords (simplified)

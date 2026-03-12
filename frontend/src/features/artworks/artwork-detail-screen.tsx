@@ -6,6 +6,7 @@ import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Bookmark,
+  Camera,
   ChevronLeft,
   Clock,
   ExternalLink,
@@ -50,6 +51,7 @@ import {
   useRemoveSavedArtwork,
   useToast,
 } from '@/lib/hooks';
+import { showGlobalToast } from '@/lib/toast-store';
 import { getErrorMessage } from '@/lib/utils';
 
 // ─── Constants ───────────────────────────────────────────
@@ -74,6 +76,7 @@ export function ArtworkDetailScreen() {
   const storyGen = useStoryGenerator({ artworkId: id });
 
   const imageOrientation = useImageOrientation(artwork?.imageUrl);
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const { toast, showToast } = useToast();
@@ -119,7 +122,10 @@ export function ArtworkDetailScreen() {
         url: artwork.wikiUrl ?? undefined,
       });
     } catch (error) {
-      if (error instanceof Error && error.message?.toLowerCase().includes('cancel')) {
+      if (
+        error instanceof Error &&
+        error.message?.toLowerCase().includes('cancel')
+      ) {
         return;
       }
       showToast("We couldn't open the share sheet. Please try again.", 'error');
@@ -131,7 +137,8 @@ export function ArtworkDetailScreen() {
 
     if (isSaved && savedEntry) {
       removeSavedArtwork.mutate(savedEntry.id, {
-        onSuccess: () => showToast('Removed from your saved artworks.', 'success'),
+        onSuccess: () =>
+          showToast('Removed from your saved artworks.', 'success'),
         onError: (error) =>
           showToast(
             getErrorMessage(
@@ -167,6 +174,7 @@ export function ArtworkDetailScreen() {
     deleteArtwork.mutate(id, {
       onSuccess: () => {
         setDeleteConfirmVisible(false);
+        showGlobalToast('Artwork deleted');
         router.dismissAll();
       },
       onError: (error) => {
@@ -179,7 +187,9 @@ export function ArtworkDetailScreen() {
     });
   };
 
-  if (isLoading) {
+  const isImageReady = !artwork?.imageUrl || imageOrientation !== null;
+
+  if (isLoading || !isImageReady) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator size="large" color="#1c1917" />
@@ -206,8 +216,13 @@ export function ArtworkDetailScreen() {
     );
   }
 
-  const confidence = artwork.source === 'AI_SCAN' ? 0.89 : null;
-  const confidencePercent = confidence ? Math.round(confidence * 100) : null;
+  const confidence = artwork.scanConfidence ?? null;
+  const confidencePercent =
+    confidence != null ? Math.round(confidence * 100) : null;
+  const isUnverifiedAiScan = confidence != null && confidence < 0.5;
+  const isManualEntry = artwork.source === 'MANUAL';
+  const isLowConfidence =
+    (isUnverifiedAiScan || isManualEntry) && !artwork.verified;
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -292,18 +307,25 @@ export function ArtworkDetailScreen() {
                 lastTapRef.current = now;
               }}
             >
-              <View style={{ height: px(heroHeight), overflow: 'hidden' }}>
-                <Image
-                  source={artwork.imageUrl ?? ''}
-                  className="h-full w-full"
-                  contentFit="cover"
-                  transition={400}
-                />
+              <View
+                style={{ height: px(heroHeight), overflow: 'hidden' }}
+                className="bg-neutral-200"
+              >
+                {artwork.imageUrl ? (
+                  <Image
+                    source={artwork.imageUrl}
+                    className="h-full w-full"
+                    contentFit="cover"
+                    transition={400}
+                    onLoad={() => setHeroImageLoaded(true)}
+                    style={{ opacity: heroImageLoaded ? 1 : 0 }}
+                  />
+                ) : null}
               </View>
             </Pressable>
           </Animated.View>
 
-          {confidencePercent && confidencePercent >= 80 && (
+          {confidencePercent != null && confidencePercent > 0 && (
             <Motion.View
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -311,7 +333,11 @@ export function ArtworkDetailScreen() {
               className="absolute left-0 right-0 top-0 items-center"
               style={{ top: insets.top + 14 }}
             >
-              <View className="rounded-full bg-white/20 px-3 py-1.5">
+              <View
+                className={`rounded-full px-3 py-1.5 ${
+                  isLowConfidence ? 'bg-black/40' : 'bg-white/20'
+                }`}
+              >
                 <Text className="text-xs font-semibold tracking-wider text-white">
                   {confidencePercent}% match
                 </Text>
@@ -371,6 +397,12 @@ export function ArtworkDetailScreen() {
                 label={artwork.museum.name}
               />
             ) : null}
+            {isLowConfidence ? (
+              <TagPill
+                icon={<Camera size={14} color="#969696" />}
+                label="Personal upload"
+              />
+            ) : null}
           </View>
 
           {/* About Section */}
@@ -392,6 +424,19 @@ export function ArtworkDetailScreen() {
                     </Text>
                   </View>
                 )}
+              </View>
+            ) : isLowConfidence ? (
+              <View className="items-center rounded-2xl border border-neutral-200 bg-charcoal-50 p-6">
+                <View className="mb-3 h-12 w-12 items-center justify-center rounded-full bg-white">
+                  <Sparkles size={20} color="#a8a29e" />
+                </View>
+                <Text className="mb-1 text-center font-medium text-charcoal-900">
+                  No story available
+                </Text>
+                <Text className="max-w-60 text-center text-sm leading-5 text-charcoal-400">
+                  AI stories are available for recognized artworks. You can add
+                  your own description from the edit page.
+                </Text>
               </View>
             ) : storyGen.isPending ? (
               <GeneratingSkeleton />

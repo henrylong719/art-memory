@@ -57,7 +57,19 @@ export class ArtworkService {
           StatusCodes.NOT_FOUND,
         );
       }
-      return ServiceResponse.success('Artwork found', artwork);
+
+      // Attach best scan confidence so the frontend can show warnings
+      const { prisma } = await import('@/common/db/prisma');
+      const bestScan = await prisma.scan.findFirst({
+        where: { artworkId: id },
+        orderBy: { confidence: 'desc' },
+        select: { confidence: true },
+      });
+
+      return ServiceResponse.success('Artwork found', {
+        ...artwork,
+        scanConfidence: bestScan?.confidence ?? null,
+      });
     } catch (ex) {
       logger.error(
         `Error finding artwork with id ${id}: ${(ex as Error).message}`,
@@ -354,6 +366,28 @@ export class ArtworkService {
         );
       }
 
+      // ── Look up scan confidence for this artwork ──
+      const bestScan = await prisma.scan.findFirst({
+        where: { artworkId: id },
+        orderBy: { confidence: 'desc' },
+        select: { confidence: true },
+      });
+      const confidence = bestScan?.confidence ?? null;
+
+      // ── Block generation for unverified / low-confidence artworks ──
+      // Trusted sources: seeded data or verified artworks can always generate
+      const trustedSources = ['SEED_MET', 'SEED_AIC', 'SEED_WIKI'];
+      const isTrusted =
+        artwork.verified || trustedSources.includes(artwork.source);
+
+      if (!isTrusted && (confidence === null || confidence < 0.3)) {
+        return ServiceResponse.failure(
+          'Story generation is not available for this artwork. The image could not be confidently identified as a recognized artwork.',
+          { reason: 'low_confidence', confidence },
+          StatusCodes.UNPROCESSABLE_ENTITY,
+        );
+      }
+
       // ── Generate story via OpenAI ──
       const artistName = artwork.artist?.name || 'Unknown Artist';
 
@@ -363,6 +397,7 @@ export class ArtworkService {
         year: artwork.year,
         medium: artwork.medium,
         style: artwork.style,
+        confidence,
       });
 
       // Log AI usage

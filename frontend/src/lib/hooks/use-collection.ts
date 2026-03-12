@@ -89,7 +89,30 @@ export function useSaveArtwork() {
       const { data } = await savedArtworkApi.save(input);
       return data.responseObject;
     },
-    onSuccess: () => {
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['saved-artworks'] });
+
+      const previousSaved = queryClient.getQueryData(['saved-artworks']);
+
+      // Optimistically add a placeholder entry
+      queryClient.setQueryData<any[]>(['saved-artworks'], (old) => [
+        ...(old ?? []),
+        {
+          id: `optimistic-${Date.now()}`,
+          artworkId: input.artworkId,
+          collectionId: input.collectionId,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+
+      return { previousSaved };
+    },
+    onError: (_err, _input, context) => {
+      if (context?.previousSaved) {
+        queryClient.setQueryData(['saved-artworks'], context.previousSaved);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-artworks'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
@@ -102,7 +125,24 @@ export function useRemoveSavedArtwork() {
     mutationFn: async (id: string) => {
       await savedArtworkApi.remove(id);
     },
-    onSuccess: () => {
+    onMutate: async (removedId) => {
+      await queryClient.cancelQueries({ queryKey: ['saved-artworks'] });
+
+      const previousSaved = queryClient.getQueryData(['saved-artworks']);
+
+      // Optimistically remove from list
+      queryClient.setQueryData<any[]>(['saved-artworks'], (old) =>
+        old?.filter((s) => s.id !== removedId),
+      );
+
+      return { previousSaved };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousSaved) {
+        queryClient.setQueryData(['saved-artworks'], context.previousSaved);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-artworks'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },

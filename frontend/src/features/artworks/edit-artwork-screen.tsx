@@ -100,8 +100,13 @@ export function EditArtworkScreen() {
   } | null>(null);
 
   const isAtLimit = limitInfo !== null && limitInfo.remaining <= 0;
+  const isLowConfidence =
+    artwork != null &&
+    !artwork.verified &&
+    (artwork.source === 'MANUAL' ||
+      (artwork.scanConfidence != null && artwork.scanConfidence < 0.5));
   const generateDisabled =
-    generateStory.isPending || cooldown.isActive || isAtLimit;
+    generateStory.isPending || cooldown.isActive || isAtLimit || isLowConfidence;
 
   // Hydrate form from API (only on initial load)
   const hasHydrated = useRef(false);
@@ -232,12 +237,14 @@ export function EditArtworkScreen() {
   };
 
   const getGenerateLabel = () => {
+    if (isLowConfidence) return 'Not available';
     if (cooldown.isActive) return `Wait ${cooldown.remaining}s`;
     if (isAtLimit) return 'Daily limit reached';
     return 'Generate Story';
   };
 
   const getRegenerateLabel = () => {
+    if (isLowConfidence) return 'Not available';
     if (cooldown.isActive) return `${cooldown.remaining}s`;
     if (isAtLimit) return 'Limit reached';
     return 'Regenerate';
@@ -410,7 +417,7 @@ export function EditArtworkScreen() {
             </View>
 
             {/* Divider */}
-            <View className="h-px bg-neutral-200/60 w-full" />
+            {/* <View className="h-px bg-neutral-200/60 w-full" /> */}
 
             {/* About Section */}
             <View className="gap-4">
@@ -436,43 +443,58 @@ export function EditArtworkScreen() {
                     No story available yet
                   </Text>
                   <Text className="text-charcoal-400 text-sm text-center mb-5 max-w-[200px] leading-5">
-                    Use AI to generate a short story and context for this
-                    artwork
+                    {isLowConfidence
+                      ? 'AI generation is not available for unidentified artworks. You can type your own description below.'
+                      : 'Use AI to generate a short story and context for this artwork'}
                   </Text>
-                  <Pressable
-                    onPress={handleGenerate}
-                    disabled={generateDisabled}
-                    className={`px-5 py-2.5 rounded-xl ${
-                      generateDisabled
-                        ? 'bg-charcoal-200'
-                        : 'bg-charcoal-900 active:bg-charcoal-800'
-                    }`}
-                    style={
-                      !generateDisabled
-                        ? {
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 1 },
-                            shadowOpacity: 0.1,
-                            shadowRadius: 2,
-                            elevation: 1,
-                          }
-                        : undefined
-                    }
-                  >
-                    <Text
-                      className={`text-sm font-medium ${
-                        generateDisabled ? 'text-charcoal-400' : 'text-white'
-                      }`}
-                    >
-                      {getGenerateLabel()}
-                    </Text>
-                  </Pressable>
 
-                  {limitInfo && !isAtLimit && (
-                    <Text className="text-charcoal-300 text-[11px] mt-2.5">
-                      {limitInfo.remaining} of {limitInfo.limit} generations
-                      left today
-                    </Text>
+                  {isLowConfidence ? (
+                    <Pressable
+                      onPress={() => setAboutState('available')}
+                      className="px-5 py-2.5 rounded-xl bg-charcoal-900 active:bg-charcoal-800"
+                    >
+                      <Text className="text-sm font-medium text-white">
+                        Write Manually
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    <>
+                      <Pressable
+                        onPress={handleGenerate}
+                        disabled={generateDisabled}
+                        className={`px-5 py-2.5 rounded-xl ${
+                          generateDisabled
+                            ? 'bg-charcoal-200'
+                            : 'bg-charcoal-900 active:bg-charcoal-800'
+                        }`}
+                        style={
+                          !generateDisabled
+                            ? {
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: 0.1,
+                                shadowRadius: 2,
+                                elevation: 1,
+                              }
+                            : undefined
+                        }
+                      >
+                        <Text
+                          className={`text-sm font-medium ${
+                            generateDisabled ? 'text-charcoal-400' : 'text-white'
+                          }`}
+                        >
+                          {getGenerateLabel()}
+                        </Text>
+                      </Pressable>
+
+                      {limitInfo && !isAtLimit && (
+                        <Text className="text-charcoal-300 text-[11px] mt-2.5">
+                          {limitInfo.remaining} of {limitInfo.limit} generations
+                          left today
+                        </Text>
+                      )}
+                    </>
                   )}
                 </View>
               )}
@@ -497,7 +519,7 @@ export function EditArtworkScreen() {
                     placeholderTextColor="#d6d3d1"
                     multiline
                     textAlignVertical="top"
-                    className="min-h-[160px] text-[15px] leading-6 text-charcoal-900 p-4"
+                    className="min-h-[300px] text-[15px] leading-6 text-charcoal-900 p-4"
                   />
                   <View className="bg-charcoal-50 border-t border-neutral-100 px-4 py-3 flex-row items-center justify-between">
                     <View className="flex-row items-center gap-1.5">
@@ -529,7 +551,7 @@ export function EditArtworkScreen() {
             </View>
 
             {/* Divider */}
-            <View className="h-px bg-neutral-200/60 w-full" />
+            {/* <View className="h-px bg-neutral-200/60 w-full" /> */}
 
             {/* Personal Memory Section */}
             <View className="gap-4">

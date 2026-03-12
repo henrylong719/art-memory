@@ -210,7 +210,7 @@ export async function extractLabel(
 // ─── Artwork Story Generation ────────────────────────────
 // Called after scan to generate a rich description
 
-const STORY_GENERATION_PROMPT = `You are an expert art historian and storyteller.
+const STORY_GENERATION_PROMPT_HIGH_CONFIDENCE = `You are an expert art historian and storyteller.
 Given the following artwork details, write a rich, engaging description that covers:
 - The historical context and significance of the artwork
 - The artist's life and circumstances when creating this piece
@@ -225,14 +225,40 @@ Stick to well-established art historical facts.
 
 Respond with ONLY the description text — no JSON, no markdown, no headers.`;
 
+const STORY_GENERATION_PROMPT_LOW_CONFIDENCE = `You are an honest and helpful art assistant.
+The following artwork details were provided by the user or identified with LOW confidence by AI — the image may not be a recognized artwork.
+
+CRITICAL RULES:
+- Do NOT fabricate art history, artist biographies, or historical context.
+- Do NOT pretend this is a well-known artwork if you don't recognize it.
+- If you recognize the artwork or artist, share what you know factually.
+- If you do NOT recognize it, honestly say so and instead provide:
+  - A brief, objective description of what the artwork appears to depict
+  - Observations about the style, colors, or techniques visible
+  - Any genuine context you can offer based on the provided details
+
+Keep it to 1-2 short paragraphs (60-100 words). Be honest and helpful, not flowery.
+
+Respond with ONLY the description text — no JSON, no markdown, no headers.`;
+
 export async function generateArtworkStory(artwork: {
   title: string;
   artistName: string;
   year?: number | null;
   medium?: string | null;
   style?: string | null;
+  confidence?: number | null;
 }): Promise<{ story: string; rawResponse: object }> {
   const startTime = Date.now();
+
+  const isHighConfidence =
+    artwork.confidence !== null &&
+    artwork.confidence !== undefined &&
+    artwork.confidence >= 0.7;
+
+  const prompt = isHighConfidence
+    ? STORY_GENERATION_PROMPT_HIGH_CONFIDENCE
+    : STORY_GENERATION_PROMPT_LOW_CONFIDENCE;
 
   const artworkInfo = [
     `Title: ${artwork.title}`,
@@ -240,6 +266,9 @@ export async function generateArtworkStory(artwork: {
     artwork.year ? `Year: ${artwork.year}` : null,
     artwork.medium ? `Medium: ${artwork.medium}` : null,
     artwork.style ? `Style: ${artwork.style}` : null,
+    artwork.confidence != null
+      ? `AI identification confidence: ${Math.round(artwork.confidence * 100)}%`
+      : 'AI identification confidence: unknown (user-provided details)',
   ]
     .filter(Boolean)
     .join('\n');
@@ -250,7 +279,7 @@ export async function generateArtworkStory(artwork: {
     messages: [
       {
         role: 'user',
-        content: `${STORY_GENERATION_PROMPT}\n\nArtwork details:\n${artworkInfo}`,
+        content: `${prompt}\n\nArtwork details:\n${artworkInfo}`,
       },
     ],
   });

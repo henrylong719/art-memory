@@ -42,6 +42,7 @@ export function useCreateArtwork() {
       artistName?: string;
       year?: number;
       medium?: string;
+      description?: string;
       imageUrl?: string;
       source?: string;
       latitude?: number;
@@ -87,10 +88,36 @@ export function useDeleteArtwork() {
       await artworkApi.delete(id);
       return id;
     },
-    onSuccess: (_data, deletedId) => {
-      // Remove the individual artwork query so the detail screen
-      // doesn't flash a "not found" state during navigation.
+    onMutate: async (deletedId) => {
+      // Cancel in-flight queries so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['artworks'] });
+
+      // Snapshot for rollback
+      const previousArtworks = queryClient.getQueryData<Artwork[]>(['artworks']);
+      const previousArtwork = queryClient.getQueryData(['artworks', deletedId]);
+
+      // Optimistically remove from list
+      queryClient.setQueryData<Artwork[]>(['artworks'], (old) =>
+        old?.filter((a) => a.id !== deletedId),
+      );
       queryClient.removeQueries({ queryKey: ['artworks', deletedId] });
+
+      return { previousArtworks, previousArtwork, deletedId };
+    },
+    onError: (_err, _id, context) => {
+      // Rollback on failure
+      if (context?.previousArtworks) {
+        queryClient.setQueryData(['artworks'], context.previousArtworks);
+      }
+      if (context?.previousArtwork) {
+        queryClient.setQueryData(
+          ['artworks', context.deletedId],
+          context.previousArtwork,
+        );
+      }
+    },
+    onSettled: () => {
+      // Refetch to sync with server
       queryClient.invalidateQueries({ queryKey: ['artworks'] });
       queryClient.invalidateQueries({ queryKey: ['scans'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });

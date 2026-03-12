@@ -135,9 +135,15 @@ export class ScanService {
         longitude: options.longitude,
       });
 
+      const isLowConfidence = aiResult.confidence < 0.5;
       return ServiceResponse.success(
-        'Artwork scanned successfully',
-        scan,
+        isLowConfidence
+          ? 'Scan saved but artwork could not be confidently identified. Details may be inaccurate.'
+          : 'Artwork scanned successfully',
+        {
+          ...scan,
+          lowConfidence: isLowConfidence,
+        },
         StatusCodes.CREATED,
       );
     } catch (ex) {

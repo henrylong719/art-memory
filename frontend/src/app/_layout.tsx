@@ -8,10 +8,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AnimatePresence } from '@legendapp/motion';
+
+import Toast from '@/components/ui/toast';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { hydrateAuth } from '@/features/auth/use-auth-store';
 import { APIProvider } from '@/lib/api';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
+import { useToastStore } from '@/lib/toast-store';
 import '../global.css';
 import { useEffect, type ReactNode } from 'react';
 
@@ -105,6 +109,18 @@ export default function RootLayout() {
   );
 }
 
+function GlobalToast() {
+  const { visible, text, variant, hide } = useToastStore();
+
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(hide, 2500);
+    return () => clearTimeout(timer);
+  }, [visible, hide]);
+
+  return <AnimatePresence>{visible && <Toast text={text} variant={variant} />}</AnimatePresence>;
+}
+
 function Providers({ children }: { children: ReactNode }) {
   const theme = useThemeConfig();
   return (
@@ -115,6 +131,7 @@ function Providers({ children }: { children: ReactNode }) {
             <APIProvider>
               <BottomSheetModalProvider>
                 {children}
+                <GlobalToast />
                 <FlashMessage position="top" />
               </BottomSheetModalProvider>
             </APIProvider>

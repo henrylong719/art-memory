@@ -77,6 +77,7 @@ export function ManualEntryScreen() {
     artist: '',
     year: '',
     medium: '',
+    description: '',
   });
 
   const canSubmit =
@@ -101,6 +102,7 @@ export function ManualEntryScreen() {
         artistName: formData.artist.trim(),
         year: formData.year ? Number(formData.year) : undefined,
         medium: formData.medium.trim() || undefined,
+        description: formData.description.trim() || undefined,
         imageUrl: photoUrl || undefined,
         source: 'MANUAL',
         latitude: locationRef.current?.latitude,
@@ -287,6 +289,16 @@ export function ManualEntryScreen() {
                 />
               </View>
             </View>
+
+            <FormField
+              label="About"
+              placeholder="Add a description or story about this artwork..."
+              value={formData.description}
+              onChangeText={(v) =>
+                setFormData((prev) => ({ ...prev, description: v }))
+              }
+              multiline
+            />
           </Motion.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -300,7 +312,7 @@ export function ManualEntryScreen() {
           <Pressable
             onPress={handleSubmit}
             disabled={!canSubmit}
-            className={`w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 ${
+            className={`w-full py-3 rounded-2xl flex-row items-center justify-center gap-2 ${
               canSubmit
                 ? 'bg-charcoal-900 active:bg-charcoal-800'
                 : 'bg-charcoal-200'
@@ -344,6 +356,7 @@ function FormField({
   onChangeText,
   autoFocus,
   keyboardType,
+  multiline,
 }: {
   label: string;
   required?: boolean;
@@ -352,6 +365,7 @@ function FormField({
   onChangeText: (text: string) => void;
   autoFocus?: boolean;
   keyboardType?: 'default' | 'number-pad';
+  multiline?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
 
@@ -368,8 +382,11 @@ function FormField({
         placeholderTextColor="#A3A3A3"
         autoFocus={autoFocus}
         keyboardType={keyboardType}
+        multiline={multiline}
+        textAlignVertical={multiline ? 'top' : 'auto'}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        style={multiline ? { minHeight: 120 } : undefined}
         className={`bg-white border rounded-2xl px-5 py-4 text-lg text-charcoal-900 ${
           focused ? 'border-charcoal-400' : 'border-neutral-200'
         }`}
