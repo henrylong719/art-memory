@@ -17,7 +17,8 @@ COPY package.json pnpm-lock.yaml ./
 # Install all dependencies (including dev dependencies)
 RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY . .
-RUN pnpm exec prisma generate --schema prisma/schema.prisma
+RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/postgres" \
+  pnpm exec prisma generate --schema prisma/schema.prisma
 RUN pnpm run build
 
 # Final stage - combine production dependencies and build output
