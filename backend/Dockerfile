@@ -24,7 +24,6 @@ RUN pnpm run build
 # Final stage - combine production dependencies and build output
 FROM node:23.11.1-alpine AS runner
 WORKDIR /app
-RUN corepack enable
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/generated ./generated
@@ -37,4 +36,4 @@ USER node
 EXPOSE 8080
 
 # Start the server
-CMD ["sh", "-c", "pnpm exec prisma migrate deploy --schema prisma/schema.prisma && node dist/index.js"]
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma && node dist/index.js"]
