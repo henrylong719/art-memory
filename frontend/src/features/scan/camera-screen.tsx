@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import * as MediaLibrary from 'expo-media-library';
 import { Accelerometer } from 'expo-sensors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -382,6 +383,13 @@ export function CameraScreen() {
 
     if (!photo?.uri) return;
 
+    // Save original photo to camera roll
+    MediaLibrary.requestPermissionsAsync().then(({ status }) => {
+      if (status === 'granted') {
+        MediaLibrary.saveToLibraryAsync(photo.uri);
+      }
+    });
+
     let frameWidthFraction: number;
     let frameAspect: number;
 
@@ -441,6 +449,33 @@ export function CameraScreen() {
     screenHeight,
     screenWidth,
   ]);
+
+  // ── Pick from gallery ──
+  const handlePickImage = useCallback(async () => {
+    if (processing) return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    const uri = asset.uri;
+    const pickedIsLandscape = (asset.width ?? 0) > (asset.height ?? 0);
+
+    if (isCombined && isArtworkStep) {
+      setArtworkUri(uri);
+      setArtworkIsLandscape(pickedIsLandscape);
+      setStep('details');
+    } else if (isCombined && !isArtworkStep && artworkUri) {
+      await processScan(artworkUri, uri);
+    } else {
+      setArtworkIsLandscape(pickedIsLandscape);
+      await processScan(uri);
+    }
+  }, [artworkUri, isArtworkStep, isCombined, processScan, processing]);
 
   // ── Back ──
   const handleBack = () => {
@@ -652,17 +687,32 @@ export function CameraScreen() {
           </Animated.View>
         )}
 
-        <Pressable
-          onPress={handleCapture}
-          disabled={processing}
-          className={`h-20 w-20 items-center justify-center rounded-full border-[3px] p-0.75 ${
-            !isArtworkStep && isCombined
-              ? 'border-warning-400'
-              : 'border-neutral-300'
-          }`}
-        >
-          <View className="h-full w-full rounded-full bg-white" />
-        </Pressable>
+        <View className="flex-row items-center gap-8">
+          {/* Spacer to keep capture button centered */}
+          <View className="h-12 w-12" />
+
+          <Pressable
+            onPress={handleCapture}
+            disabled={processing}
+            className={`h-20 w-20 items-center justify-center rounded-full border-[3px] p-0.75 ${
+              !isArtworkStep && isCombined
+                ? 'border-warning-400'
+                : 'border-neutral-300'
+            }`}
+          >
+            <View className="h-full w-full rounded-full bg-white" />
+          </Pressable>
+
+          <Pressable
+            onPress={handlePickImage}
+            disabled={processing}
+            className="h-12 w-12 items-center justify-center rounded-full"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            hitSlop={8}
+          >
+            <ImageUp size={22} color="#fff" />
+          </Pressable>
+        </View>
       </View>
 
       {/* ── Processing overlay ── */}

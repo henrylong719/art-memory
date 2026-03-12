@@ -173,11 +173,7 @@ export function ArtworkDetailScreen() {
     deleteArtwork.mutate(id, {
       onSuccess: () => {
         setDeleteConfirmVisible(false);
-        setShowSuccessToast(true);
-        setTimeout(() => {
-          setShowSuccessToast(false);
-          router.dismissAll();
-        }, 1800);
+        router.dismissAll();
       },
     });
   };

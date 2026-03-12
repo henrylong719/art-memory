@@ -84,8 +84,12 @@ export function useDeleteArtwork() {
   return useMutation({
     mutationFn: async (id: string) => {
       await artworkApi.delete(id);
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (_data, deletedId) => {
+      // Remove the individual artwork query so the detail screen
+      // doesn't flash a "not found" state during navigation.
+      queryClient.removeQueries({ queryKey: ['artworks', deletedId] });
       queryClient.invalidateQueries({ queryKey: ['artworks'] });
       queryClient.invalidateQueries({ queryKey: ['scans'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
