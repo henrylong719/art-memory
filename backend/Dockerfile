@@ -5,12 +5,6 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 WORKDIR /app
 
-# Production dependencies stage
-FROM base AS prod-deps
-COPY package.json pnpm-lock.yaml ./
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
-
 # Build stage - install all dependencies and build
 FROM base AS build
 COPY package.json pnpm-lock.yaml ./
@@ -21,10 +15,11 @@ RUN DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/postgres" 
   pnpm exec prisma generate --schema prisma/schema.prisma
 RUN pnpm run build
 
-# Final stage - combine production dependencies and build output
-FROM node:23.11.1-alpine AS runner
+# Final stage - run with the full node_modules from build so Prisma CLI is available
+FROM node:23.11.1-slim AS runner
 WORKDIR /app
-COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/generated ./generated
 COPY --from=build --chown=node:node /app/dist ./dist
