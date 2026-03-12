@@ -33,6 +33,7 @@
     "openai": "^6.27.0",
     "pino": "9.9.0",
     "pino-http": "10.5.0",
+    "sharp": "^0.34.5",
     "swagger-ui-express": "5.0.1",
     "zod": "3.25.76"
   },
