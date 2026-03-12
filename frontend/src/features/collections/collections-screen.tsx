@@ -4,10 +4,10 @@ import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Plus, LibraryBig } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import { Image, Input, SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import { renderBackdrop } from '@/components/ui/modal';
 import { useCollections, useCreateCollection } from '@/lib/hooks';
 
@@ -138,33 +138,22 @@ const CreateCollectionSheet = forwardRef<
         </Text>
 
         <View className="gap-4">
-          <View>
-            <Text className="text-sm font-medium text-stone-700 mb-2 ml-1">
-              Name <Text className="text-red-500">*</Text>
-            </Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Paris 2025 Trip"
-              placeholderTextColor="#a8a29e"
-              className="bg-white border border-stone-200 rounded-2xl px-5 py-4 text-stone-900 text-base"
-            />
-          </View>
+          <Input
+            label="Name"
+            required
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Paris 2025 Trip"
+          />
 
-          <View>
-            <Text className="text-sm font-medium text-stone-700 mb-2 ml-1">
-              Description
-            </Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Optional description"
-              placeholderTextColor="#a8a29e"
-              multiline
-              className="bg-white border border-stone-200 rounded-2xl px-5 py-4 text-stone-900 text-base"
-              style={{ minHeight: 80, textAlignVertical: 'top' }}
-            />
-          </View>
+          <Input
+            label="Description"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Optional description"
+            multiline
+            style={{ minHeight: 80 }}
+          />
 
           <Pressable
             onPress={handleCreate}

@@ -9,12 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  TextInput,
 } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, ScrollView, Text, View } from '@/components/ui';
+import { Image, Input, ScrollView, Text, View } from '@/components/ui';
 import Toast from '@/components/ui/toast';
 import { uploadApi } from '@/lib/api/services';
 import { useCorrectScan, useCreateArtwork, useToast } from '@/lib/hooks';
@@ -245,7 +244,7 @@ export function ManualEntryScreen() {
             transition={{ type: 'timing', duration: 350, delay: 80 }}
             className="gap-5"
           >
-            <FormField
+            <Input
               label="Artwork Title"
               required
               placeholder="e.g. Starry Night"
@@ -256,7 +255,7 @@ export function ManualEntryScreen() {
               autoFocus
             />
 
-            <FormField
+            <Input
               label="Artist"
               required
               placeholder="e.g. Vincent van Gogh"
@@ -268,7 +267,7 @@ export function ManualEntryScreen() {
 
             <View className="flex-row gap-4">
               <View className="flex-1">
-                <FormField
+                <Input
                   label="Year"
                   placeholder="e.g. 1889"
                   value={formData.year}
@@ -279,7 +278,7 @@ export function ManualEntryScreen() {
                 />
               </View>
               <View className="flex-2">
-                <FormField
+                <Input
                   label="Medium"
                   placeholder="e.g. Oil on canvas"
                   value={formData.medium}
@@ -290,7 +289,7 @@ export function ManualEntryScreen() {
               </View>
             </View>
 
-            <FormField
+            <Input
               label="About"
               placeholder="Add a description or story about this artwork..."
               value={formData.description}
@@ -343,54 +342,6 @@ export function ManualEntryScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
-  );
-}
-
-// ─── Form Field ──────────────────────────────────────────
-function FormField({
-  label,
-  required,
-  placeholder,
-  value,
-  onChangeText,
-  autoFocus,
-  keyboardType,
-  multiline,
-}: {
-  label: string;
-  required?: boolean;
-  placeholder: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  autoFocus?: boolean;
-  keyboardType?: 'default' | 'number-pad';
-  multiline?: boolean;
-}) {
-  const [focused, setFocused] = useState(false);
-
-  return (
-    <View>
-      <Text className="text-sm font-semibold text-charcoal-600 mb-2 ml-1">
-        {label}
-        {required && <Text className="text-danger-500"> *</Text>}
-      </Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#A3A3A3"
-        autoFocus={autoFocus}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'auto'}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={multiline ? { minHeight: 120 } : undefined}
-        className={`bg-white border rounded-2xl px-5 py-4 text-lg text-charcoal-900 ${
-          focused ? 'border-charcoal-400' : 'border-neutral-200'
-        }`}
-      />
     </View>
   );
 }

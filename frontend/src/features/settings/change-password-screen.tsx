@@ -3,10 +3,10 @@ import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text, View } from '@/components/ui';
+import { Input, Text, View } from '@/components/ui';
 import { useChangePassword, useToast } from '@/lib/hooks';
 import { getErrorMessage } from '@/lib/utils';
 import Toast from '../../components/ui/toast';
@@ -108,119 +108,54 @@ export function ChangePasswordScreen() {
           className="gap-5"
         >
           {/* Current Password */}
-          <View>
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 mb-2 px-1">
-              Current Password
-            </Text>
-            <View
-              className="bg-white rounded-2xl border border-stone-100 flex-row items-center px-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 6,
-                elevation: 1,
-              }}
-            >
-              <TextInput
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                secureTextEntry={!showCurrent}
-                placeholder="Enter current password"
-                placeholderTextColor="#a8a29e"
-                autoCapitalize="none"
-                autoComplete="current-password"
-                className="flex-1 py-4 text-[15px] text-stone-900"
-              />
+          <Input
+            label="Current Password"
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry={!showCurrent}
+            placeholder="Enter current password"
+            autoCapitalize="none"
+            autoComplete="current-password"
+            rightIcon={
               <Pressable onPress={() => setShowCurrent((s) => !s)} hitSlop={8}>
-                {showCurrent ? (
-                  <EyeOff size={20} color="#a8a29e" />
-                ) : (
-                  <Eye size={20} color="#a8a29e" />
-                )}
+                {showCurrent ? <EyeOff size={20} color="#a8a29e" /> : <Eye size={20} color="#a8a29e" />}
               </Pressable>
-            </View>
-          </View>
+            }
+          />
 
           {/* New Password */}
-          <View>
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 mb-2 px-1">
-              New Password
-            </Text>
-            <View
-              className="bg-white rounded-2xl border border-stone-100 flex-row items-center px-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 6,
-                elevation: 1,
-              }}
-            >
-              <TextInput
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry={!showNew}
-                placeholder="At least 8 characters"
-                placeholderTextColor="#a8a29e"
-                autoCapitalize="none"
-                autoComplete="new-password"
-                className="flex-1 py-4 text-[15px] text-stone-900"
-              />
+          <Input
+            label="New Password"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            secureTextEntry={!showNew}
+            placeholder="At least 8 characters"
+            autoCapitalize="none"
+            autoComplete="new-password"
+            error={newPassword.length > 0 && newPassword.length < 8 ? 'Must be at least 8 characters' : undefined}
+            rightIcon={
               <Pressable onPress={() => setShowNew((s) => !s)} hitSlop={8}>
-                {showNew ? (
-                  <EyeOff size={20} color="#a8a29e" />
-                ) : (
-                  <Eye size={20} color="#a8a29e" />
-                )}
+                {showNew ? <EyeOff size={20} color="#a8a29e" /> : <Eye size={20} color="#a8a29e" />}
               </Pressable>
-            </View>
-            {newPassword.length > 0 && newPassword.length < 8 && (
-              <Text className="text-[12px] text-red-500 mt-1.5 px-1">
-                Must be at least 8 characters
-              </Text>
-            )}
-          </View>
+            }
+          />
 
           {/* Confirm New Password */}
-          <View>
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 mb-2 px-1">
-              Confirm New Password
-            </Text>
-            <View
-              className="bg-white rounded-2xl border border-stone-100 flex-row items-center px-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 6,
-                elevation: 1,
-              }}
-            >
-              <TextInput
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirm}
-                placeholder="Re-enter new password"
-                placeholderTextColor="#a8a29e"
-                autoCapitalize="none"
-                autoComplete="new-password"
-                className="flex-1 py-4 text-[15px] text-stone-900"
-              />
+          <Input
+            label="Confirm New Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirm}
+            placeholder="Re-enter new password"
+            autoCapitalize="none"
+            autoComplete="new-password"
+            error={confirmPassword.length > 0 && confirmPassword !== newPassword ? 'Passwords do not match' : undefined}
+            rightIcon={
               <Pressable onPress={() => setShowConfirm((s) => !s)} hitSlop={8}>
-                {showConfirm ? (
-                  <EyeOff size={20} color="#a8a29e" />
-                ) : (
-                  <Eye size={20} color="#a8a29e" />
-                )}
+                {showConfirm ? <EyeOff size={20} color="#a8a29e" /> : <Eye size={20} color="#a8a29e" />}
               </Pressable>
-            </View>
-            {confirmPassword.length > 0 && confirmPassword !== newPassword && (
-              <Text className="text-[12px] text-red-500 mt-1.5 px-1">
-                Passwords do not match
-              </Text>
-            )}
-          </View>
+            }
+          />
 
           {/* Submit Button */}
           <Pressable

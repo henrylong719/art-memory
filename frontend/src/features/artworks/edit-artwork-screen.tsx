@@ -8,15 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  TextInput,
+  TextInput as RNTextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, ScrollView, Text, View } from '@/components/ui';
+import { Image, Input, ScrollView, Text, View } from '@/components/ui';
 import { GeneratingSkeleton } from '@/components/ui/generating-skeleton';
 import Toast from '@/components/ui/toast';
 import { ConfirmModal } from '@/features/artworks/components/confirm-modal';
-import { FormField } from '@/features/artworks/components/form-field';
 import {
   useArtwork,
   useUpdateArtwork,
@@ -367,7 +366,7 @@ export function EditArtworkScreen() {
               </Text>
 
               <View className="gap-5">
-                <FormField
+                <Input
                   label="Title"
                   value={title}
                   onChangeText={(text) => {
@@ -381,7 +380,7 @@ export function EditArtworkScreen() {
                 {/* Artist & Year Row */}
                 <View className="flex-row gap-4">
                   <View className="flex-1">
-                    <FormField
+                    <Input
                       label="Artist"
                       value={artist}
                       onChangeText={setArtist}
@@ -389,7 +388,7 @@ export function EditArtworkScreen() {
                     />
                   </View>
                   <View className="w-[100px]">
-                    <FormField
+                    <Input
                       label="Year"
                       value={year}
                       onChangeText={setYear}
@@ -400,14 +399,14 @@ export function EditArtworkScreen() {
                   </View>
                 </View>
 
-                <FormField
+                <Input
                   label="Medium"
                   value={medium}
                   onChangeText={setMedium}
                   placeholder="e.g. Oil on canvas"
                 />
 
-                <FormField
+                <Input
                   label="Location"
                   value={museum}
                   onChangeText={setMuseum}
@@ -512,7 +511,7 @@ export function EditArtworkScreen() {
                     elevation: 1,
                   }}
                 >
-                  <TextInput
+                  <RNTextInput
                     value={description}
                     onChangeText={setDescription}
                     placeholder="Artwork context or story..."
@@ -564,13 +563,13 @@ export function EditArtworkScreen() {
                 </Text>
               </View>
 
-              <FormField
+              <Input
                 label=""
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="Add your memories..."
                 multiline
-                minHeight={140}
+                style={{ minHeight: 140 }}
               />
             </View>
           </Motion.View>

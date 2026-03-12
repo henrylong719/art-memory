@@ -3,10 +3,10 @@ import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Mail, Send } from 'lucide-react-native';
 import * as React from 'react';
-import { Linking, Pressable, TextInput } from 'react-native';
+import { Linking, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScrollView, Text, View } from '@/components/ui';
+import { Input, ScrollView, Text, View } from '@/components/ui';
 
 export function ContactSupportScreen() {
   const router = useRouter();
@@ -71,48 +71,21 @@ export function ContactSupportScreen() {
           transition={{ type: 'timing', duration: 450, delay: 100 }}
           className="gap-5 mb-8"
         >
-          <View className="gap-1.5">
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 ml-1">
-              Subject
-            </Text>
-            <TextInput
-              value={subject}
-              onChangeText={setSubject}
-              placeholder="What is this regarding?"
-              placeholderTextColor="#a8a29e"
-              className="w-full bg-white border border-stone-200 rounded-2xl px-4 py-3.5 text-[15px] text-stone-900"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
-            />
-          </View>
+          <Input
+            label="Subject"
+            value={subject}
+            onChangeText={setSubject}
+            placeholder="What is this regarding?"
+          />
 
-          <View className="gap-1.5">
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 ml-1">
-              Message
-            </Text>
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              placeholder="How can we help you?"
-              placeholderTextColor="#a8a29e"
-              multiline
-              className="w-full bg-white border border-stone-200 rounded-2xl px-4 py-3.5 text-[15px] text-stone-900"
-              style={{
-                minHeight: 160,
-                textAlignVertical: 'top',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
-            />
-          </View>
+          <Input
+            label="Message"
+            value={message}
+            onChangeText={setMessage}
+            placeholder="How can we help you?"
+            multiline
+            style={{ minHeight: 160 }}
+          />
         </Motion.View>
 
         {/* Send Button */}

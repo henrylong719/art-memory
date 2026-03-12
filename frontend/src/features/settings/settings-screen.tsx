@@ -8,24 +8,19 @@ import {
   FileText,
   Globe,
   HelpCircle,
-  LayoutGrid,
-  LogOut,
-  Mail,
-  MapPin,
   MessageSquare,
   Moon,
-  ScanLine,
   Shield,
   ShieldAlert,
   User,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { ActivityIndicator, Pressable, Switch } from 'react-native';
+import { Pressable, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScrollView, Text, View } from '@/components/ui';
 import Toast from '@/components/ui/toast';
-import { useLogout, useMe, useToast, useUpdateMe } from '@/lib/hooks';
+import { useMe, useToast, useUpdateMe } from '@/lib/hooks';
 import { getErrorMessage } from '@/lib/utils';
 
 // ─── Section ─────────────────────────────────────────────
@@ -164,7 +159,6 @@ export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { data: me } = useMe();
   const updateMe = useUpdateMe();
-  const logout = useLogout();
   const { toast, showToast } = useToast();
 
   const [notifications, setNotifications] = React.useState(
@@ -195,10 +189,6 @@ export function SettingsScreen() {
         },
       },
     );
-  };
-
-  const handleLogout = () => {
-    logout.mutate();
   };
 
   return (
@@ -285,28 +275,6 @@ export function SettingsScreen() {
             />
           </Section>
 
-          {/* Artwork Experience */}
-          {/* <Section title="Artwork Experience" delay={0.2}>
-            <ActionRow
-              icon={<LayoutGrid size={20} color="#a8a29e" strokeWidth={1.5} />}
-              label="Default View"
-              value="Grid"
-            />
-            <Divider />
-            <ActionRow
-              icon={<ScanLine size={20} color="#a8a29e" strokeWidth={1.5} />}
-              label="Scan Preferences"
-              onPress={() => {}}
-            />
-            <Divider />
-            <ToggleRow
-              icon={<MapPin size={20} color="#a8a29e" strokeWidth={1.5} />}
-              label="Museum Recommendations"
-              value={true}
-              onToggle={() => {}}
-            />
-          </Section> */}
-
           {/* Support */}
           <Section title="Support" delay={0.3}>
             <ActionRow
@@ -335,38 +303,6 @@ export function SettingsScreen() {
               onPress={() => router.push('/profile/terms')}
             />
           </Section>
-
-          {/* Logout */}
-          <Motion.View
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'timing', duration: 400, delay: 400 }}
-            className="mt-2"
-          >
-            <Pressable
-              onPress={handleLogout}
-              disabled={logout.isPending}
-              className="bg-white rounded-3xl py-[18px] px-5 flex-row items-center justify-center gap-2 border border-stone-100 active:bg-red-50 active:border-red-100"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 6,
-                elevation: 1,
-              }}
-            >
-              {logout.isPending ? (
-                <ActivityIndicator size="small" color="#dc2626" />
-              ) : (
-                <>
-                  <LogOut size={20} color="#dc2626" strokeWidth={2} />
-                  <Text className="text-red-600 font-semibold text-[15px] tracking-tight">
-                    Log Out
-                  </Text>
-                </>
-              )}
-            </Pressable>
-          </Motion.View>
         </View>
       </ScrollView>
     </View>

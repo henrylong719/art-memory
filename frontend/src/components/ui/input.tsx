@@ -1,4 +1,6 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import type { ReactNode } from 'react';
+import { useCallback, useState, type Ref } from 'react';
 import type { TextInputProps } from 'react-native';
 import {
   I18nManager,
@@ -8,33 +10,56 @@ import {
 } from 'react-native';
 import { tv } from 'tailwind-variants';
 
-import colors from './colors';
 import { Text } from './text';
-import { useCallback, useState, type Ref } from 'react';
+
+const inputShadow = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.03,
+  shadowRadius: 4,
+  elevation: 1,
+} as const;
 
 const inputTv = tv({
   slots: {
-    container: 'mb-2',
-    label: 'text-grey-100 mb-1 text-lg dark:text-neutral-100',
-    input:
-      'font-inter mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 text-base/5 font-medium dark:border-neutral-700 dark:bg-neutral-800 dark:text-white',
+    container: '',
+    label:
+      'text-[13px] font-semibold tracking-widest uppercase text-stone-500 mb-2 ml-1',
+    inputWrapper:
+      'bg-white rounded-2xl border border-stone-200 flex-row items-center px-4',
+    input: 'flex-1 py-3.5 text-[15px] text-stone-900',
+    errorText: 'text-[12px] text-red-500 mt-1.5 ml-1',
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-neutral-400 dark:border-neutral-300',
+        inputWrapper: 'border-stone-400',
       },
     },
     error: {
       true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600 dark:text-danger-600',
+        inputWrapper: 'border-red-300 bg-red-50/30',
+        label: 'text-red-600',
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200',
+        inputWrapper: 'bg-stone-100 border-stone-200/60',
+        input: 'text-stone-500',
+      },
+    },
+    variant: {
+      default: {},
+      search: {
+        inputWrapper:
+          'bg-stone-200/50 border-stone-200 rounded-full',
+        input: 'pl-3',
+      },
+    },
+    multiline: {
+      true: {
+        input: 'leading-6',
       },
     },
   },
@@ -42,6 +67,8 @@ const inputTv = tv({
     focused: false,
     error: false,
     disabled: false,
+    variant: 'default',
+    multiline: false,
   },
 });
 
@@ -49,6 +76,12 @@ export type NInputProps = {
   label?: string;
   disabled?: boolean;
   error?: string;
+  required?: boolean;
+  variant?: 'default' | 'search';
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  containerClassName?: string;
+  hint?: string;
 } & TextInputProps;
 
 export function Input({
@@ -58,16 +91,23 @@ export function Input({
   const {
     label,
     error,
+    required,
+    variant = 'default',
+    leftIcon,
+    rightIcon,
+    containerClassName,
+    hint,
     testID,
     onBlur: onBlurProp,
     onFocus: onFocusProp,
+    multiline,
     ...inputProps
   } = props;
-  const [isFocussed, setIsFocussed] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   const onBlur = useCallback(
     (e: any) => {
-      setIsFocussed(false);
+      setIsFocused(false);
       onBlurProp?.(e);
     },
     [onBlurProp],
@@ -75,7 +115,7 @@ export function Input({
 
   const onFocus = useCallback(
     (e: any) => {
-      setIsFocussed(true);
+      setIsFocused(true);
       onFocusProp?.(e);
     },
     [onFocusProp],
@@ -83,42 +123,60 @@ export function Input({
 
   const styles = inputTv({
     error: Boolean(error),
-    focused: isFocussed,
+    focused: isFocused,
     disabled: Boolean(props.disabled),
+    variant,
+    multiline: Boolean(multiline),
   });
 
   return (
-    <View className={styles.container()}>
-      {label && (
+    <View className={containerClassName ?? styles.container()}>
+      {label ? (
         <Text
           testID={testID ? `${testID}-label` : undefined}
           className={styles.label()}
         >
           {label}
+          {required && <Text className="text-red-500"> *</Text>}
         </Text>
-      )}
-      <NTextInput
-        testID={testID}
-        ref={ref}
-        placeholderTextColor={colors.neutral[400]}
-        className={styles.input()}
-        onBlur={onBlur}
-        onFocus={onFocus}
-        {...inputProps}
-        style={StyleSheet.flatten([
-          { writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
-          { textAlign: I18nManager.isRTL ? 'right' : 'left' },
-          inputProps.style,
-        ])}
-      />
-      {error && (
+      ) : null}
+      <View
+        className={styles.inputWrapper()}
+        style={!props.disabled ? inputShadow : undefined}
+      >
+        {leftIcon}
+        <NTextInput
+          testID={testID}
+          ref={ref}
+          placeholderTextColor="#a8a29e"
+          className={styles.input()}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : undefined}
+          {...inputProps}
+          style={StyleSheet.flatten([
+            { writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
+            { textAlign: I18nManager.isRTL ? 'right' : 'left' },
+            multiline && inputProps.style == null
+              ? { minHeight: 120 }
+              : undefined,
+            inputProps.style,
+          ])}
+        />
+        {rightIcon}
+      </View>
+      {hint && !error ? (
+        <Text className="text-[11px] text-stone-400 mt-1.5 ml-1">{hint}</Text>
+      ) : null}
+      {error ? (
         <Text
           testID={testID ? `${testID}-error` : undefined}
-          className="text-sm text-danger-400 dark:text-danger-600"
+          className={styles.errorText()}
         >
           {error}
         </Text>
-      )}
+      ) : null}
     </View>
   );
 }

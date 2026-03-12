@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { AnimatePresence, Motion } from '@legendapp/motion';
 
-import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import { Input, SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useRegister } from '@/lib/hooks/use-auth';
 import Toast from '@/components/ui/toast';
@@ -93,11 +93,8 @@ export function SignUpScreen() {
           <View className="flex flex-col mb-10">
             <View className="flex-row mb-5 gap-3">
               <View className="flex-1">
-                <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                  First Name
-                </Text>
-                <TextInput
-                  className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
+                <Input
+                  label="First Name"
                   value={firstName}
                   onChangeText={setFirstName}
                   autoCapitalize="words"
@@ -106,11 +103,8 @@ export function SignUpScreen() {
                 />
               </View>
               <View className="flex-1">
-                <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                  Last Name
-                </Text>
-                <TextInput
-                  className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
+                <Input
+                  label="Last Name"
                   value={lastName}
                   onChangeText={setLastName}
                   autoCapitalize="words"
@@ -121,11 +115,8 @@ export function SignUpScreen() {
             </View>
 
             <View className="mb-5">
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                Email
-              </Text>
-              <TextInput
-                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
+              <Input
+                label="Email"
                 placeholder="name@example.com"
                 placeholderTextColor="#B0B0B0"
                 value={email}
@@ -138,11 +129,9 @@ export function SignUpScreen() {
             </View>
 
             <View>
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                Password
-              </Text>
-              <TextInput
-                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
+              <Input
+                label="Password"
+                hint="Minimum 6 characters"
                 placeholder="••••••••"
                 placeholderTextColor="#B0B0B0"
                 value={password}
@@ -151,9 +140,6 @@ export function SignUpScreen() {
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit}
               />
-              <Text className="text-[11px] text-stone-400 mt-1.5 pl-1">
-                Minimum 6 characters
-              </Text>
             </View>
           </View>
 

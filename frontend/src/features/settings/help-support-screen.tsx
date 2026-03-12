@@ -17,7 +17,7 @@ import {
   User,
 } from 'lucide-react-native';
 import * as React from 'react';
-import { Dimensions, Linking, Pressable, TextInput } from 'react-native';
+import { Dimensions, Linking, Pressable } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -25,7 +25,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScrollView, Text, View } from '@/components/ui';
+import { Input, ScrollView, Text, View } from '@/components/ui';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 12;
@@ -193,24 +193,11 @@ export function HelpSupportScreen() {
           transition={{ type: 'timing', duration: 450, delay: 100 }}
           className="px-6 pb-8"
         >
-          <View
-            className="flex-row items-center bg-white border border-stone-200 rounded-2xl px-4"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 4,
-              elevation: 1,
-            }}
-          >
-            <Search size={20} color="#a8a29e" strokeWidth={1.5} />
-            <TextInput
-              placeholder="Search help articles..."
-              placeholderTextColor="#a8a29e"
-              className="flex-1 py-4 pl-3 text-[15px] text-stone-900"
-              returnKeyType="search"
-            />
-          </View>
+          <Input
+            variant="search"
+            leftIcon={<Search size={20} color="#a8a29e" strokeWidth={1.5} />}
+            placeholder="Search help articles..."
+          />
         </Motion.View>
 
         <View className="px-6 gap-10">

@@ -8,11 +8,10 @@ import {
   Dimensions,
   FlatList,
   Pressable,
-  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, ScrollView, Text, View } from '@/components/ui';
+import { Image, Input, ScrollView, Text, View } from '@/components/ui';
 import { useArtworks, useSearchArtworks } from '@/lib/hooks';
 
 import type { Artwork } from '@/lib/api/types';
@@ -187,17 +186,14 @@ export function ArtworksScreen({
 
         {/* Search Bar */}
         <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 flex-row items-center bg-stone-200/50 border border-stone-200 rounded-full px-4">
-            <Search size={20} color="#a8a29e" />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search artworks, artists..."
-              placeholderTextColor="#a8a29e"
-              className="flex-1 py-3 pl-3 text-[15px] text-stone-900"
-              returnKeyType="search"
-            />
-          </View>
+          <Input
+            variant="search"
+            leftIcon={<Search size={20} color="#a8a29e" />}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search artworks, artists..."
+            containerClassName="flex-1"
+          />
           <Pressable
             className="p-3.5 bg-stone-900 rounded-full active:bg-stone-800"
           >

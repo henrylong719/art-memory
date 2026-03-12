@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { AnimatePresence, Motion } from '@legendapp/motion';
-import { SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import { Input, SafeAreaView, ScrollView, Text, View } from '@/components/ui';
 import Toast from '@/components/ui/toast';
 import { SocialLoginButtons } from '@/features/auth/components/social-login-buttons';
 import { useLogin } from '@/lib/hooks/use-auth';
@@ -84,38 +84,29 @@ export function SignInScreen() {
 
           {/* Fields */}
           <View className="mb-4">
-            <View className="mb-5">
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                Email
-              </Text>
-              <TextInput
-                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
-                placeholder="name@example.com"
-                placeholderTextColor="#a8a29e"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                returnKeyType="next"
-              />
-            </View>
+            <Input
+              label="Email"
+              placeholder="name@example.com"
+              placeholderTextColor="#a8a29e"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="next"
+              containerClassName="mb-5"
+            />
 
-            <View>
-              <Text className="text-[11px] font-semibold text-stone-600 uppercase tracking-wider mb-2.5 pl-1">
-                Password
-              </Text>
-              <TextInput
-                className="bg-white border border-stone-200 rounded-2xl py-3.5 px-4 text-[15px] text-stone-900"
-                placeholder="••••••••"
-                placeholderTextColor="#a8a29e"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
-              />
-            </View>
+            <Input
+              label="Password"
+              placeholder="••••••••"
+              placeholderTextColor="#a8a29e"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
+            />
           </View>
 
           {/* Forgot password */}

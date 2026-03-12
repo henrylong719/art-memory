@@ -2,10 +2,10 @@
 import { Motion, AnimatePresence } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { Camera, ChevronLeft, Lock } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, TextInput } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, ScrollView, Text, View } from '@/components/ui';
+import { Image, Input, ScrollView, Text, View } from '@/components/ui';
 import { useMe, useUpdateMe } from '@/lib/hooks';
 import { useEffect, useState } from 'react';
 import Toast from '../../components/ui/toast';
@@ -169,61 +169,30 @@ export function EditProfileScreen() {
           transition={{ type: 'timing', duration: 450, delay: 100 }}
           className="w-full gap-5"
         >
-          {/* First Name + Last Name side by side */}
-          <View className="gap-1.5">
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 ml-1">
-              First Name
-            </Text>
-            <TextInput
-              value={firstName}
-              onChangeText={setFirstName}
-              placeholder="First name"
-              placeholderTextColor="#a8a29e"
-              className="w-full bg-white border border-stone-200 rounded-2xl px-4 py-3.5 text-[15px] text-stone-900"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
-            />
-          </View>
+          {/* First Name */}
+          <Input
+            label="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+            placeholder="First name"
+          />
 
-          <View className="gap-1.5">
-            <Text className="text-[13px] font-semibold tracking-widest uppercase text-stone-500 ml-1">
-              Last Name
-            </Text>
-            <TextInput
-              value={lastName}
-              onChangeText={setLastName}
-              placeholder="Last name"
-              placeholderTextColor="#a8a29e"
-              className="w-full bg-white border border-stone-200 rounded-2xl px-4 py-3.5 text-[15px] text-stone-900"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 4,
-                elevation: 1,
-              }}
-            />
-          </View>
+          {/* Last Name */}
+          <Input
+            label="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+            placeholder="Last name"
+          />
 
           {/* Email (read-only) */}
-          <View className="gap-1.5">
-            <View className="flex-row items-center justify-between ml-1 mr-2">
-              <Text className="text-[12px] font-semibold tracking-widest uppercase text-stone-500">
-                Email
-              </Text>
-              <Lock size={12} color="#a8a29e" />
-            </View>
-            <View className="w-full bg-stone-100 border border-stone-200/60 rounded-2xl px-4 py-3.5">
-              <Text className="text-[15px] text-stone-500">
-                {me?.email ?? ''}
-              </Text>
-            </View>
-          </View>
+          <Input
+            label="Email"
+            value={me?.email ?? ''}
+            disabled
+            editable={false}
+            rightIcon={<Lock size={12} color="#a8a29e" />}
+          />
         </Motion.View>
 
         {/* Save Button */}

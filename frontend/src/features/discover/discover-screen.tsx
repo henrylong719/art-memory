@@ -15,11 +15,10 @@ import {
   Linking,
   Platform,
   Pressable,
-  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, ScrollView, Text, View } from '@/components/ui';
+import { Image, Input, ScrollView, Text, View } from '@/components/ui';
 import { useNearbyMuseums, useMuseumSearch } from '@/lib/hooks';
 
 import type { NearbyMuseum } from '@/lib/api/types';
@@ -295,17 +294,14 @@ export function DiscoverScreen() {
 
         {/* Search */}
         <View className="flex-row gap-3 mb-4">
-          <View className="flex-1 flex-row items-center bg-stone-200/50 border border-stone-200 rounded-full px-4">
-            <Search size={20} color="#a8a29e" />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search museums..."
-              placeholderTextColor="#a8a29e"
-              className="flex-1 py-3 pl-3 text-[15px] text-stone-900"
-              returnKeyType="search"
-            />
-          </View>
+          <Input
+            variant="search"
+            leftIcon={<Search size={20} color="#a8a29e" />}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search museums..."
+            containerClassName="flex-1"
+          />
         </View>
       </View>
 
