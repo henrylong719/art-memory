@@ -548,15 +548,7 @@ export function CameraScreen() {
           <CornerMarker position="bl" />
           <CornerMarker position="br" />
 
-          <View
-            style={
-              physicalOrientation === 'portrait'
-                ? styles.instructionPortrait
-                : physicalOrientation === 'landscape-left'
-                  ? styles.instructionLandscapeLeft
-                  : styles.instructionLandscapeRight
-            }
-          >
+          <View style={styles.instructionBottom}>
             <View
               style={
                 physicalOrientation === 'portrait'
@@ -570,7 +562,7 @@ export function CameraScreen() {
                 style={[
                   textBounceStyle,
                   {
-                    backgroundColor: 'rgba(0,0,0,0.55)',
+                    backgroundColor: 'rgba(0,0,0,0.10)',
                     paddingHorizontal: 20,
                     paddingVertical: 10,
                     borderRadius: 9999,
@@ -774,6 +766,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 16,
     justifyContent: 'center',
+  },
+
+  instructionBottom: {
+    position: 'absolute',
+    bottom: 200,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
   },
   rotateCW: { transform: [{ rotate: '90deg' }] },
   rotateCCW: { transform: [{ rotate: '-90deg' }] },

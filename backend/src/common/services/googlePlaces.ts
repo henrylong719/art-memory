@@ -76,8 +76,7 @@ export async function searchMuseumsByText(
   longitude?: number,
 ): Promise<GooglePlaceResult[]> {
   const url = new URL(`${PLACES_BASE_URL}/textsearch/json`);
-  url.searchParams.set('query', query);
-  url.searchParams.set('type', 'museum');
+  url.searchParams.set('query', `${query} museum`);
   url.searchParams.set('key', env.GOOGLE_PLACES_API_KEY);
 
   if (latitude && longitude) {

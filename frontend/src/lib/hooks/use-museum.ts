@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { museumApi } from '@/lib/api/services';
 
 export type LocationStatus =
@@ -89,24 +89,44 @@ export function useMuseum(id: string, isPlaceId = false) {
   });
 }
 
+// ─── Debounce hook ───────────────────────────────────────
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debounced;
+}
+
 // ─── Museum Search ───────────────────────────────────────
 
 export function useMuseumSearch(
   query: string,
   coords?: { latitude: number; longitude: number } | null,
 ) {
-  console.log('query', query);
+  const debouncedQuery = useDebouncedValue(query.trim(), 400);
 
   return useQuery({
-    queryKey: ['museums', 'search', query, coords?.latitude, coords?.longitude],
+    queryKey: [
+      'museums',
+      'search',
+      debouncedQuery,
+      coords?.latitude,
+      coords?.longitude,
+    ],
     queryFn: async () => {
       const { data } = await museumApi.search(
-        query,
+        debouncedQuery,
         coords?.latitude,
         coords?.longitude,
       );
       return data.responseObject;
     },
-    enabled: query.length > 0,
+    enabled: debouncedQuery.length > 0,
+    placeholderData: keepPreviousData,
   });
 }
