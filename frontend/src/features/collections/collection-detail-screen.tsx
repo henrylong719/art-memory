@@ -16,6 +16,7 @@ import {
   Dimensions,
   FlatList,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
 } from 'react-native';
@@ -36,6 +37,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 16;
 const GRID_PADDING = 24;
 const COLUMN_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP) / 2;
+
+const blurActiveElementOnWeb = () => {
+  if (Platform.OS !== 'web') return;
+  const active = document.activeElement as HTMLElement | null;
+  active?.blur();
+};
 
 // ─── Grid Item ───────────────────────────────────────────
 function GridItem({
@@ -191,6 +198,25 @@ export function CollectionDetailScreen() {
 
   const isLoading = loadingCollection || loadingSaved;
 
+  const artworkCount = savedArtworks?.length ?? 0;
+
+  // Scans with artwork that aren't already in this collection
+  const existingArtworkIds = useMemo(
+    () => new Set(savedArtworks?.map((s) => s.artworkId).filter(Boolean)),
+    [savedArtworks],
+  );
+  const availableScans = useMemo(
+    () =>
+      scans
+        ?.filter((s) => s.artwork && !existingArtworkIds.has(s.artwork.id))
+        // Deduplicate by artworkId
+        .filter(
+          (s, i, arr) =>
+            arr.findIndex((x) => x.artwork?.id === s.artwork?.id) === i,
+        ) ?? [],
+    [scans, existingArtworkIds],
+  );
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-stone-50 items-center justify-center">
@@ -214,25 +240,6 @@ export function CollectionDetailScreen() {
       </View>
     );
   }
-
-  const artworkCount = savedArtworks?.length ?? 0;
-
-  // Scans with artwork that aren't already in this collection
-  const existingArtworkIds = useMemo(
-    () => new Set(savedArtworks?.map((s) => s.artworkId).filter(Boolean)),
-    [savedArtworks],
-  );
-  const availableScans = useMemo(
-    () =>
-      scans
-        ?.filter((s) => s.artwork && !existingArtworkIds.has(s.artwork.id))
-        // Deduplicate by artworkId
-        .filter(
-          (s, i, arr) =>
-            arr.findIndex((x) => x.artwork?.id === s.artwork?.id) === i,
-        ) ?? [],
-    [scans, existingArtworkIds],
-  );
 
   const toggleSelection = (artworkId: string) => {
     setSelectedArtworkIds((prev) => {
@@ -287,6 +294,27 @@ export function CollectionDetailScreen() {
     }
   };
 
+  const openAddModal = () => {
+    blurActiveElementOnWeb();
+    setAddModalVisible(true);
+  };
+
+  const closeAddModal = () => {
+    blurActiveElementOnWeb();
+    setAddModalVisible(false);
+    setSelectedArtworkIds(new Set());
+  };
+
+  const openDeleteModal = () => {
+    blurActiveElementOnWeb();
+    setDeleteConfirmVisible(true);
+  };
+
+  const closeDeleteModal = () => {
+    blurActiveElementOnWeb();
+    setDeleteConfirmVisible(false);
+  };
+
   return (
     <View className="flex-1 bg-stone-50">
       {/* Sticky Header */}
@@ -309,14 +337,14 @@ export function CollectionDetailScreen() {
         </Text>
         <View className="flex-row items-center gap-1">
           <Pressable
-            onPress={() => setAddModalVisible(true)}
+            onPress={openAddModal}
             className="p-2 rounded-full active:bg-stone-200/50"
             hitSlop={8}
           >
             <Plus size={24} color="#1c1917" />
           </Pressable>
           <Pressable
-            onPress={() => setDeleteConfirmVisible(true)}
+            onPress={openDeleteModal}
             className="p-2 -mr-2 rounded-full active:bg-stone-200/50"
             hitSlop={8}
           >
@@ -461,18 +489,9 @@ export function CollectionDetailScreen() {
         transparent
         animationType="slide"
         statusBarTranslucent
-        onRequestClose={() => {
-          setAddModalVisible(false);
-          setSelectedArtworkIds(new Set());
-        }}
+        onRequestClose={closeAddModal}
       >
-        <Pressable
-          className="flex-1 bg-black/40"
-          onPress={() => {
-            setAddModalVisible(false);
-            setSelectedArtworkIds(new Set());
-          }}
-        />
+        <Pressable className="flex-1 bg-black/40" onPress={closeAddModal} />
         <View
           className="bg-white rounded-t-4xl pt-3"
           style={{
@@ -525,10 +544,7 @@ export function CollectionDetailScreen() {
             </View>
           ) : (
             <>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                className="px-6"
-              >
+              <ScrollView showsVerticalScrollIndicator={false} className="px-6">
                 <View className="gap-2 pb-4">
                   {availableScans.map((scan) => {
                     const artworkId = scan.artwork?.id;
@@ -639,10 +655,10 @@ export function CollectionDetailScreen() {
         transparent
         animationType="fade"
         statusBarTranslucent
-        onRequestClose={() => setDeleteConfirmVisible(false)}
+        onRequestClose={closeDeleteModal}
       >
         <Pressable
-          onPress={() => setDeleteConfirmVisible(false)}
+          onPress={closeDeleteModal}
           className="flex-1 bg-stone-900/40 items-center justify-center px-6"
         >
           <Pressable
@@ -678,7 +694,7 @@ export function CollectionDetailScreen() {
                 )}
               </Pressable>
               <Pressable
-                onPress={() => setDeleteConfirmVisible(false)}
+                onPress={closeDeleteModal}
                 className="w-full py-4 bg-stone-100 rounded-2xl items-center active:bg-stone-200"
               >
                 <Text className="text-stone-700 font-semibold text-[15px]">
