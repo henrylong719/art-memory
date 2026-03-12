@@ -4,6 +4,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 WORKDIR /app
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Build stage - install all dependencies and build
 FROM base AS build
@@ -23,6 +24,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/generated ./generated
 COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 # Use the node user from the image
 USER node
@@ -31,4 +34,4 @@ USER node
 EXPOSE 8080
 
 # Start the server
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy --schema prisma/schema.prisma && node dist/index.js"]
+CMD ["./docker-entrypoint.sh"]

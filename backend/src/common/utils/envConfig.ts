@@ -20,6 +20,8 @@ const envSchema = z.object({
 
   COMMON_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(1000),
 
+  DATABASE_URL: z.string().min(1),
+
   // JWT
   JWT_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
