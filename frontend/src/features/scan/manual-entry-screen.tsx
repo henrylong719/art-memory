@@ -82,14 +82,15 @@ export function ManualEntryScreen() {
       }
 
       setSuccess(true);
-      setTimeout(
-        () =>
-          router.replace({
-            pathname: '/scan/result',
-            params: { id: artwork.id },
-          }),
-        1500,
-      );
+      setTimeout(() => {
+        // Dismiss the entire scan stack (fallback + manual-entry)
+        // so pressing back on the result page goes to the home screen
+        router.dismissAll();
+        router.push({
+          pathname: '/scan/result',
+          params: { id: artwork.id },
+        });
+      }, 1500);
     } catch {
       setSubmitting(false);
     }
