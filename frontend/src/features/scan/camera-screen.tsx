@@ -11,30 +11,31 @@ import { Camera, ScanText, X, Zap, ZapOff } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Image as RNImage,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import Animated, {
-  useSharedValue,
+  ZoomIn,
   useAnimatedStyle,
+  useSharedValue,
+  withDelay,
   withRepeat,
   withSequence,
-  withDelay,
   withSpring,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Image, Text, View } from '@/components/ui';
 import { useScanArtwork, useScanCombined } from '@/lib/hooks';
-import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ─── Types ───────────────────────────────────────────────
 type ScanType = 'combined' | 'artwork_only';
 type Step = 'artwork' | 'details';
+type PhysicalOrientation = 'portrait' | 'landscape-left' | 'landscape-right';
 
 // ─── Corner Marker ───────────────────────────────────────
 function CornerMarker({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
@@ -58,63 +59,87 @@ const BAR_HEIGHT_LANDSCAPE = 96; // h-24
 
 async function cropToFrame(
   uri: string,
-  _rawW: number,
-  _rawH: number,
+  rawW: number,
+  rawH: number,
   screenW: number,
   screenH: number,
   frameWidthFraction: number,
   frameAspectWH: number,
+  physicalOrientation: PhysicalOrientation,
 ): Promise<{ uri: string; isLandscape: boolean }> {
-  // First pass: force EXIF orientation normalization by applying a no-op
-  // rotation. rotate(0) forces the image through the pipeline, baking
-  // EXIF rotation into pixels.
-  const normalizedRef = await ImageManipulator.manipulate(uri)
-    .rotate(0)
-    .renderAsync();
-  const normalized = await normalizedRef.saveAsync({
-    format: SaveFormat.JPEG,
-    compress: 1,
-  });
-  const photoW = normalizedRef.width;
-  const photoH = normalizedRef.height;
+  const photoW = rawW;
+  const photoH = rawH;
 
   const screenIsPortrait = screenH > screenW;
   const bottomBarH = screenIsPortrait
     ? BAR_HEIGHT_PORTRAIT
     : BAR_HEIGHT_LANDSCAPE;
 
-  // Frame size on screen
   const frameScreenW = screenW * frameWidthFraction;
   const frameScreenH = frameScreenW / frameAspectWH;
 
-  // Frame position – centred in the viewfinder area (screen minus bottom bar),
-  // shifted down by 40px (paddingTop on the overlay container)
   const FRAME_OFFSET_Y = 40;
   const viewfinderH = screenH - bottomBarH;
   const frameScreenX = (screenW - frameScreenW) / 2;
   const frameScreenY = (viewfinderH - frameScreenH) / 2 + FRAME_OFFSET_Y / 2;
 
-  // Camera preview uses "cover" scaling
+  // Camera preview uses "cover"
   const scale = Math.max(screenW / photoW, screenH / photoH);
-  const offsetX = (photoW * scale - screenW) / 2;
-  const offsetY = (photoH * scale - screenH) / 2;
+  const scaledPhotoW = photoW * scale;
+  const scaledPhotoH = photoH * scale;
+  const offsetX = (scaledPhotoW - screenW) / 2;
+  const offsetY = (scaledPhotoH - screenH) / 2;
 
-  // Map frame screen rect → photo pixel rect
   const originX = Math.max(0, Math.round((frameScreenX + offsetX) / scale));
   const originY = Math.max(0, Math.round((frameScreenY + offsetY) / scale));
   const width = Math.min(Math.round(frameScreenW / scale), photoW - originX);
   const height = Math.min(Math.round(frameScreenH / scale), photoH - originY);
 
-  // Second pass: crop the EXIF-normalized image
-  const croppedRef = await ImageManipulator.manipulate(normalized.uri)
+  // 1) Crop first
+  const croppedRef = await ImageManipulator.manipulate(uri)
     .crop({ originX, originY, width, height })
     .renderAsync();
-  const result = await croppedRef.saveAsync({
+
+  const croppedSaved = await croppedRef.saveAsync({
     format: SaveFormat.JPEG,
     compress: 0.85,
   });
 
-  return { uri: result.uri, isLandscape: croppedRef.width > croppedRef.height };
+  // Important:
+  // Expo camera already processes orientation, but after our crop math,
+  // the final cropped image still needs a device-side correction.
+  // On this project, landscape-left => -90 and landscape-right => 90
+  // produced the correct final result across capture + upload + display.
+
+  let rotation = 0;
+
+  if (physicalOrientation === 'landscape-left') {
+    rotation = -90;
+  } else if (physicalOrientation === 'landscape-right') {
+    rotation = 90;
+  }
+
+  // 2) Rotate after crop
+  if (rotation !== 0) {
+    const rotatedRef = await ImageManipulator.manipulate(croppedSaved.uri)
+      .rotate(rotation)
+      .renderAsync();
+
+    const rotatedSaved = await rotatedRef.saveAsync({
+      format: SaveFormat.JPEG,
+      compress: 0.85,
+    });
+
+    return {
+      uri: rotatedSaved.uri,
+      isLandscape: rotatedRef.width > rotatedRef.height,
+    };
+  }
+
+  return {
+    uri: croppedSaved.uri,
+    isLandscape: croppedRef.width > croppedRef.height,
+  };
 }
 
 // ─── Main Screen ─────────────────────────────────────────
@@ -132,15 +157,11 @@ export function CameraScreen() {
   const [flash, setFlash] = useState(false);
 
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-
   const isLandscape = screenWidth > screenHeight;
 
-  // Detect physical device tilt via accelerometer (app is portrait-locked).
-  // 'portrait' | 'landscape-left' | 'landscape-right'
-  type PhysicalOrientation = 'portrait' | 'landscape-left' | 'landscape-right';
   const [physicalOrientation, setPhysicalOrientation] =
     useState<PhysicalOrientation>('portrait');
-  // Captured URIs
+
   const [artworkUri, setArtworkUri] = useState<string | null>(null);
   const [artworkIsLandscape, setArtworkIsLandscape] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -175,15 +196,14 @@ export function CameraScreen() {
         setPhysicalOrientation('portrait');
       }
     });
+
     return () => subscription.remove();
   }, []);
 
   useEffect(() => {
-    // Delay on first mount so animation plays after screen transition
     const delay = isFirstMount.current ? 400 : 0;
     isFirstMount.current = false;
 
-    // Text bounces up first, then the frame follows
     textTranslateY.value = 18;
     textOpacity.value = 0;
     textTranslateY.value = withDelay(
@@ -204,7 +224,6 @@ export function CameraScreen() {
     );
   }, [step, frameScale, frameOpacity, textTranslateY, textOpacity]);
 
-  // Bounce the frame when physical orientation changes
   const prevOrientation = useRef(physicalOrientation);
   useEffect(() => {
     if (prevOrientation.current === physicalOrientation) return;
@@ -218,11 +237,12 @@ export function CameraScreen() {
     });
   }, [physicalOrientation, frameScale]);
 
-  // Scan line animation (replaces @legendapp/motion keyframe array)
+  // Scan line animation
   const scanLineY = useSharedValue(0);
   const scanLineStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: scanLineY.value }],
   }));
+
   const pulseOpacity = useSharedValue(0.5);
   const pulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
@@ -241,6 +261,7 @@ export function CameraScreen() {
         -1,
         false,
       );
+
       pulseOpacity.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 750 }),
@@ -250,9 +271,8 @@ export function CameraScreen() {
         false,
       );
     }
-  }, [processing, scanLineY, pulseOpacity, scanLineDistance]);
+  }, [processing, pulseOpacity, scanLineDistance, scanLineY]);
 
-  // Scan mutations
   const scanArtwork = useScanArtwork();
   const scanCombined = useScanCombined();
 
@@ -266,15 +286,20 @@ export function CameraScreen() {
     }
   }, [permission, requestPermission]);
 
-  // ── Location (best effort) ──
+  // ── Location ──
   const getLocation = useCallback(async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return undefined;
+
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      return { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+
+      return {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      };
     } catch {
       return undefined;
     }
@@ -287,7 +312,7 @@ export function CameraScreen() {
     name: `scan-${Date.now()}.jpg`,
   });
 
-  // ── Process scan (hit API) ──
+  // ── Process scan ──
   const processScan = useCallback(
     async (artUri: string, labelUri?: string) => {
       setProcessingUri(artUri);
@@ -334,7 +359,7 @@ export function CameraScreen() {
         });
       }
     },
-    [isCombined, scanCombined, scanArtwork, getLocation, router],
+    [getLocation, isCombined, router, scanArtwork, scanCombined],
   );
 
   // ── Capture photo ──
@@ -345,19 +370,15 @@ export function CameraScreen() {
 
     const photo = await cameraRef.current.takePictureAsync({
       quality: 0.85,
-      skipProcessing: true,
     });
 
     if (!photo?.uri) return;
 
-    // Crop to the viewfinder frame area.
-    // In landscape the frame flips to a wide aspect ratio (4:3) sized by
-    // height percentage, so we need to compute the equivalent width fraction.
     let frameWidthFraction: number;
     let frameAspect: number;
 
     if (isLandscape) {
-      const bottomBarH = 96; // h-24 in landscape
+      const bottomBarH = 96;
       const viewfinderH = screenHeight - bottomBarH;
       const heightPct = 0.85;
       const frameH = viewfinderH * heightPct;
@@ -371,6 +392,7 @@ export function CameraScreen() {
 
     let croppedUri: string;
     let photoIsLandscape = false;
+
     try {
       const cropped = await cropToFrame(
         photo.uri,
@@ -380,7 +402,9 @@ export function CameraScreen() {
         screenHeight,
         frameWidthFraction,
         frameAspect,
+        physicalOrientation,
       );
+
       croppedUri = cropped.uri;
       photoIsLandscape = cropped.isLandscape;
     } catch {
@@ -399,13 +423,15 @@ export function CameraScreen() {
       await processScan(croppedUri);
     }
   }, [
-    processing,
-    isCombined,
-    isArtworkStep,
     artworkUri,
+    isArtworkStep,
+    isCombined,
+    isLandscape,
+    physicalOrientation,
     processScan,
-    screenWidth,
+    processing,
     screenHeight,
+    screenWidth,
   ]);
 
   // ── Back ──
@@ -422,16 +448,16 @@ export function CameraScreen() {
   // ── Permission not granted ──
   if (!permission?.granted) {
     return (
-      <View className="flex-1 bg-black items-center justify-center px-8">
-        <Text className="font-serif text-2xl font-semibold text-white text-center mb-3">
+      <View className="flex-1 items-center justify-center bg-black px-8">
+        <Text className="mb-3 text-center font-serif text-2xl font-semibold text-white">
           Camera Access Required
         </Text>
-        <Text className="text-white/60 text-center text-sm mb-8 leading-5">
+        <Text className="mb-8 text-center text-sm leading-5 text-white/60">
           ArtMemory needs camera access to scan and identify artworks.
         </Text>
         <Pressable
           onPress={requestPermission}
-          className="bg-white px-8 py-3.5 rounded-2xl"
+          className="rounded-2xl bg-white px-8 py-3.5"
         >
           <Text className="font-semibold text-charcoal-900">Grant Access</Text>
         </Pressable>
@@ -451,21 +477,20 @@ export function CameraScreen() {
 
       {/* ── Top controls ── */}
       <View
-        className="absolute top-0 left-0 right-0 z-50 flex-row justify-between items-center px-5"
+        className="absolute left-0 right-0 top-0 z-50 flex-row items-center justify-between px-5"
         style={{ paddingTop: insets.top + 8 }}
       >
         <Pressable
           onPress={handleBack}
-          className="w-11 h-11 rounded-full items-center justify-center"
+          className="h-11 w-11 items-center justify-center rounded-full"
           style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
           hitSlop={8}
         >
           <X size={22} color="#fff" />
         </Pressable>
 
-        {/* Mode badge */}
         <View
-          className="px-4 py-2 rounded-full flex-row items-center gap-2"
+          className="flex-row items-center gap-2 rounded-full px-4 py-2"
           style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
         >
           {isArtworkStep ? (
@@ -473,14 +498,14 @@ export function CameraScreen() {
           ) : (
             <ScanText size={14} color="#fff" />
           )}
-          <Text className="text-white text-xs font-semibold tracking-wider">
+          <Text className="text-xs font-semibold tracking-wider text-white">
             {isArtworkStep ? 'Scan Artwork' : 'Capture Details'}
           </Text>
         </View>
 
         <Pressable
           onPress={() => setFlash((f) => !f)}
-          className="w-11 h-11 rounded-full items-center justify-center"
+          className="h-11 w-11 items-center justify-center rounded-full"
           style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
           hitSlop={8}
         >
@@ -498,7 +523,6 @@ export function CameraScreen() {
         style={{ paddingTop: 40 }}
         pointerEvents="none"
       >
-        {/* Dimmed area around frame */}
         <View
           style={{
             position: 'absolute',
@@ -509,24 +533,10 @@ export function CameraScreen() {
           }}
         />
 
-        {/* Dimmed area around frame */}
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        />
-
-        {/* Frame cutout */}
         <Animated.View
-          className={`relative border-2 rounded-xl ${
+          className={`relative rounded-xl border-2 ${
             isLandscape
-              ? isArtworkStep
-                ? 'h-[85%] aspect-4/3'
-                : 'h-[85%] aspect-4/3'
+              ? 'h-[85%] aspect-4/3'
               : isArtworkStep
                 ? 'w-[85%] aspect-3/4'
                 : 'w-[90%] aspect-4/5'
@@ -538,10 +548,6 @@ export function CameraScreen() {
           <CornerMarker position="bl" />
           <CornerMarker position="br" />
 
-          {/* Instruction text – always at the visual bottom of the frame.
-               Portrait: text sits at the bottom edge, centered horizontally.
-               Landscape-left/right: text moves to the side edge that is the
-               "visual bottom" and rotates so it reads correctly. */}
           <View
             style={
               physicalOrientation === 'portrait'
@@ -571,7 +577,7 @@ export function CameraScreen() {
                   },
                 ]}
               >
-                <Text className="text-white text-sm font-semibold tracking-wide text-center">
+                <Text className="text-center text-sm font-semibold tracking-wide text-white">
                   {isArtworkStep
                     ? 'Center the artwork in the frame'
                     : 'Capture the label or wall text clearly'}
@@ -581,7 +587,6 @@ export function CameraScreen() {
           </View>
         </Animated.View>
 
-        {/* Step indicator for combined mode */}
         {isCombined && (
           <View
             className="absolute items-center"
@@ -589,7 +594,7 @@ export function CameraScreen() {
           >
             <View className="flex-row gap-2">
               <View
-                className="w-2 h-2 rounded-full"
+                className="h-2 w-2 rounded-full"
                 style={{
                   backgroundColor: isArtworkStep
                     ? '#fff'
@@ -597,7 +602,7 @@ export function CameraScreen() {
                 }}
               />
               <View
-                className="w-2 h-2 rounded-full"
+                className="h-2 w-2 rounded-full"
                 style={{
                   backgroundColor: !isArtworkStep
                     ? '#fff'
@@ -611,23 +616,22 @@ export function CameraScreen() {
 
       {/* ── Bottom controls ── */}
       <View
-        className={`${isLandscape ? 'h-24' : 'h-36'} bg-black items-center justify-center border-t border-white/10`}
+        className={`${isLandscape ? 'h-24' : 'h-36'} items-center justify-center border-t border-white/10 bg-black`}
         style={{ paddingBottom: insets.bottom }}
       >
-        {/* Artwork preview thumbnail (shows during details step) */}
         {!isArtworkStep && artworkUri && (
           <Animated.View
             entering={ZoomIn.duration(250)}
-            className="absolute left-6 top-0 bottom-0 justify-center"
+            className="absolute bottom-0 left-6 top-0 justify-center"
           >
             <View className="relative">
               <View
-                className="w-14 h-14 rounded-xl overflow-hidden border-2"
+                className="h-14 w-14 overflow-hidden rounded-xl border-2"
                 style={{ borderColor: 'rgba(255,255,255,0.3)' }}
               >
                 <Image
                   source={artworkUri}
-                  className="w-full h-full"
+                  className="h-full w-full"
                   contentFit="cover"
                 />
               </View>
@@ -638,7 +642,7 @@ export function CameraScreen() {
                   setArtworkIsLandscape(false);
                   setStep('artwork');
                 }}
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full items-center justify-center"
+                className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full"
                 style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
                 hitSlop={6}
               >
@@ -648,17 +652,16 @@ export function CameraScreen() {
           </Animated.View>
         )}
 
-        {/* Shutter button */}
         <Pressable
           onPress={handleCapture}
           disabled={processing}
-          className={`w-20 h-20 rounded-full items-center justify-center p-0.75 border-[3px] ${
+          className={`h-20 w-20 items-center justify-center rounded-full border-[3px] p-0.75 ${
             !isArtworkStep && isCombined
               ? 'border-warning-400'
               : 'border-neutral-300'
           }`}
         >
-          <View className="w-full h-full bg-white rounded-full" />
+          <View className="h-full w-full rounded-full bg-white" />
         </Pressable>
       </View>
 
@@ -682,7 +685,6 @@ export function CameraScreen() {
               justifyContent: 'center',
             }}
           >
-            {/* Blurred image card */}
             <View
               style={{
                 width: artworkIsLandscape ? 300 : 260,
@@ -700,14 +702,14 @@ export function CameraScreen() {
                   blurRadius={20}
                 />
               )}
-              {/* Scrim */}
+
               <View
                 style={{
                   ...StyleSheet.absoluteFillObject,
                   backgroundColor: 'rgba(0,0,0,0.35)',
                 }}
               />
-              {/* Scan line */}
+
               <Animated.View
                 style={[
                   scanLineStyle,
@@ -724,7 +726,7 @@ export function CameraScreen() {
                   },
                 ]}
               />
-              {/* Spinner */}
+
               <View
                 style={{
                   ...StyleSheet.absoluteFillObject,
@@ -737,7 +739,7 @@ export function CameraScreen() {
             </View>
 
             <Animated.View style={pulseStyle}>
-              <Text className="font-serif text-xl text-white tracking-wide">
+              <Text className="font-serif text-xl tracking-wide text-white">
                 {isCombined
                   ? 'Analyzing artwork & details...'
                   : 'Identifying artwork...'}
@@ -752,7 +754,6 @@ export function CameraScreen() {
 
 // ─── Instruction text position styles ─────────────────────
 const styles = StyleSheet.create({
-  // Portrait: centered at the bottom of the frame
   instructionPortrait: {
     position: 'absolute',
     bottom: 16,
@@ -760,7 +761,6 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
-  // Landscape-left (top of phone points left): visual bottom = portrait left edge
   instructionLandscapeLeft: {
     position: 'absolute',
     top: 0,
@@ -768,7 +768,6 @@ const styles = StyleSheet.create({
     left: 16,
     justifyContent: 'center',
   },
-  // Landscape-right (top of phone points right): visual bottom = portrait right edge
   instructionLandscapeRight: {
     position: 'absolute',
     top: 0,
@@ -776,7 +775,6 @@ const styles = StyleSheet.create({
     right: 16,
     justifyContent: 'center',
   },
-  // Rotation wrappers so text reads correctly when sideways
   rotateCW: { transform: [{ rotate: '90deg' }] },
   rotateCCW: { transform: [{ rotate: '-90deg' }] },
 });

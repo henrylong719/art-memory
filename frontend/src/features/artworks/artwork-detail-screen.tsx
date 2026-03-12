@@ -1,6 +1,7 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import {
   forwardRef,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -31,6 +32,7 @@ import {
   Pressable,
   Share,
   Platform,
+  Image as RNImage,
 } from 'react-native';
 import Animated, {
   interpolate,
@@ -62,6 +64,14 @@ const HEADER_HEIGHT = 56;
 const px = (v: number) =>
   Platform.OS === 'web' ? (`${v}px` as unknown as number) : v;
 
+type ImageOrientation = 'portrait' | 'landscape' | 'square';
+
+function getImageOrientation(width: number, height: number): ImageOrientation {
+  if (width > height) return 'landscape';
+  if (height > width) return 'portrait';
+  return 'square';
+}
+
 // ─── Main Screen ─────────────────────────────────────────
 export function ArtworkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,7 +86,8 @@ export function ArtworkDetailScreen() {
   const deleteArtwork = useDeleteArtwork();
   const storyGen = useStoryGenerator({ artworkId: id });
 
-  const [imageAspect, setImageAspect] = useState<number | null>(null);
+  const [imageOrientation, setImageOrientation] =
+    useState<ImageOrientation | null>(null);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -85,26 +96,38 @@ export function ArtworkDetailScreen() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const lastTapRef = useRef(0);
 
-  // Check if already saved
   const savedEntry = useMemo(
     () => savedArtworks?.find((s) => s.artworkId === id),
     [savedArtworks, id],
   );
   const isSaved = !!savedEntry;
 
-  const imageIsLandscape = (imageAspect ?? 0) > 1;
+  const imageIsLandscape = imageOrientation === 'landscape';
   const heroHeight = imageIsLandscape
     ? HERO_HEIGHT_LANDSCAPE
     : HERO_HEIGHT_PORTRAIT;
 
-  // Scroll handler
+  useEffect(() => {
+    if (!artwork?.imageUrl || typeof artwork.imageUrl !== 'string') return;
+
+    RNImage.getSize(
+      artwork.imageUrl,
+      (width, height) => {
+        setImageOrientation(getImageOrientation(width, height));
+      },
+      (err) => {
+        console.log('Failed to get image size:', err);
+        setImageOrientation('portrait');
+      },
+    );
+  }, [artwork?.imageUrl]);
+
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
   });
 
-  // Animated header opacity
   const headerStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       scrollY.value,
@@ -113,7 +136,6 @@ export function ArtworkDetailScreen() {
     ),
   }));
 
-  // Animated hero parallax
   const heroStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: scrollY.value * 0.4 }],
   }));
@@ -158,41 +180,38 @@ export function ArtworkDetailScreen() {
     });
   };
 
-  // ── Loading ──
   if (isLoading) {
     return (
-      <View className="flex-1 bg-neutral-50 items-center justify-center">
+      <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator size="large" color="#1c1917" />
       </View>
     );
   }
 
-  // ── Error ──
   if (error || !artwork) {
     return (
-      <View className="flex-1 bg-neutral-50 items-center justify-center px-8">
-        <Text className="font-serif text-2xl font-semibold text-charcoal-900 mb-2 text-center">
+      <View className="flex-1 items-center justify-center bg-neutral-50 px-8">
+        <Text className="mb-2 text-center font-serif text-2xl font-semibold text-charcoal-900">
           Artwork not found
         </Text>
-        <Text className="text-charcoal-400 text-center mb-6">
+        <Text className="mb-6 text-center text-charcoal-400">
           We couldn't load this artwork. It may have been removed.
         </Text>
         <Pressable
           onPress={() => router.back()}
-          className="bg-charcoal-900 px-6 py-3 rounded-2xl"
+          className="rounded-2xl bg-charcoal-900 px-6 py-3"
         >
-          <Text className="text-white font-semibold">Go back</Text>
+          <Text className="font-semibold text-white">Go back</Text>
         </Pressable>
       </View>
     );
   }
 
-  const confidence = artwork.source === 'AI_SCAN' ? 0.89 : null; // from scan context
+  const confidence = artwork.source === 'AI_SCAN' ? 0.89 : null;
   const confidencePercent = confidence ? Math.round(confidence * 100) : null;
 
   return (
     <View className="flex-1 bg-neutral-50">
-      {/* ── Sticky header (appears on scroll) ── */}
       <Animated.View
         style={[
           headerStyle,
@@ -220,14 +239,13 @@ export function ArtworkDetailScreen() {
         </View>
       </Animated.View>
 
-      {/* ── Nav buttons (always visible) ── */}
       <View
         style={{ paddingTop: insets.top + 4 }}
-        className="absolute top-0 left-0 right-0 z-[60] flex-row justify-between items-center px-5"
+        className="absolute left-0 right-0 top-0 z-[60] flex-row items-center justify-between px-5"
       >
         <Pressable
           onPress={() => router.back()}
-          className="w-11 h-11 bg-black/30 rounded-full items-center justify-center"
+          className="h-11 w-11 items-center justify-center rounded-full bg-black/30"
           style={{ backdropFilter: 'blur(12px)' }}
           hitSlop={8}
         >
@@ -237,7 +255,7 @@ export function ArtworkDetailScreen() {
         <View className="flex-row gap-3">
           <Pressable
             onPress={() => router.push(`/artworks/${id}/edit`)}
-            className="w-11 h-11 bg-black/30 rounded-full items-center justify-center"
+            className="h-11 w-11 items-center justify-center rounded-full bg-black/30"
             style={{ backdropFilter: 'blur(12px)' }}
             hitSlop={8}
           >
@@ -245,7 +263,7 @@ export function ArtworkDetailScreen() {
           </Pressable>
           <Pressable
             onPress={handleShare}
-            className="w-11 h-11 bg-black/30 rounded-full items-center justify-center"
+            className="h-11 w-11 items-center justify-center rounded-full bg-black/30"
             style={{ backdropFilter: 'blur(12px)' }}
             hitSlop={8}
           >
@@ -254,16 +272,14 @@ export function ArtworkDetailScreen() {
         </View>
       </View>
 
-      {/* ── Scrollable content ── */}
       <Animated.ScrollView
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
       >
-        {/* Hero image */}
         <View className="mb-8">
-          <Animated.View>
+          <Animated.View style={heroStyle}>
             <Pressable
               onPress={() => {
                 const now = Date.now();
@@ -276,28 +292,24 @@ export function ArtworkDetailScreen() {
               <View style={{ height: px(heroHeight), overflow: 'hidden' }}>
                 <Image
                   source={artwork.imageUrl ?? ''}
-                  className="w-full h-full"
+                  className="h-full w-full"
+                  contentFit="cover"
                   transition={400}
-                  onLoad={(e) => {
-                    const { width: w, height: h } = e.source;
-                    if (w && h) setImageAspect(w / h);
-                  }}
                 />
               </View>
             </Pressable>
           </Animated.View>
 
-          {/* Confidence badge */}
           {confidencePercent && confidencePercent >= 80 && (
             <Motion.View
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'timing', duration: 400, delay: 300 }}
-              className="absolute top-0 left-0 right-0 items-center"
+              className="absolute left-0 right-0 top-0 items-center"
               style={{ top: insets.top + 14 }}
             >
-              <View className="bg-white/20 px-3 py-1.5 rounded-full">
-                <Text className="text-white text-xs font-semibold tracking-wider">
+              <View className="rounded-full bg-white/20 px-3 py-1.5">
+                <Text className="text-xs font-semibold tracking-wider text-white">
                   {confidencePercent}% match
                 </Text>
               </View>
@@ -305,21 +317,19 @@ export function ArtworkDetailScreen() {
           )}
         </View>
 
-        {/* Content */}
         <Motion.View
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ type: 'timing', duration: 350, delay: 100 }}
-          className="px-6 -mt-2"
+          className="-mt-2 px-6"
         >
-          {/* Title + bookmark */}
-          <View className="flex-row items-start justify-between gap-3 mb-1">
-            <Text className="font-serif text-[28px] leading-[34px] font-semibold text-charcoal-900 flex-1 flex-shrink">
+          <View className="mb-1 flex-row items-start justify-between gap-3">
+            <Text className="flex-1 flex-shrink font-serif text-[28px] font-semibold leading-[34px] text-charcoal-900">
               {artwork.title}
             </Text>
             <Pressable
               onPress={handleSaveToggle}
-              className="mt-1 w-11 h-11 rounded-full bg-charcoal-50 items-center justify-center"
+              className="mt-1 h-11 w-11 items-center justify-center rounded-full bg-charcoal-50"
               hitSlop={8}
             >
               <Bookmark
@@ -330,8 +340,7 @@ export function ArtworkDetailScreen() {
             </Pressable>
           </View>
 
-          {/* Artist, year */}
-          <Text className="text-base text-charcoal-500 mb-5">
+          <Text className="mb-5 text-base text-charcoal-500">
             <Text className="font-semibold text-charcoal-800">
               {artwork.artist?.name ?? 'Unknown Artist'}
             </Text>
@@ -340,8 +349,7 @@ export function ArtworkDetailScreen() {
             ) : null}
           </Text>
 
-          {/* Tags */}
-          <View className="flex-row flex-wrap gap-2 mb-8">
+          <View className="mb-8 flex-row flex-wrap gap-2">
             {artwork.medium ? (
               <TagPill
                 icon={<Palette size={14} color="#969696" />}
@@ -351,26 +359,24 @@ export function ArtworkDetailScreen() {
             {artwork.style ? <TagPill label={artwork.style} /> : null}
             {artwork.museum ? (
               <TagPill
-                icon={<View className="w-2 h-2 rounded-full bg-success-500" />}
+                icon={<View className="h-2 w-2 rounded-full bg-success-500" />}
                 label={artwork.museum.name}
               />
             ) : null}
           </View>
 
-          {/* About */}
           <View className="mb-8">
-            <Text className="font-serif text-xl font-semibold text-charcoal-900 mb-3">
+            <Text className="mb-3 font-serif text-xl font-semibold text-charcoal-900">
               About
             </Text>
 
-            {/* Has description */}
             {artwork.description ? (
               <View>
                 <Text className="text-[15px] leading-6 text-charcoal-500">
                   {artwork.description}
                 </Text>
                 {artwork.description.length > 200 && (
-                  <View className="flex-row items-center gap-1.5 mt-3">
+                  <View className="mt-3 flex-row items-center gap-1.5">
                     <Sparkles size={12} color="#a8a29e" />
                     <Text className="text-xs font-medium text-charcoal-400">
                       AI Generated
@@ -381,30 +387,19 @@ export function ArtworkDetailScreen() {
             ) : storyGen.isPending ? (
               <GeneratingSkeleton />
             ) : (
-              /* No description — generate CTA */
-              <View className="bg-charcoal-50 border border-neutral-200 rounded-2xl p-6 items-center">
-                <View
-                  className="w-12 h-12 bg-white rounded-full items-center justify-center mb-3"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 4,
-                    elevation: 1,
-                  }}
-                >
+              <View className="items-center rounded-2xl border border-neutral-200 bg-charcoal-50 p-6">
+                <View className="mb-3 h-12 w-12 items-center justify-center rounded-full bg-white">
                   <Sparkles size={20} color="#a8a29e" />
                 </View>
-                <Text className="text-charcoal-900 font-medium mb-1">
+                <Text className="mb-1 font-medium text-charcoal-900">
                   No story available yet
                 </Text>
-                <Text className="text-charcoal-400 text-sm text-center mb-5 max-w-[200px] leading-5">
+                <Text className="mb-5 max-w-[200px] text-center text-sm leading-5 text-charcoal-400">
                   Use AI to generate a short story and context for this artwork
                 </Text>
 
-                {/* Error / limit message */}
                 {storyGen.errorMessage && (
-                  <Text className="text-red-500 text-xs text-center mb-3 max-w-[240px]">
+                  <Text className="mb-3 max-w-[240px] text-center text-xs text-red-500">
                     {storyGen.errorMessage}
                   </Text>
                 )}
@@ -412,22 +407,11 @@ export function ArtworkDetailScreen() {
                 <Pressable
                   onPress={storyGen.generate}
                   disabled={storyGen.isDisabled}
-                  className={`px-5 py-2.5 rounded-xl ${
+                  className={`rounded-xl px-5 py-2.5 ${
                     storyGen.isDisabled
                       ? 'bg-charcoal-200'
                       : 'bg-charcoal-900 active:bg-charcoal-800'
                   }`}
-                  style={
-                    !storyGen.isDisabled
-                      ? {
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 1 },
-                          shadowOpacity: 0.1,
-                          shadowRadius: 2,
-                          elevation: 1,
-                        }
-                      : undefined
-                  }
                 >
                   <Text
                     className={`text-sm font-medium ${
@@ -442,9 +426,8 @@ export function ArtworkDetailScreen() {
                   </Text>
                 </Pressable>
 
-                {/* Remaining generations counter */}
                 {storyGen.limitInfo && !storyGen.isAtLimit && (
-                  <Text className="text-charcoal-300 text-[11px] mt-2.5">
+                  <Text className="mt-2.5 text-[11px] text-charcoal-300">
                     {storyGen.limitInfo.remaining} of {storyGen.limitInfo.limit}{' '}
                     generations left today
                   </Text>
@@ -453,9 +436,8 @@ export function ArtworkDetailScreen() {
             )}
           </View>
 
-          {/* Details grid */}
           <View className="mb-8">
-            <Text className="font-serif text-xl font-semibold text-charcoal-900 mb-4">
+            <Text className="mb-4 font-serif text-xl font-semibold text-charcoal-900">
               Details
             </Text>
             <View className="flex-row flex-wrap gap-3">
@@ -490,19 +472,13 @@ export function ArtworkDetailScreen() {
             </View>
           </View>
 
-          {/* Learn more link */}
           {artwork.wikiUrl ? (
-            <Pressable
-              onPress={() => {
-                // Use Linking or WebBrowser
-              }}
-              className="flex-row items-center justify-between bg-white border border-neutral-200 rounded-2xl px-5 py-4"
-            >
+            <Pressable className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-white px-5 py-4">
               <View>
                 <Text className="text-sm font-semibold text-charcoal-900">
                   Learn more
                 </Text>
-                <Text className="text-xs text-charcoal-400 mt-0.5">
+                <Text className="mt-0.5 text-xs text-charcoal-400">
                   Wikipedia
                 </Text>
               </View>
@@ -510,11 +486,10 @@ export function ArtworkDetailScreen() {
             </Pressable>
           ) : null}
 
-          {/* Remove artwork */}
-          <View className="mt-12 pt-8 border-t border-neutral-200/60 items-center pb-8">
+          <View className="mt-12 items-center border-t border-neutral-200/60 pb-8 pt-8">
             <Pressable
               onPress={() => setDeleteConfirmVisible(true)}
-              className="px-6 py-2.5 rounded-full active:bg-red-50"
+              className="rounded-full px-6 py-2.5 active:bg-red-50"
             >
               <Text className="text-sm font-medium text-charcoal-400">
                 Remove Artwork
@@ -524,7 +499,6 @@ export function ArtworkDetailScreen() {
         </Motion.View>
       </Animated.ScrollView>
 
-      {/* ── Fullscreen image viewer ── */}
       <Modal
         visible={fullscreenVisible}
         transparent
@@ -532,17 +506,17 @@ export function ArtworkDetailScreen() {
         statusBarTranslucent
         onRequestClose={() => setFullscreenVisible(false)}
       >
-        <View className="flex-1 bg-black items-center justify-center">
+        <View className="flex-1 items-center justify-center bg-black">
           {artwork.imageUrl && (
             <Image
               source={artwork.imageUrl}
-              className="w-full h-full"
+              className="h-full w-full"
               contentFit="contain"
             />
           )}
           <Pressable
             onPress={() => setFullscreenVisible(false)}
-            className="absolute w-11 h-11 rounded-full items-center justify-center"
+            className="absolute h-11 w-11 items-center justify-center rounded-full"
             style={{
               top: insets.top + 8,
               right: 20,
@@ -555,14 +529,12 @@ export function ArtworkDetailScreen() {
         </View>
       </Modal>
 
-      {/* ── Save to Collection bottom sheet ── */}
       <CollectionSheet
         ref={bottomSheetRef}
         onSelect={handleSaveToCollection}
         isPending={saveArtwork.isPending}
       />
 
-      {/* ── Success toast ── */}
       {showSuccessToast && (
         <Motion.View
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -571,27 +543,17 @@ export function ArtworkDetailScreen() {
           style={{ top: insets.top + 12 }}
           className="absolute left-0 right-0 z-120 items-center"
         >
-          <View
-            className="bg-charcoal-900 flex-row items-center gap-2.5 px-5 py-3 rounded-full"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
-          >
-            <View className="w-5 h-5 rounded-full bg-white/20 items-center justify-center">
+          <View className="flex-row items-center gap-2.5 rounded-full bg-charcoal-900 px-5 py-3">
+            <View className="h-5 w-5 items-center justify-center rounded-full bg-white/20">
               <Check size={12} color="#fff" strokeWidth={3} />
             </View>
-            <Text className="text-sm font-medium text-white tracking-wide">
+            <Text className="text-sm font-medium tracking-wide text-white">
               Artwork removed
             </Text>
           </View>
         </Motion.View>
       )}
 
-      {/* ── Delete confirmation modal ── */}
       <Modal
         visible={deleteConfirmVisible}
         transparent
@@ -601,23 +563,16 @@ export function ArtworkDetailScreen() {
       >
         <Pressable
           onPress={() => setDeleteConfirmVisible(false)}
-          className="flex-1 bg-charcoal-900/40 items-center justify-center px-6"
+          className="flex-1 items-center justify-center bg-charcoal-900/40 px-6"
         >
           <Pressable
             onPress={() => {}}
-            className="w-full max-w-[320px] bg-white rounded-4xl p-7 items-center"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.15,
-              shadowRadius: 24,
-              elevation: 12,
-            }}
+            className="w-full max-w-[320px] items-center rounded-4xl bg-white p-7"
           >
-            <Text className="font-serif text-2xl font-medium text-charcoal-900 text-center mb-3">
+            <Text className="mb-3 text-center font-serif text-2xl font-medium text-charcoal-900">
               Remove Artwork?
             </Text>
-            <Text className="text-[15px] text-charcoal-400 text-center leading-6 mb-8">
+            <Text className="mb-8 text-center text-[15px] leading-6 text-charcoal-400">
               This artwork will be removed from your saved artworks or
               collection. This action cannot be undone.
             </Text>
@@ -625,21 +580,21 @@ export function ArtworkDetailScreen() {
               <Pressable
                 onPress={handleDelete}
                 disabled={deleteArtwork.isPending}
-                className="w-full py-4 bg-red-50 rounded-2xl items-center active:bg-red-100"
+                className="w-full items-center rounded-2xl bg-red-50 py-4 active:bg-red-100"
               >
                 {deleteArtwork.isPending ? (
                   <ActivityIndicator size="small" color="#DC2626" />
                 ) : (
-                  <Text className="text-red-600 font-semibold text-[15px]">
+                  <Text className="text-[15px] font-semibold text-red-600">
                     Remove
                   </Text>
                 )}
               </Pressable>
               <Pressable
                 onPress={() => setDeleteConfirmVisible(false)}
-                className="w-full py-4 bg-charcoal-50 rounded-2xl items-center active:bg-charcoal-100"
+                className="w-full items-center rounded-2xl bg-charcoal-50 py-4 active:bg-charcoal-100"
               >
-                <Text className="text-charcoal-700 font-semibold text-[15px]">
+                <Text className="text-[15px] font-semibold text-charcoal-700">
                   Cancel
                 </Text>
               </Pressable>
@@ -651,17 +606,15 @@ export function ArtworkDetailScreen() {
   );
 }
 
-// ─── Tag Pill ────────────────────────────────────────────
 function TagPill({ icon, label }: { icon?: ReactNode; label: string }) {
   return (
-    <View className="flex-row items-center gap-1.5 bg-white border border-neutral-200 px-4 py-2 rounded-full">
+    <View className="flex-row items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-2">
       {icon}
       <Text className="text-sm font-semibold text-charcoal-700">{label}</Text>
     </View>
   );
 }
 
-// ─── Detail Card ─────────────────────────────────────────
 function DetailCard({
   icon,
   label,
@@ -672,10 +625,10 @@ function DetailCard({
   value: string;
 }) {
   return (
-    <View className="bg-white border border-neutral-200 rounded-2xl px-4 py-3.5 w-[48%]">
-      <View className="flex-row items-center gap-1.5 mb-1.5">
+    <View className="w-[48%] rounded-2xl border border-neutral-200 bg-white px-4 py-3.5">
+      <View className="mb-1.5 flex-row items-center gap-1.5">
         {icon}
-        <Text className="text-xs font-semibold text-charcoal-400 uppercase tracking-wider">
+        <Text className="text-xs font-semibold uppercase tracking-wider text-charcoal-400">
           {label}
         </Text>
       </View>
@@ -684,7 +637,6 @@ function DetailCard({
   );
 }
 
-// ─── Collection Bottom Sheet ─────────────────────────────
 const CollectionSheet = forwardRef<
   BottomSheetModal,
   {
@@ -694,7 +646,6 @@ const CollectionSheet = forwardRef<
   }
 >(({ onSelect, isPending, onCreateNew }, ref) => {
   const { data: collections, isLoading } = useCollections();
-
   const snapPoints = useMemo(() => ['55%'], []);
 
   return (
@@ -705,14 +656,13 @@ const CollectionSheet = forwardRef<
       backdropComponent={renderBackdrop}
       enableDynamicSizing={false}
       handleComponent={() => (
-        <View className="items-center pt-3 pb-2">
-          <View className="w-12 h-1.5 bg-stone-200 rounded-full" />
+        <View className="items-center pb-2 pt-3">
+          <View className="h-1.5 w-12 rounded-full bg-stone-200" />
         </View>
       )}
     >
       <BottomSheetView className="flex-1 px-6 pb-8">
-        {/* Title row */}
-        <View className="flex-row justify-between items-center mb-6">
+        <View className="mb-6 flex-row items-center justify-between">
           <Text className="font-serif text-2xl font-medium text-stone-900">
             Save to Collection
           </Text>
@@ -720,7 +670,7 @@ const CollectionSheet = forwardRef<
             onPress={() =>
               (ref as RefObject<BottomSheetModal>)?.current?.dismiss()
             }
-            className="p-2 bg-stone-100 rounded-full"
+            className="rounded-full bg-stone-100 p-2"
             hitSlop={8}
           >
             <X size={20} color="#1c1917" />
@@ -730,7 +680,7 @@ const CollectionSheet = forwardRef<
         {isLoading ? (
           <ActivityIndicator size="small" color="#1c1917" className="mt-4" />
         ) : (
-          <View className="gap-3 mb-6">
+          <View className="mb-6 gap-3">
             {collections?.map((collection) => {
               const coverImage =
                 collection.coverUrl ??
@@ -742,50 +692,48 @@ const CollectionSheet = forwardRef<
                   key={collection.id}
                   onPress={() => onSelect(collection.id)}
                   disabled={isPending}
-                  className="flex-row items-center p-3 rounded-2xl active:bg-stone-50 border border-transparent active:border-stone-200"
+                  className="flex-row items-center rounded-2xl border border-transparent p-3 active:border-stone-200 active:bg-stone-50"
                 >
-                  {/* Collection thumbnail */}
-                  <View className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 mr-4">
+                  <View className="mr-4 h-16 w-16 overflow-hidden rounded-xl bg-stone-100">
                     {coverImage ? (
                       <Image
                         source={{ uri: coverImage }}
-                        className="w-full h-full"
+                        className="h-full w-full"
                         contentFit="cover"
                         transition={200}
                       />
                     ) : (
-                      <View className="w-full h-full items-center justify-center">
+                      <View className="h-full w-full items-center justify-center">
                         <Bookmark size={16} color="#a8a29e" />
                       </View>
                     )}
                   </View>
                   <View className="flex-1">
                     <Text
-                      className="font-medium text-stone-900 text-[15px]"
+                      className="text-[15px] font-medium text-stone-900"
                       numberOfLines={1}
                     >
                       {collection.name}
                     </Text>
-                    <Text className="text-stone-500 text-xs mt-1">
+                    <Text className="mt-1 text-xs text-stone-500">
                       {collection._count.savedArtworks} artwork
                       {collection._count.savedArtworks === 1 ? '' : 's'}
                       {collection.isDefault ? ' · Default' : ''}
                     </Text>
                   </View>
-                  <View className="w-6 h-6 rounded-full border border-stone-300" />
+                  <View className="h-6 w-6 rounded-full border border-stone-300" />
                 </Pressable>
               );
             })}
           </View>
         )}
 
-        {/* Create New Collection */}
         <Pressable
           onPress={onCreateNew}
-          className="flex-row items-center justify-center gap-2 py-4 border-2 border-dashed border-stone-200 rounded-2xl active:bg-stone-50 active:border-stone-300"
+          className="flex-row items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-stone-200 py-4 active:border-stone-300 active:bg-stone-50"
         >
           <Plus size={20} color="#57534e" />
-          <Text className="text-stone-600 font-medium">
+          <Text className="font-medium text-stone-600">
             Create New Collection
           </Text>
         </Pressable>

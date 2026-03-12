@@ -95,6 +95,8 @@ export function useMuseumSearch(
   query: string,
   coords?: { latitude: number; longitude: number } | null,
 ) {
+  console.log('query', query);
+
   return useQuery({
     queryKey: ['museums', 'search', query, coords?.latitude, coords?.longitude],
     queryFn: async () => {

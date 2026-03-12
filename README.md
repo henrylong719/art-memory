@@ -1,284 +1,452 @@
-# ArtMemory
+# Art Memory
 
-> Your personal AI-powered museum companion. Scan artworks, extract label details, and build a curated archive of the art that moves you.
+Art Memory is a full-stack mobile app for museum and gallery visitors. It lets users scan artworks, identify them with AI, save them into personal collections, generate stories, and discover nearby museums.
 
-ArtMemory is a full-stack mobile application inspired by apps like [ArtScan AI](https://www.artscanai.com/). It helps museum visitors and art lovers identify artworks with AI, save them into personal collections, and discover nearby museums — all in one elegant, minimal app.
+This repository contains:
 
----
-
-## Features
-
-### AI Scanning — two modes
-- **Artwork + Details** — photograph the artwork *and* the museum label. AI extracts the title, artist, year, and medium directly from the label text (no inference, just OCR), then builds a complete record.
-- **Artwork Only** — photograph the artwork alone. OpenAI Vision identifies the piece and returns structured metadata with a confidence score.
-
-### Collections & Archive
-- Save any artwork into named personal collections
-- Add personal notes, ratings, and custom metadata to saved pieces
-- Browse all artworks stored in the system database
-
-### Scan History
-- Full chronological history of every scan
-- Tap any scan to view the result or correct the AI's output
-
-### Discover
-- Find museums and galleries near you using Google Places
-- View museum details, opening hours, and featured artworks
-
-### Auth
-- JWT-based authentication with access + refresh token rotation
-- Secure token storage with react-native-mmkv
+- `frontend/` — Expo + React Native mobile app
+- `backend/` — Express + TypeScript API
 
 ---
 
-## Tech Stack
+## What the app does
 
-### Backend (`/backend`)
+### Scan artworks with AI
 
-| Layer | Technology |
-|-------|-----------|
-| Runtime | Node.js (ESM) |
-| Framework | Express 5 |
-| Language | TypeScript 5 + `tsup` |
-| ORM | Prisma 7 + `@prisma/adapter-pg` (PostgreSQL) |
-| AI | OpenAI SDK — Vision + Chat Completions (`gpt-4o`) |
-| Storage | AWS S3 (artwork & label image uploads) |
-| Auth | JWT (`jsonwebtoken`) + bcrypt |
-| Validation | Zod + `@asteasolutions/zod-to-openapi` |
-| API Docs | Swagger UI (auto-generated from Zod schemas) |
-| Logging | Pino + pino-http |
-| Maps | Google Places API |
-| Testing | Vitest + Supertest |
-| Linting | Biome 2 |
+Users can scan in two ways:
 
-### Frontend (`/frontend`)
+- **Artwork only**: upload a single artwork photo and let OpenAI identify it
+- **Artwork + label**: upload both the artwork and its museum label for better extraction
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Expo SDK 54 / React Native 0.81 / React 19 |
-| Navigation | Expo Router 6 (file-system routing) |
-| Language | TypeScript 5 |
-| Styling | NativeWind (TailwindCSS for React Native) |
-| State | Zustand 5 |
-| Data Fetching | TanStack Query v5 + Axios |
-| Storage | react-native-mmkv |
-| Animations | Moti + React Native Reanimated 4 |
-| Images | expo-image |
-| Location | expo-location |
-| Camera | expo-camera |
-| Testing | Jest + React Testing Library / Maestro (E2E) |
+Each scan is stored in scan history, including AI confidence, raw AI result, extracted text, and user corrections.
 
----
+### Build a personal collection
 
-## Project Structure
+Users can:
 
-```
-ArtMemory/
-├── backend/               # Express API
-│   ├── prisma/            # Schema + migrations
-│   ├── src/
-│   │   ├── api/           # Feature modules (auth, artwork, scan, collection, museum…)
-│   │   │   └── <feature>/
-│   │   │       ├── *Router.ts
-│   │   │       ├── *Controller.ts
-│   │   │       ├── *Service.ts
-│   │   │       └── *Repository.ts
-│   │   ├── common/
-│   │   │   ├── db/        # Prisma client singleton
-│   │   │   ├── middleware/ # Auth, error handler, rate limiter, upload
-│   │   │   └── services/  # OpenAI, S3, Google Places
-│   │   └── api-docs/      # OpenAPI / Swagger
-│   └── generated/prisma/  # Auto-generated Prisma client
-│
-└── frontend/              # Expo app
-    └── src/
-        ├── app/           # Expo Router file-based routes
-        │   ├── (app)/     # Authenticated tab group (Home, Scan, Artworks, Collections, Profile)
-        │   ├── artworks/  # Artwork detail
-        │   ├── collections/
-        │   ├── discover/  # Museum list + detail (accessed from Home)
-        │   ├── scan/      # Camera, result, fallback, manual entry
-        │   ├── profile/   # Scan history
-        │   ├── login.tsx  # Sign In
-        │   ├── sign-up.tsx
-        │   └── onboarding.tsx # Splash
-        ├── features/      # Feature modules (auth, home, scan, artworks, collections, discover, profile)
-        ├── lib/
-        │   ├── api/       # Axios client, services, types
-        │   └── hooks/     # TanStack Query hooks for every endpoint
-        └── components/ui/ # Shared UI components + icons
-```
+- create collections
+- save artworks into collections
+- add ratings, personal notes, and custom metadata
+- upload personal artwork photos
+
+### Browse art data
+
+The backend supports browsing:
+
+- artworks
+- artists
+- museums
+- saved artworks
+- user collections
+
+### Generate artwork stories
+
+Users can generate AI-written stories for artworks. Story generation is limited by plan:
+
+- `FREE`: 3 per day
+- `MONTHLY`: 20 per day
+- `YEARLY`: 50 per day
+
+### Discover nearby museums
+
+The app can search museums by text or by nearby location using Google Places.
+
+### Authentication and profile
+
+The project includes:
+
+- email/password authentication
+- social login endpoint support
+- JWT access/refresh token flow
+- logout, logout-all, and change-password endpoints
+- profile editing
 
 ---
 
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/auth/register` | Create account |
-| POST | `/auth/login` | Get access + refresh tokens |
-| POST | `/auth/refresh` | Rotate tokens |
-| POST | `/auth/logout` | Invalidate refresh token |
-| GET / PATCH | `/users/me` | Current user profile |
-| GET | `/artworks` | All artworks |
-| GET | `/artworks/:id` | Artwork detail |
-| GET | `/artworks/search` | Search artworks |
-| POST | `/artworks/:id/generate-story` | Generate AI story for artwork |
-| GET | `/artists`, `/artists/:id`, `/artists/search` | Artist browsing |
-| POST | `/scans/artwork` | Scan artwork only (AI Vision) |
-| POST | `/scans/combined` | Scan artwork + label (OCR) |
-| GET | `/scans`, `/scans/:id` | Scan history |
-| PUT | `/scans/:id/correct` | Correct AI result |
-| GET / POST / PUT / DELETE | `/collections/*` | Manage collections |
-| GET / POST / PUT / DELETE | `/saved-artworks/*` | Save artworks into collections |
-| GET | `/museums/nearby` | Nearby museums (Google Places) |
-| GET | `/museums/search` | Search museums |
-| GET | `/museums/place/:placeId` | Museum detail by Google Place ID |
-| GET | `/museums/:id` | Museum detail by database ID |
-
-Interactive API docs are available at `http://localhost:8080/swagger` when the backend is running.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 22+
-- pnpm
-- PostgreSQL database
-- AWS S3 bucket
-- OpenAI API key (`gpt-4o` recommended)
-- Google Places API key
-
-### Backend
-
-```bash
-cd backend
-
-# Install dependencies
-pnpm install
-
-# Copy env template and fill in your values
-cp .env.template .env
-
-# Generate Prisma client
-pnpm prisma generate
-
-# Run migrations
-pnpm prisma migrate dev
-
-# Start dev server (with file watching)
-pnpm run start:dev
-```
-
-The API will be available at `http://localhost:8080`.
+## Tech stack
 
 ### Frontend
 
-```bash
-cd frontend
+- Expo SDK 54
+- React Native 0.81
+- React 19
+- Expo Router 6
+- TypeScript
+- NativeWind + Tailwind-style utilities
+- Zustand
+- TanStack Query
+- Axios
+- MMKV
+- Reanimated + Moti
+- Expo Camera / Expo Image / Expo Location
+- Jest + React Native Testing Library
+- Maestro for E2E
 
-# Install dependencies
-pnpm install
+### Backend
 
-# Copy env file
-cp .env.development .env
+- Node.js
+- Express 5
+- TypeScript
+- Prisma 7
+- PostgreSQL
+- OpenAI SDK
+- AWS S3
+- JWT + bcrypt
+- Zod
+- Swagger / OpenAPI
+- Pino
+- Vitest + Supertest
+- Biome
 
-# Set EXPO_PUBLIC_API_URL to your backend URL, e.g.:
-# EXPO_PUBLIC_API_URL=http://localhost:8080
+---
 
-# Start Expo dev server
-pnpm start
+## Repository structure
+
+```text
+ArtMemory/
+├── README.md
+├── er-diagram.mermaid
+├── backend/
+│   ├── prisma/
+│   │   └── schema.prisma
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── artist/
+│   │   │   ├── artwork/
+│   │   │   ├── auth/
+│   │   │   ├── collection/
+│   │   │   ├── healthCheck/
+│   │   │   ├── museum/
+│   │   │   ├── savedArtwork/
+│   │   │   ├── scan/
+│   │   │   ├── upload/
+│   │   │   └── user/
+│   │   ├── api-docs/
+│   │   ├── common/
+│   │   ├── index.ts
+│   │   └── server.ts
+│   └── .env.template
+└── frontend/
+    ├── src/
+    │   ├── app/
+    │   │   ├── (app)/
+    │   │   ├── artworks/
+    │   │   ├── collections/
+    │   │   ├── discover/
+    │   │   ├── profile/
+    │   │   ├── scan/
+    │   │   ├── login.tsx
+    │   │   ├── sign-up.tsx
+    │   │   └── onboarding.tsx
+    │   ├── components/
+    │   ├── features/
+    │   └── lib/
+    ├── app.config.ts
+    ├── env.ts
+    ├── eas.json
+    └── package.json
 ```
 
 ---
 
-## Environment Variables
+## Backend API overview
 
-### Backend (`.env`)
+### Public routes
+
+- `GET /health-check`
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/social`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+
+### Authenticated routes
+
+- `POST /auth/change-password`
+- `POST /auth/logout-all`
+- `GET /users/me`
+- `PATCH /users/me`
+
+### Artists
+
+- `GET /artists`
+- `GET /artists/search`
+- `GET /artists/:id`
+- `POST /artists`
+- `PUT /artists/:id`
+- `DELETE /artists/:id`
+
+### Artworks
+
+- `GET /artworks`
+- `GET /artworks/search`
+- `GET /artworks/artist/:artistId`
+- `GET /artworks/:id`
+- `POST /artworks`
+- `PUT /artworks/:id`
+- `DELETE /artworks/:id`
+- `POST /artworks/:id/generate-story`
+
+### Scans
+
+- `GET /scans`
+- `GET /scans/:id`
+- `POST /scans/artwork`
+- `POST /scans/combined`
+- `PUT /scans/:id/correct`
+- `DELETE /scans/:id`
+
+### Collections
+
+- `GET /collections`
+- `GET /collections/:id`
+- `POST /collections`
+- `PUT /collections/:id`
+- `DELETE /collections/:id`
+
+### Saved artworks
+
+- `GET /saved-artworks`
+- `GET /saved-artworks/collection/:collectionId`
+- `GET /saved-artworks/:id`
+- `POST /saved-artworks`
+- `PUT /saved-artworks/:id`
+- `DELETE /saved-artworks/:id`
+
+### Museums
+
+- `GET /museums/nearby`
+- `GET /museums/search`
+- `GET /museums/place/:placeId`
+- `GET /museums/:id`
+
+### Uploads
+
+- `POST /uploads/image`
+
+When the backend is running, Swagger is available from the OpenAPI router.
+
+---
+
+## Database models
+
+The Prisma schema currently includes:
+
+- `User`
+- `RefreshToken`
+- `Artist`
+- `Artwork`
+- `Scan`
+- `Collection`
+- `SavedArtwork`
+- `Museum`
+- `AiUsageLog`
+
+There are also enums for:
+
+- `Plan`
+- `ArtworkSource`
+- `ScanType`
+
+---
+
+## Getting started
+
+## 1) Prerequisites
+
+Install these first:
+
+- Node.js 22+
+- pnpm
+- PostgreSQL
+- an AWS S3 bucket
+- an OpenAI API key
+- a Google Places API key
+
+---
+
+## 2) Run the backend
+
+```bash
+cd backend
+pnpm install
+cp .env.template .env
+```
+
+Fill in `.env` with your real values.
+
+Then run:
+
+```bash
+pnpm prisma generate
+pnpm prisma migrate dev
+pnpm run start:dev
+```
+
+The backend runs on:
+
+- `http://localhost:8080`
+
+---
+
+## 3) Run the frontend
+
+Create a frontend `.env` file in `frontend/` with values like this:
+
+```env
+EXPO_PUBLIC_APP_ENV=development
+EXPO_PUBLIC_API_URL=http://localhost:8080
+EXPO_PUBLIC_ASSOCIATED_DOMAIN=
+EXPO_PUBLIC_VAR_NUMBER=0
+EXPO_PUBLIC_VAR_BOOL=false
+APP_BUILD_ONLY_VAR=
+```
+
+Then run:
+
+```bash
+cd frontend
+pnpm install
+pnpm start
+```
+
+Useful commands:
+
+```bash
+pnpm android
+pnpm ios
+pnpm web
+pnpm test
+pnpm lint
+pnpm type-check
+```
+
+---
+
+## Environment variables
+
+### Backend
+
+The backend validates environment variables with Zod.
+
+Main variables:
 
 ```env
 NODE_ENV=development
-PORT=8080
 HOST=localhost
-
-# CORS — comma-separated list of allowed origins
+PORT=8080
 CORS_ORIGIN=http://localhost:8080,http://localhost:8081
 
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/artmemory
+COMMON_RATE_LIMIT_MAX_REQUESTS=1000
+COMMON_RATE_LIMIT_WINDOW_MS=1000
 
-# JWT
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/artmemory
+
 JWT_SECRET=your-secret-key-at-least-32-characters-long
 JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
-# AWS S3
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret-key
 S3_BUCKET_NAME=artmemory-uploads
 
-# OpenAI
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o
 
-# Google Places
-GOOGLE_PLACES_API_KEY=your-google-places-key
+GOOGLE_PLACES_API_KEY=your-google-places-api-key
 ```
 
-### Frontend (`.env.development`)
+### Frontend
+
+The frontend uses `env.ts` to build environment-specific config.
+
+Important variables:
 
 ```env
 EXPO_PUBLIC_APP_ENV=development
 EXPO_PUBLIC_API_URL=http://localhost:8080
+EXPO_PUBLIC_ASSOCIATED_DOMAIN=
+EXPO_PUBLIC_VAR_NUMBER=0
+EXPO_PUBLIC_VAR_BOOL=false
+APP_BUILD_ONLY_VAR=
+```
+
+Notes:
+
+- `EXPO_PUBLIC_APP_ENV` must be one of `development`, `preview`, or `production`
+- `EXPO_PUBLIC_API_URL` must be a valid URL
+- strict validation is enabled during some prebuild flows
+
+---
+
+## Build and release
+
+The frontend includes EAS build profiles:
+
+- `development`
+- `preview`
+- `production`
+- `simulator`
+
+Examples:
+
+```bash
+cd frontend
+pnpm build:development:ios
+pnpm build:development:android
+pnpm build:preview:ios
+pnpm build:preview:android
+pnpm build:production:ios
+pnpm build:production:android
 ```
 
 ---
 
-## Database Schema
+## Testing
 
-The data model is defined in `backend/prisma/schema.prisma`. Key entities:
+### Backend
 
-- **User** — account with plan (FREE / MONTHLY / YEARLY)
-- **Artwork** — title, artist, year, medium, style, image, AI source tracking
-- **Artist** — biography, nationality, wiki link
-- **Scan** — scan type (ARTWORK / COMBINED), raw AI result, confidence, corrections
-- **Collection** — user-named groups of saved artworks
-- **SavedArtwork** — artwork saved to a collection with personal notes, rating, custom metadata
-- **Museum** — location, opening hours, admission, Google Place ID
-- **AiUsageLog** — per-request OpenAI cost and token tracking
-- **RefreshToken** — JWT refresh token store with expiry
+```bash
+cd backend
+pnpm test
+pnpm test:cov
+```
 
-An ER diagram is available at [`er-diagram.mermaid`](./er-diagram.mermaid).
+### Frontend
+
+```bash
+cd frontend
+pnpm test
+pnpm test:ci
+pnpm e2e-test
+```
 
 ---
 
-## App Screens
+## Notes about the current codebase
 
-| Screen | Route |
-|--------|-------|
-| Splash | `/onboarding` |
-| Sign In | `/login` |
-| Sign Up | `/sign-up` |
-| Home | `/(app)/` |
-| Scan Entry | `/(app)/scan` |
-| Camera Capture | `/scan/camera` |
-| Scan Result | `/scan/result` |
-| Scan Fallback | `/scan/fallback` |
-| Manual Entry | `/scan/manual-entry` |
-| Artworks List | `/(app)/artworks` |
-| Artwork Detail | `/artworks/[id]` |
-| Collections List | `/(app)/collections` |
-| Collection Detail | `/collections/[id]` |
-| Discover | `/discover` |
-| Museum Detail | `/discover/[id]` |
-| Profile | `/(app)/profile` |
-| Scan History | `/profile/history` |
+A few details in the current repo are worth knowing:
+
+- the frontend is based on an Obytes Expo starter and still includes some starter-style environment fields
+- the frontend display name in config is currently `art_memory`
+- the production bundle/package identifiers in `frontend/env.ts` still look like placeholder values and may need updating before release
+- backend Prisma client output is configured to generate into `backend/generated/prisma`
+
+---
+
+## Future improvements
+
+Good next README additions later could be:
+
+- screenshots or app flow diagrams
+- seed scripts for artwork and museum data
+- deployment instructions for backend hosting
+- sample API requests and responses
+- architecture diagram for scan flow and story generation
 
 ---
 
 ## License
 
-MIT
+There are separate `LICENSE` files inside `frontend/` and `backend/`.
