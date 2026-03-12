@@ -95,6 +95,8 @@ export const artworkApi = {
     medium?: string;
     imageUrl?: string;
     source?: string;
+    latitude?: number;
+    longitude?: number;
   }) => client.post<ApiResponse<Artwork>>('/artworks', data),
 
   update: (

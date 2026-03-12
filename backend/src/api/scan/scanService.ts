@@ -119,6 +119,8 @@ export class ScanService {
       const artworkId = await this.resolveArtwork({
         ...aiResult,
         imageUrl: imageUrl,
+        latitude: options.latitude,
+        longitude: options.longitude,
       });
 
       // Step 5: Create scan record
@@ -235,6 +237,8 @@ export class ScanService {
             artistId: artist.id,
             imageUrl: imageUrl,
             source: 'AI_GENERATED',
+            latitude: options.latitude,
+            longitude: options.longitude,
           });
           artworkId = newArtwork.id;
         }
@@ -392,6 +396,8 @@ export class ScanService {
     description?: string | null;
     imageUrl?: string | null;
     confidence: number;
+    latitude?: number;
+    longitude?: number;
   }): Promise<string | undefined> {
     if (aiResult.confidence < 0.3 || !aiResult.title || !aiResult.artistName) {
       return undefined;
@@ -425,6 +431,8 @@ export class ScanService {
       imageUrl: aiResult.imageUrl ?? undefined,
       artistId: artist.id,
       source: 'AI_GENERATED',
+      latitude: aiResult.latitude,
+      longitude: aiResult.longitude,
     });
 
     return newArtwork.id;

@@ -103,6 +103,8 @@ export type Artwork = {
   description: string | null;
   imageUrl: string | null;
   wikiUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
   artistId: string | null;
   museumId: string | null;
   source: string;

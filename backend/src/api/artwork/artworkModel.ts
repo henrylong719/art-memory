@@ -15,6 +15,8 @@ export const ArtworkSchema = z.object({
   description: z.string().nullable(),
   imageUrl: z.string().nullable(),
   wikiUrl: z.string().nullable(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
   artistId: z.string().nullable(),
   museumId: z.string().nullable(),
   source: z.enum([
@@ -75,6 +77,8 @@ export const CreateArtworkSchema = z.object({
       .enum(['AI_GENERATED', 'SEED_MET', 'SEED_AIC', 'SEED_WIKI', 'MANUAL'])
       .optional(),
     externalId: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
   }),
 });
 

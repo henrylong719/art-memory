@@ -1,7 +1,8 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 import { Check, X } from 'lucide-react-native';
 import {
   ActivityIndicator,
@@ -34,6 +35,28 @@ export function ManualEntryScreen() {
   }>();
   const createArtwork = useCreateArtwork();
   const correctScan = useCorrectScan();
+
+  // Capture location silently on mount
+  const locationRef = useRef<{ latitude: number; longitude: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        locationRef.current = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+      } catch {
+        // Location is optional — fail silently
+      }
+    })();
+  }, []);
 
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -68,6 +91,8 @@ export function ManualEntryScreen() {
         medium: formData.medium.trim() || undefined,
         imageUrl: photoUrl || undefined,
         source: 'MANUAL',
+        latitude: locationRef.current?.latitude,
+        longitude: locationRef.current?.longitude,
       });
 
       if (scanId) {

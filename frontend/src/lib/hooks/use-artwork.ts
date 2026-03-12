@@ -43,6 +43,8 @@ export function useCreateArtwork() {
       medium?: string;
       imageUrl?: string;
       source?: string;
+      latitude?: number;
+      longitude?: number;
     }) => {
       const { data } = await artworkApi.create(input);
       return data.responseObject;

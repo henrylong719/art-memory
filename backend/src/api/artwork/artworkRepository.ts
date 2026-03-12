@@ -82,6 +82,8 @@ export class ArtworkRepository {
     museumId?: string;
     source?: 'AI_GENERATED' | 'SEED_MET' | 'SEED_AIC' | 'SEED_WIKI' | 'MANUAL';
     externalId?: string;
+    latitude?: number;
+    longitude?: number;
   }) {
     return prisma.artwork.create({
       data,

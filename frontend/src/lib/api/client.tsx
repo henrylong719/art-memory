@@ -1,6 +1,7 @@
 import type { InternalAxiosRequestConfig } from 'axios';
 import type { TokenType } from '@/lib/auth/utils';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 import Env from 'env';
 import { signOut } from '@/features/auth/use-auth-store';
 import { getToken, removeToken, setToken } from '@/lib/auth/utils';
@@ -12,20 +13,105 @@ export const client = axios.create({
   },
 });
 
-// ─── Request Interceptor: Attach access token ────────────
+// ─── Token refresh helpers ──────────────────────────────
+let isRefreshing = false;
+let refreshPromise: Promise<TokenType> | null = null;
+
+/**
+ * Returns true if the access token will expire within the given buffer (ms).
+ * Defaults to 60 seconds — enough time to complete a request before expiry.
+ */
+function isTokenExpiringSoon(accessToken: string, bufferMs = 60_000): boolean {
+  try {
+    const { exp } = jwtDecode<{ exp: number }>(accessToken);
+    return exp * 1000 - Date.now() < bufferMs;
+  } catch {
+    return true; // treat decode failures as expired
+  }
+}
+
+async function doRefresh(refreshToken: string): Promise<TokenType> {
+  const { data } = await axios.post(
+    `${Env.EXPO_PUBLIC_API_URL}/auth/refresh`,
+    { refreshToken },
+  );
+
+  if (!data.success) {
+    throw new Error('Refresh failed');
+  }
+
+  const newTokens: TokenType = {
+    access: data.responseObject.tokens.accessToken,
+    refresh: data.responseObject.tokens.refreshToken,
+  };
+
+  setToken(newTokens);
+  return newTokens;
+}
+
+/**
+ * Ensures we have a valid (non-expiring) access token.
+ * Deduplicates concurrent refresh attempts via a shared promise.
+ */
+async function ensureFreshToken(): Promise<string | null> {
+  const token = getToken();
+  if (!token?.access) return null;
+
+  // Token still fresh — use it as-is
+  if (!isTokenExpiringSoon(token.access)) {
+    return token.access;
+  }
+
+  // Need to refresh — deduplicate concurrent callers
+  if (!isRefreshing) {
+    isRefreshing = true;
+
+    if (!token.refresh) {
+      isRefreshing = false;
+      return null;
+    }
+
+    refreshPromise = doRefresh(token.refresh).finally(() => {
+      isRefreshing = false;
+      refreshPromise = null;
+    });
+  }
+
+  try {
+    const newTokens = await refreshPromise!;
+    return newTokens.access;
+  } catch {
+    removeToken();
+    signOut();
+    return null;
+  }
+}
+
+// ─── Request Interceptor: Attach fresh access token ─────
 client.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getToken();
-    if (token?.access) {
-      config.headers.Authorization = `Bearer ${token.access}`;
+  async (config: InternalAxiosRequestConfig) => {
+    // Skip token logic for auth endpoints
+    const url = config.url ?? '';
+    if (
+      url.includes('/auth/login') ||
+      url.includes('/auth/register') ||
+      url.includes('/auth/refresh')
+    ) {
+      return config;
+    }
+
+    const accessToken = await ensureFreshToken();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// ─── Response Interceptor: Auto-refresh on 401 ──────────
-let isRefreshing = false;
+// ─── Response Interceptor: Fallback refresh on 401 ──────
+// This catches edge cases where the token expired between the
+// preemptive check and the server receiving the request.
 let failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
@@ -84,23 +170,7 @@ client.interceptors.response.use(
         throw new Error('No refresh token available');
       }
 
-      // Call refresh endpoint directly (bypass interceptors)
-      const { data } = await axios.post(
-        `${Env.EXPO_PUBLIC_API_URL}/auth/refresh`,
-        { refreshToken: currentToken.refresh },
-      );
-
-      if (!data.success) {
-        throw new Error('Refresh failed');
-      }
-
-      const newTokens: TokenType = {
-        access: data.responseObject.tokens.accessToken,
-        refresh: data.responseObject.tokens.refreshToken,
-      };
-
-      // Store new tokens
-      setToken(newTokens);
+      const newTokens = await doRefresh(currentToken.refresh);
 
       // Process queued requests
       processQueue(null, newTokens.access);

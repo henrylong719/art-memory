@@ -18,6 +18,7 @@ import {
   Clock,
   ExternalLink,
   MapPin,
+  Navigation,
   Palette,
   Pencil,
   Plus,
@@ -28,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import {
   ActivityIndicator,
+  Linking,
   Modal,
   Pressable,
   Share,
@@ -241,7 +243,7 @@ export function ArtworkDetailScreen() {
 
       <View
         style={{ paddingTop: insets.top + 4 }}
-        className="absolute left-0 right-0 top-0 z-[60] flex-row items-center justify-between px-5"
+        className="absolute left-0 right-0 top-0 z-60 flex-row items-center justify-between px-5"
       >
         <Pressable
           onPress={() => router.back()}
@@ -324,7 +326,7 @@ export function ArtworkDetailScreen() {
           className="-mt-2 px-6"
         >
           <View className="mb-1 flex-row items-start justify-between gap-3">
-            <Text className="flex-1 flex-shrink font-serif text-[28px] font-semibold leading-[34px] text-charcoal-900">
+            <Text className="flex-1 shrink font-serif text-[28px] font-semibold leading-8.5 text-charcoal-900">
               {artwork.title}
             </Text>
             <Pressable
@@ -394,12 +396,12 @@ export function ArtworkDetailScreen() {
                 <Text className="mb-1 font-medium text-charcoal-900">
                   No story available yet
                 </Text>
-                <Text className="mb-5 max-w-[200px] text-center text-sm leading-5 text-charcoal-400">
+                <Text className="mb-5 max-w-50 text-center text-sm leading-5 text-charcoal-400">
                   Use AI to generate a short story and context for this artwork
                 </Text>
 
                 {storyGen.errorMessage && (
-                  <Text className="mb-3 max-w-[240px] text-center text-xs text-red-500">
+                  <Text className="mb-3 max-w-60 text-center text-xs text-red-500">
                     {storyGen.errorMessage}
                   </Text>
                 )}
@@ -471,6 +473,48 @@ export function ArtworkDetailScreen() {
               ) : null}
             </View>
           </View>
+
+          {artwork.latitude != null && artwork.longitude != null && (
+            <View className="mb-8">
+              <Text className="mb-3 font-serif text-xl font-semibold text-charcoal-900">
+                Location
+              </Text>
+              <Pressable
+                onPress={() => {
+                  const url = Platform.select({
+                    ios: `maps:0,0?q=${artwork.latitude},${artwork.longitude}`,
+                    android: `geo:${artwork.latitude},${artwork.longitude}?q=${artwork.latitude},${artwork.longitude}`,
+                    default: `https://maps.google.com/?q=${artwork.latitude},${artwork.longitude}`,
+                  });
+                  if (url) Linking.openURL(url).catch(() => {});
+                }}
+                className="overflow-hidden rounded-2xl border border-neutral-200 active:opacity-90"
+              >
+                <Image
+                  source={{
+                    uri: `https://maps.googleapis.com/maps/api/staticmap?center=${artwork.latitude},${artwork.longitude}&zoom=15&size=600x300&scale=2&markers=color:0x1c1917%7C${artwork.latitude},${artwork.longitude}&style=feature:poi%7Cvisibility:off&key=${process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY}`,
+                  }}
+                  className="h-40 w-full"
+                  contentFit="cover"
+                  transition={300}
+                />
+                <View className="flex-row items-center justify-between bg-white px-4 py-3">
+                  <View className="flex-row items-center gap-2">
+                    <MapPin size={14} color="#969696" />
+                    <Text className="text-sm text-charcoal-500">
+                      Scanned location
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center gap-1.5 rounded-full bg-charcoal-50 px-3 py-1.5">
+                    <Navigation size={12} color="#57534e" />
+                    <Text className="text-xs font-semibold text-charcoal-600">
+                      Directions
+                    </Text>
+                  </View>
+                </View>
+              </Pressable>
+            </View>
+          )}
 
           {artwork.wikiUrl ? (
             <Pressable className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-white px-5 py-4">

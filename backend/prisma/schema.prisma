@@ -120,6 +120,10 @@ model Artwork {
   museumId String?
   museum   Museum? @relation(fields: [museumId], references: [id])
 
+  // Location where artwork was scanned/encountered
+  latitude  Float?
+  longitude Float?
+
   // Data origin & verification
   source          ArtworkSource @default(AI_GENERATED)
   externalId      String? // ID from source API (e.g. Met Museum object ID)
