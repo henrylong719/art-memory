@@ -6,7 +6,11 @@ import * as Location from 'expo-location';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 
-import type { PhysicalOrientation, ScanType, Step } from '@/features/scan/types';
+import type {
+  PhysicalOrientation,
+  ScanType,
+  Step,
+} from '@/features/scan/types';
 import { cropToFrame } from '@/features/scan/utils/crop-to-frame';
 import { useScanArtwork, useScanCombined } from '@/lib/hooks';
 import { getErrorMessage } from '@/lib/utils';
@@ -58,6 +62,11 @@ export function useScanFlow(scanType: ScanType) {
       setProcessing(true);
       setErrorMessage(null);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Let the processing overlay render before starting heavy work
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      );
 
       const location = await getLocation();
 
