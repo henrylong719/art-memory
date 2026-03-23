@@ -21,11 +21,17 @@ export function SignUpScreen() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const { toast, showToast } = useToast();
 
   const handleSubmit = () => {
     if (!email.trim() || !password || register.isPending) return;
+
+    if (password !== confirmPassword) {
+      showToast('passwords do not match.');
+      return;
+    }
 
     register.mutate(
       {
@@ -39,7 +45,10 @@ export function SignUpScreen() {
           router.replace('/(app)');
         },
         onError: (error) => {
-          showToast(getErrorMessage(error, 'Failed to create account.'), 'error');
+          showToast(
+            getErrorMessage(error, 'Failed to create account.'),
+            'error',
+          );
         },
       },
     );
@@ -128,7 +137,7 @@ export function SignUpScreen() {
               />
             </View>
 
-            <View>
+            <View className="mb-5">
               <Input
                 label="Password"
                 hint="Minimum 6 characters"
@@ -139,6 +148,25 @@ export function SignUpScreen() {
                 secureTextEntry
                 returnKeyType="done"
                 onSubmitEditing={handleSubmit}
+              />
+            </View>
+
+            <View>
+              <Input
+                label="Confirm password"
+                hint="Re-enter password"
+                placeholder="••••••••"
+                placeholderTextColor="#B0B0B0"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+                error={
+                  confirmPassword.length > 0 && confirmPassword !== password
+                    ? 'Passwords do not match'
+                    : undefined
+                }
               />
             </View>
           </View>
