@@ -1,6 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { collectionApi, savedArtworkApi } from '@/lib/api/services';
 
+type SaveArtworkInput = {
+  artworkId?: string;
+  collectionId?: string;
+  personalNote?: string;
+  userPhotoUrl?: string;
+  rating?: number;
+  customTitle?: string;
+  customArtist?: string;
+  customYear?: number;
+  customMedium?: string;
+  deferInvalidation?: boolean;
+};
+
+type RemoveSavedArtworkInput = string | { id: string; deferInvalidation?: boolean };
+
+function shouldDeferInvalidation(
+  input: { deferInvalidation?: boolean } | RemoveSavedArtworkInput,
+) {
+  return typeof input === 'object' && input.deferInvalidation === true;
+}
+
+function getSavedArtworkId(input: RemoveSavedArtworkInput) {
+  return typeof input === 'string' ? input : input.id;
+}
+
 // ─── Collections ─────────────────────────────────────────
 
 export function useCollections() {
@@ -75,27 +100,22 @@ export function useSavedArtworksByCollection(collectionId: string) {
 export function useSaveArtwork() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      artworkId?: string;
-      collectionId?: string;
-      personalNote?: string;
-      userPhotoUrl?: string;
-      rating?: number;
-      customTitle?: string;
-      customArtist?: string;
-      customYear?: number;
-      customMedium?: string;
-    }) => {
-      const { data } = await savedArtworkApi.save(input);
+    mutationFn: async (input: SaveArtworkInput) => {
+      const { deferInvalidation: _deferInvalidation, ...requestData } = input;
+      const { data } = await savedArtworkApi.save(requestData);
       return data.responseObject;
     },
     onMutate: async (input) => {
+      if (shouldDeferInvalidation(input)) {
+        return {};
+      }
+
       await queryClient.cancelQueries({ queryKey: ['saved-artworks'] });
 
       const previousSaved = queryClient.getQueryData(['saved-artworks']);
 
       // Optimistically add a placeholder entry
-      queryClient.setQueryData<any[]>(['saved-artworks'], (old) => [
+      queryClient.setQueryData<any[]>(['saved-artworks'], old => [
         ...(old ?? []),
         {
           id: `optimistic-${Date.now()}`,
@@ -112,7 +132,11 @@ export function useSaveArtwork() {
         queryClient.setQueryData(['saved-artworks'], context.previousSaved);
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, input) => {
+      if (shouldDeferInvalidation(input)) {
+        return;
+      }
+
       queryClient.invalidateQueries({ queryKey: ['saved-artworks'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
@@ -122,17 +146,23 @@ export function useSaveArtwork() {
 export function useRemoveSavedArtwork() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await savedArtworkApi.remove(id);
+    mutationFn: async (input: RemoveSavedArtworkInput) => {
+      await savedArtworkApi.remove(getSavedArtworkId(input));
     },
-    onMutate: async (removedId) => {
+    onMutate: async (input) => {
+      if (shouldDeferInvalidation(input)) {
+        return {};
+      }
+
       await queryClient.cancelQueries({ queryKey: ['saved-artworks'] });
 
       const previousSaved = queryClient.getQueryData(['saved-artworks']);
+      const removedId = getSavedArtworkId(input);
 
       // Optimistically remove from list
-      queryClient.setQueryData<any[]>(['saved-artworks'], (old) =>
-        old?.filter((s) => s.id !== removedId),
+      queryClient.setQueryData<any[]>(
+        ['saved-artworks'],
+        old => old?.filter(s => s.id !== removedId),
       );
 
       return { previousSaved };
@@ -142,7 +172,11 @@ export function useRemoveSavedArtwork() {
         queryClient.setQueryData(['saved-artworks'], context.previousSaved);
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, input) => {
+      if (shouldDeferInvalidation(input)) {
+        return;
+      }
+
       queryClient.invalidateQueries({ queryKey: ['saved-artworks'] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
     },

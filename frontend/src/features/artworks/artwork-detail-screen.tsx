@@ -1,7 +1,7 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from '@legendapp/motion';
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -67,6 +67,7 @@ export function ArtworkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const { data: artwork, isLoading, error } = useArtwork(id);
   const { data: savedArtworks } = useSavedArtworks();
@@ -79,17 +80,27 @@ export function ArtworkDetailScreen() {
   const [heroImageLoaded, setHeroImageLoaded] = useState(false);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [collectionSheetVisible, setCollectionSheetVisible] = useState(false);
+  const [isUpdatingCollections, setIsUpdatingCollections] = useState(false);
   const { toast, showToast } = useToast();
 
   const scrollY = useSharedValue(0);
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const lastTapRef = useRef(0);
 
-  const savedEntry = useMemo(
-    () => savedArtworks?.find((s) => s.artworkId === id),
+  const savedEntries = useMemo(
+    () => savedArtworks?.filter((s) => s.artworkId === id) ?? [],
     [savedArtworks, id],
   );
-  const isSaved = !!savedEntry;
+  const savedEntriesByCollectionId = useMemo(
+    () =>
+      new Map(savedEntries.map((entry) => [entry.collectionId, entry] as const)),
+    [savedEntries],
+  );
+  const selectedCollectionIds = useMemo(
+    () => savedEntries.map((entry) => entry.collectionId),
+    [savedEntries],
+  );
+  const isSaved = savedEntries.length > 0;
 
   const imageIsLandscape = imageOrientation === 'landscape';
   const heroHeight = imageIsLandscape
@@ -133,41 +144,59 @@ export function ArtworkDetailScreen() {
   };
 
   const handleSaveToggle = () => {
-    if (saveArtwork.isPending || removeSavedArtwork.isPending) return;
-
-    if (isSaved && savedEntry) {
-      removeSavedArtwork.mutate(savedEntry.id, {
-        onSuccess: () =>
-          showToast('Removed from your saved artworks.', 'success'),
-        onError: (error) =>
-          showToast(
-            getErrorMessage(
-              error,
-              "We couldn't remove this artwork right now.",
-            ),
-            'error',
-          ),
-      });
-    } else {
-      bottomSheetRef.current?.present();
-    }
+    if (isUpdatingCollections) return;
+    setCollectionSheetVisible(true);
   };
 
-  const handleSaveToCollection = (collectionId: string) => {
-    saveArtwork.mutate(
-      { artworkId: id, collectionId },
-      {
-        onSuccess: () => {
-          bottomSheetRef.current?.dismiss();
-          showToast('Artwork saved to your collection.', 'success');
-        },
-        onError: (error) =>
-          showToast(
-            getErrorMessage(error, "We couldn't save this artwork."),
-            'error',
-          ),
-      },
+  const handleSaveToCollections = async (nextCollectionIds: Set<string>) => {
+    const currentCollectionIds = new Set(selectedCollectionIds);
+    const collectionsToAdd = Array.from(nextCollectionIds).filter(
+      collectionId => !currentCollectionIds.has(collectionId),
     );
+    const collectionsToRemove = Array.from(currentCollectionIds).filter(
+      collectionId => !nextCollectionIds.has(collectionId),
+    );
+
+    if (collectionsToAdd.length === 0 && collectionsToRemove.length === 0) {
+      setCollectionSheetVisible(false);
+      return;
+    }
+
+    setIsUpdatingCollections(true);
+
+    try {
+      await Promise.all([
+        ...collectionsToAdd.map(collectionId =>
+          saveArtwork.mutateAsync({
+            artworkId: id,
+            collectionId,
+            deferInvalidation: true,
+          }),
+        ),
+        ...collectionsToRemove.map(collectionId => {
+          const existingEntry = savedEntriesByCollectionId.get(collectionId);
+          if (!existingEntry) return Promise.resolve();
+          return removeSavedArtwork.mutateAsync({
+            id: existingEntry.id,
+            deferInvalidation: true,
+          });
+        }),
+      ]);
+
+      setCollectionSheetVisible(false);
+      showToast('Collections updated.', 'success');
+    } catch (error) {
+      showToast(
+        getErrorMessage(error, "We couldn't update this artwork's collections."),
+        'error',
+      );
+    } finally {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['saved-artworks'] }),
+        queryClient.invalidateQueries({ queryKey: ['collections'] }),
+      ]);
+      setIsUpdatingCollections(false);
+    }
   };
 
   const handleDelete = () => {
@@ -618,11 +647,15 @@ export function ArtworkDetailScreen() {
         onClose={() => setFullscreenVisible(false)}
       />
 
-      <CollectionSheet
-        ref={bottomSheetRef}
-        onSelect={handleSaveToCollection}
-        isPending={saveArtwork.isPending}
-      />
+      {collectionSheetVisible ? (
+        <CollectionSheet
+          bottomInset={insets.bottom}
+          onSave={handleSaveToCollections}
+          onClose={() => setCollectionSheetVisible(false)}
+          isPending={isUpdatingCollections}
+          selectedCollectionIds={selectedCollectionIds}
+        />
+      ) : null}
 
       <ConfirmModal
         visible={deleteConfirmVisible}

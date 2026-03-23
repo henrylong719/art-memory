@@ -1,4 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
+import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Motion } from '@legendapp/motion';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -176,6 +177,7 @@ export function CollectionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const { data: collection, isLoading: loadingCollection } = useCollection(id);
   const { data: savedArtworks, isLoading: loadingSaved } =
@@ -235,17 +237,30 @@ export function CollectionDetailScreen() {
   }
 
   const handleBatchAdd = async (selectedArtworkIds: Set<string>) => {
-    const promises = Array.from(selectedArtworkIds).map((artworkId) =>
-      saveArtwork.mutateAsync({ artworkId, collectionId: id }),
-    );
-    await Promise.all(promises);
-    const count = selectedArtworkIds.size;
-    setAddModalVisible(false);
-    setSuccessMessage(
-      count === 1 ? 'Artwork added' : `${count} artworks added`,
-    );
-    setShowSuccessToast(true);
-    setTimeout(() => setShowSuccessToast(false), 1800);
+    try {
+      const promises = Array.from(selectedArtworkIds).map((artworkId) =>
+        saveArtwork.mutateAsync({
+          artworkId,
+          collectionId: id,
+          deferInvalidation: true,
+        }),
+      );
+
+      await Promise.all(promises);
+
+      const count = selectedArtworkIds.size;
+      setAddModalVisible(false);
+      setSuccessMessage(
+        count === 1 ? 'Artwork added' : `${count} artworks added`,
+      );
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 1800);
+    } finally {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['saved-artworks'] }),
+        queryClient.invalidateQueries({ queryKey: ['collections'] }),
+      ]);
+    }
   };
 
   const handleDelete = () => {

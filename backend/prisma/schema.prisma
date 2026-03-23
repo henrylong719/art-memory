@@ -116,7 +116,8 @@ model Artwork {
   artistId String?
   artist   Artist? @relation(fields: [artistId], references: [id])
 
-  // Museum where artwork is housed
+  // Canonical museum/home for curated or verified artwork records.
+  // This is not intended to be user-editable metadata.
   museumId String?
   museum   Museum? @relation(fields: [museumId], references: [id])
 

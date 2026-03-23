@@ -66,7 +66,6 @@ export function EditArtworkScreen() {
   const [artist, setArtist] = useState('');
   const [year, setYear] = useState('');
   const [medium, setMedium] = useState('');
-  const [museum, setMuseum] = useState('');
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -76,7 +75,6 @@ export function EditArtworkScreen() {
     artist: '',
     year: '',
     medium: '',
-    museum: '',
     description: '',
     notes: '',
   });
@@ -118,7 +116,6 @@ export function EditArtworkScreen() {
         artist: artwork.artist?.name ?? '',
         year: artwork.year ? String(artwork.year) : '',
         medium: artwork.medium ?? '',
-        museum: artwork.museum?.name ?? '',
         description: artwork.description ?? '',
         notes: '',
       };
@@ -126,7 +123,6 @@ export function EditArtworkScreen() {
       setArtist(vals.artist);
       setYear(vals.year);
       setMedium(vals.medium);
-      setMuseum(vals.museum);
       setDescription(vals.description);
       setNotes(vals.notes);
       setInitialValues(vals);
@@ -143,7 +139,6 @@ export function EditArtworkScreen() {
     artist !== initialValues.artist ||
     year !== initialValues.year ||
     medium !== initialValues.medium ||
-    museum !== initialValues.museum ||
     description !== initialValues.description ||
     notes !== initialValues.notes;
 
@@ -404,13 +399,6 @@ export function EditArtworkScreen() {
                   value={medium}
                   onChangeText={setMedium}
                   placeholder="e.g. Oil on canvas"
-                />
-
-                <Input
-                  label="Location"
-                  value={museum}
-                  onChangeText={setMuseum}
-                  placeholder="Museum or Gallery name"
                 />
               </View>
             </View>
