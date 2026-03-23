@@ -1,13 +1,21 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
 import { forwardRef, useRef, useState, type RefObject } from 'react';
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Motion } from '@legendapp/motion';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Plus, LibraryBig } from 'lucide-react-native';
 import { ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Image, Input, SafeAreaView, ScrollView, Text, View } from '@/components/ui';
+import {
+  Image,
+  Input,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from '@/components/ui';
+import BottomSheetKeyboardAwareScrollView from '@/components/ui/modal-keyboard-aware-scroll-view';
 import { renderBackdrop } from '@/components/ui/modal';
 import { useCollections, useCreateCollection } from '@/lib/hooks';
 
@@ -103,6 +111,11 @@ const CreateCollectionSheet = forwardRef<
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const createCollection = useCreateCollection();
+  const sheetRef = ref as RefObject<BottomSheetModal>;
+
+  const promoteSheet = () => {
+    sheetRef.current?.snapToIndex(1);
+  };
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -112,7 +125,7 @@ const CreateCollectionSheet = forwardRef<
         onSuccess: () => {
           setName('');
           setDescription('');
-          (ref as RefObject<BottomSheetModal>)?.current?.dismiss();
+          sheetRef.current?.dismiss();
           onCreated?.();
         },
       },
@@ -123,16 +136,28 @@ const CreateCollectionSheet = forwardRef<
     <BottomSheetModal
       ref={ref}
       index={0}
-      snapPoints={['50%']}
+      snapPoints={['55%', '82%']}
       backdropComponent={renderBackdrop}
       enableDynamicSizing={false}
+      keyboardBehavior="extend"
+      keyboardBlurBehavior="restore"
+      enableBlurKeyboardOnGesture
+      android_keyboardInputMode="adjustResize"
       handleComponent={() => (
         <View className="items-center pt-3 pb-2">
           <View className="w-10 h-1 bg-stone-200 rounded-full" />
         </View>
       )}
     >
-      <BottomSheetView className="flex-1 px-6 pb-8">
+      <BottomSheetKeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={15}
+        extraKeyboardSpace={24}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 32,
+        }}
+      >
         <Text className="font-serif text-2xl font-medium text-stone-900 mb-6">
           New Collection
         </Text>
@@ -144,6 +169,8 @@ const CreateCollectionSheet = forwardRef<
             value={name}
             onChangeText={setName}
             placeholder="e.g. Paris 2025 Trip"
+            inputComponent={BottomSheetTextInput}
+            onFocus={promoteSheet}
           />
 
           <Input
@@ -153,6 +180,8 @@ const CreateCollectionSheet = forwardRef<
             placeholder="Optional description"
             multiline
             style={{ minHeight: 80 }}
+            inputComponent={BottomSheetTextInput}
+            onFocus={promoteSheet}
           />
 
           <Pressable
@@ -182,7 +211,7 @@ const CreateCollectionSheet = forwardRef<
             )}
           </Pressable>
         </View>
-      </BottomSheetView>
+      </BottomSheetKeyboardAwareScrollView>
     </BottomSheetModal>
   );
 });

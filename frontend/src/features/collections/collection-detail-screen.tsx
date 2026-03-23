@@ -203,61 +203,59 @@ export function CollectionDetailScreen() {
   const isLoading = loadingCollection || loadingSaved;
   const artworkCount = savedArtworks?.length ?? 0;
 
-  const collectionArtworkOptions = useMemo<CollectionArtworkOption[]>(
-    () => {
-      const options: CollectionArtworkOption[] = [];
-      const existingArtworkIds = new Set<string>();
-      const seenScanArtworkIds = new Set<string>();
+  const collectionArtworkOptions = useMemo<CollectionArtworkOption[]>(() => {
+    const options: CollectionArtworkOption[] = [];
+    const existingArtworkIds = new Set<string>();
+    const seenScanArtworkIds = new Set<string>();
 
-      for (const savedArtwork of savedArtworks ?? []) {
-        options.push({
-          id: `saved:${savedArtwork.id}`,
-          title: savedArtwork.customTitle ?? savedArtwork.artwork?.title ?? 'Untitled',
-          artist:
-            savedArtwork.customArtist ??
-            savedArtwork.artwork?.artist?.name ??
-            'Unknown Artist',
-          imageUrl: savedArtwork.artwork?.imageUrl ?? savedArtwork.userPhotoUrl,
-          isInCollection: true,
-          savedArtworkId: savedArtwork.id,
-          artworkId: savedArtwork.artworkId,
-        });
+    for (const savedArtwork of savedArtworks ?? []) {
+      options.push({
+        id: `saved:${savedArtwork.id}`,
+        title:
+          savedArtwork.customTitle ?? savedArtwork.artwork?.title ?? 'Untitled',
+        artist:
+          savedArtwork.customArtist ??
+          savedArtwork.artwork?.artist?.name ??
+          'Unknown Artist',
+        imageUrl: savedArtwork.artwork?.imageUrl ?? savedArtwork.userPhotoUrl,
+        isInCollection: true,
+        savedArtworkId: savedArtwork.id,
+        artworkId: savedArtwork.artworkId,
+      });
 
-        if (savedArtwork.artworkId) {
-          existingArtworkIds.add(savedArtwork.artworkId);
-        }
+      if (savedArtwork.artworkId) {
+        existingArtworkIds.add(savedArtwork.artworkId);
+      }
+    }
+
+    for (const scan of scans ?? []) {
+      const artworkId = scan.artwork?.id;
+
+      if (
+        !artworkId ||
+        existingArtworkIds.has(artworkId) ||
+        seenScanArtworkIds.has(artworkId)
+      ) {
+        continue;
       }
 
-      for (const scan of scans ?? []) {
-        const artworkId = scan.artwork?.id;
+      seenScanArtworkIds.add(artworkId);
+      options.push({
+        id: `artwork:${artworkId}`,
+        title:
+          scan.userCorrectedTitle ?? scan.artwork?.title ?? 'Unknown Artwork',
+        artist:
+          scan.userCorrectedArtist ??
+          scan.artwork?.artist?.name ??
+          'Unknown Artist',
+        imageUrl: scan.artwork?.imageUrl ?? scan.imageUrl,
+        isInCollection: false,
+        artworkId,
+      });
+    }
 
-        if (
-          !artworkId ||
-          existingArtworkIds.has(artworkId) ||
-          seenScanArtworkIds.has(artworkId)
-        ) {
-          continue;
-        }
-
-        seenScanArtworkIds.add(artworkId);
-        options.push({
-          id: `artwork:${artworkId}`,
-          title:
-            scan.userCorrectedTitle ?? scan.artwork?.title ?? 'Unknown Artwork',
-          artist:
-            scan.userCorrectedArtist ??
-            scan.artwork?.artist?.name ??
-            'Unknown Artist',
-          imageUrl: scan.artwork?.imageUrl ?? scan.imageUrl,
-          isInCollection: false,
-          artworkId,
-        });
-      }
-
-      return options;
-    },
-    [savedArtworks, scans],
-  );
+    return options;
+  }, [savedArtworks, scans]);
   const initialSelectedArtworkIds = useMemo(
     () =>
       collectionArtworkOptions
@@ -290,7 +288,9 @@ export function CollectionDetailScreen() {
     );
   }
 
-  const handleSaveArtworkSelections = async (selectedOptionIds: Set<string>) => {
+  const handleSaveArtworkSelections = async (
+    selectedOptionIds: Set<string>,
+  ) => {
     const artworksToAdd = collectionArtworkOptions.filter(
       (option) =>
         !option.isInCollection &&
@@ -567,7 +567,7 @@ export function CollectionDetailScreen() {
       <ConfirmModal
         visible={deleteConfirmVisible}
         title="Delete Collection?"
-        description="This collection and all its saved artworks will be permanently removed. This action cannot be undone."
+        description="This collection will be permanently removed. This action cannot be undone."
         confirmLabel="Delete"
         isPending={deleteCollection.isPending}
         onConfirm={handleDelete}

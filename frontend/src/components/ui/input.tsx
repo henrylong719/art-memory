@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { useCallback, useState, type Ref } from 'react';
 import type { TextInputProps } from 'react-native';
 import {
@@ -82,6 +82,7 @@ export type NInputProps = {
   rightIcon?: ReactNode;
   containerClassName?: string;
   hint?: string;
+  inputComponent?: ComponentType<TextInputProps>;
 } & TextInputProps;
 
 export function Input({
@@ -97,6 +98,7 @@ export function Input({
     rightIcon,
     containerClassName,
     hint,
+    inputComponent: InputComponent = NTextInput,
     testID,
     onBlur: onBlurProp,
     onFocus: onFocusProp,
@@ -128,6 +130,28 @@ export function Input({
     variant,
     multiline: Boolean(multiline),
   });
+  const writingDirection: 'ltr' | 'rtl' = I18nManager.isRTL ? 'rtl' : 'ltr';
+  const textAlign: 'left' | 'right' = I18nManager.isRTL ? 'right' : 'left';
+  const textAlignVertical: 'top' | undefined = multiline ? 'top' : undefined;
+
+  const sharedInputProps = {
+    testID,
+    placeholderTextColor: '#a8a29e',
+    className: styles.input(),
+    onBlur,
+    onFocus,
+    multiline,
+    textAlignVertical,
+    ...inputProps,
+    style: StyleSheet.flatten([
+      { writingDirection },
+      { textAlign },
+      multiline && inputProps.style == null
+        ? { minHeight: 120 }
+        : undefined,
+      inputProps.style,
+    ]),
+  };
 
   return (
     <View className={containerClassName ?? styles.container()}>
@@ -145,25 +169,11 @@ export function Input({
         style={!props.disabled ? inputShadow : undefined}
       >
         {leftIcon}
-        <NTextInput
-          testID={testID}
-          ref={ref}
-          placeholderTextColor="#a8a29e"
-          className={styles.input()}
-          onBlur={onBlur}
-          onFocus={onFocus}
-          multiline={multiline}
-          textAlignVertical={multiline ? 'top' : undefined}
-          {...inputProps}
-          style={StyleSheet.flatten([
-            { writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
-            { textAlign: I18nManager.isRTL ? 'right' : 'left' },
-            multiline && inputProps.style == null
-              ? { minHeight: 120 }
-              : undefined,
-            inputProps.style,
-          ])}
-        />
+        {InputComponent === NTextInput ? (
+          <NTextInput ref={ref} {...sharedInputProps} />
+        ) : (
+          <InputComponent {...sharedInputProps} />
+        )}
         {rightIcon}
       </View>
       {hint && !error ? (
