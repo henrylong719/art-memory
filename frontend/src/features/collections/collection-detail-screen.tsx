@@ -22,14 +22,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Image, Text, View } from '@/components/ui';
 import { ConfirmModal } from '@/features/artworks/components/confirm-modal';
-import { AddArtworksModal } from '@/features/collections/components/add-artworks-modal';
+import {
+  AddArtworksModal,
+  type CollectionArtworkOption,
+} from '@/features/collections/components/add-artworks-modal';
 import {
   useCollection,
   useDeleteCollection,
+  useRemoveSavedArtwork,
   useSaveArtwork,
   useSavedArtworksByCollection,
   useScanHistory,
 } from '@/lib/hooks';
+import { showGlobalToast } from '@/lib/toast-store';
+import { getErrorMessage } from '@/lib/utils';
 
 import type { SavedArtwork } from '@/lib/api/types';
 
@@ -185,6 +191,7 @@ export function CollectionDetailScreen() {
 
   const deleteCollection = useDeleteCollection();
   const saveArtwork = useSaveArtwork();
+  const removeSavedArtwork = useRemoveSavedArtwork();
   const { data: scans } = useScanHistory();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -196,20 +203,67 @@ export function CollectionDetailScreen() {
   const isLoading = loadingCollection || loadingSaved;
   const artworkCount = savedArtworks?.length ?? 0;
 
-  // Scans with artwork that aren't already in this collection
-  const existingArtworkIds = useMemo(
-    () => new Set(savedArtworks?.map((s) => s.artworkId).filter(Boolean)),
-    [savedArtworks],
+  const collectionArtworkOptions = useMemo<CollectionArtworkOption[]>(
+    () => {
+      const options: CollectionArtworkOption[] = [];
+      const existingArtworkIds = new Set<string>();
+      const seenScanArtworkIds = new Set<string>();
+
+      for (const savedArtwork of savedArtworks ?? []) {
+        options.push({
+          id: `saved:${savedArtwork.id}`,
+          title: savedArtwork.customTitle ?? savedArtwork.artwork?.title ?? 'Untitled',
+          artist:
+            savedArtwork.customArtist ??
+            savedArtwork.artwork?.artist?.name ??
+            'Unknown Artist',
+          imageUrl: savedArtwork.artwork?.imageUrl ?? savedArtwork.userPhotoUrl,
+          isInCollection: true,
+          savedArtworkId: savedArtwork.id,
+          artworkId: savedArtwork.artworkId,
+        });
+
+        if (savedArtwork.artworkId) {
+          existingArtworkIds.add(savedArtwork.artworkId);
+        }
+      }
+
+      for (const scan of scans ?? []) {
+        const artworkId = scan.artwork?.id;
+
+        if (
+          !artworkId ||
+          existingArtworkIds.has(artworkId) ||
+          seenScanArtworkIds.has(artworkId)
+        ) {
+          continue;
+        }
+
+        seenScanArtworkIds.add(artworkId);
+        options.push({
+          id: `artwork:${artworkId}`,
+          title:
+            scan.userCorrectedTitle ?? scan.artwork?.title ?? 'Unknown Artwork',
+          artist:
+            scan.userCorrectedArtist ??
+            scan.artwork?.artist?.name ??
+            'Unknown Artist',
+          imageUrl: scan.artwork?.imageUrl ?? scan.imageUrl,
+          isInCollection: false,
+          artworkId,
+        });
+      }
+
+      return options;
+    },
+    [savedArtworks, scans],
   );
-  const availableScans = useMemo(
+  const initialSelectedArtworkIds = useMemo(
     () =>
-      scans
-        ?.filter((s) => s.artwork && !existingArtworkIds.has(s.artwork.id))
-        .filter(
-          (s, i, arr) =>
-            arr.findIndex((x) => x.artwork?.id === s.artwork?.id) === i,
-        ) ?? [],
-    [scans, existingArtworkIds],
+      collectionArtworkOptions
+        .filter((option) => option.isInCollection)
+        .map((option) => option.id),
+    [collectionArtworkOptions],
   );
 
   if (isLoading) {
@@ -236,25 +290,64 @@ export function CollectionDetailScreen() {
     );
   }
 
-  const handleBatchAdd = async (selectedArtworkIds: Set<string>) => {
+  const handleSaveArtworkSelections = async (selectedOptionIds: Set<string>) => {
+    const artworksToAdd = collectionArtworkOptions.filter(
+      (option) =>
+        !option.isInCollection &&
+        selectedOptionIds.has(option.id) &&
+        option.artworkId,
+    );
+    const artworksToRemove = collectionArtworkOptions.filter(
+      (option) =>
+        option.isInCollection &&
+        !selectedOptionIds.has(option.id) &&
+        option.savedArtworkId,
+    );
+
+    if (artworksToAdd.length === 0 && artworksToRemove.length === 0) {
+      setAddModalVisible(false);
+      return;
+    }
+
     try {
-      const promises = Array.from(selectedArtworkIds).map((artworkId) =>
-        saveArtwork.mutateAsync({
-          artworkId,
-          collectionId: id,
-          deferInvalidation: true,
-        }),
-      );
+      await Promise.all([
+        ...artworksToAdd.map((option) =>
+          saveArtwork.mutateAsync({
+            artworkId: option.artworkId!,
+            collectionId: id,
+            deferInvalidation: true,
+          }),
+        ),
+        ...artworksToRemove.map((option) =>
+          removeSavedArtwork.mutateAsync({
+            id: option.savedArtworkId!,
+            deferInvalidation: true,
+          }),
+        ),
+      ]);
 
-      await Promise.all(promises);
+      const addedCount = artworksToAdd.length;
+      const removedCount = artworksToRemove.length;
 
-      const count = selectedArtworkIds.size;
       setAddModalVisible(false);
       setSuccessMessage(
-        count === 1 ? 'Artwork added' : `${count} artworks added`,
+        addedCount > 0 && removedCount === 0
+          ? addedCount === 1
+            ? 'Artwork added'
+            : `${addedCount} artworks added`
+          : removedCount > 0 && addedCount === 0
+            ? removedCount === 1
+              ? 'Artwork removed'
+              : `${removedCount} artworks removed`
+            : 'Collection updated',
       );
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 1800);
+    } catch (error) {
+      showGlobalToast(
+        getErrorMessage(error, "We couldn't update this collection."),
+        'error',
+      );
     } finally {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['saved-artworks'] }),
@@ -461,9 +554,10 @@ export function CollectionDetailScreen() {
 
       <AddArtworksModal
         visible={addModalVisible}
-        availableScans={availableScans}
+        artworks={collectionArtworkOptions}
+        initialSelectedIds={initialSelectedArtworkIds}
         bottomInset={insets.bottom}
-        onAdd={handleBatchAdd}
+        onSave={handleSaveArtworkSelections}
         onClose={() => {
           blurActiveElementOnWeb();
           setAddModalVisible(false);

@@ -1,5 +1,5 @@
 /* eslint-disable better-tailwindcss/no-unknown-classes */
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, X } from 'lucide-react-native';
 import {
   ActivityIndicator,
@@ -10,51 +10,87 @@ import {
 
 import { Image, Text, View } from '@/components/ui';
 
-import type { Scan } from '@/lib/api/types';
+export type CollectionArtworkOption = {
+  id: string;
+  title: string;
+  artist: string;
+  imageUrl: string | null;
+  isInCollection: boolean;
+  artworkId?: string | null;
+  savedArtworkId?: string;
+};
+
+const areSetsEqual = (left: Set<string>, right: Set<string>) => {
+  if (left.size !== right.size) return false;
+
+  for (const value of left) {
+    if (!right.has(value)) return false;
+  }
+
+  return true;
+};
 
 type AddArtworksModalProps = {
   visible: boolean;
-  availableScans: Scan[];
+  artworks: CollectionArtworkOption[];
+  initialSelectedIds: string[];
   bottomInset: number;
-  onAdd: (artworkIds: Set<string>) => Promise<void>;
+  onSave: (selectedIds: Set<string>) => Promise<void>;
   onClose: () => void;
 };
 
 export function AddArtworksModal({
   visible,
-  availableScans,
+  artworks,
+  initialSelectedIds,
   bottomInset,
-  onAdd,
+  onSave,
   onClose,
 }: AddArtworksModalProps) {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const initialSelection = useMemo(
+    () => new Set(initialSelectedIds),
+    [initialSelectedIds],
+  );
+  const wasVisibleRef = useRef(visible);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(initialSelectedIds),
+  );
   const [isSaving, setIsSaving] = useState(false);
 
-  const toggleSelection = (artworkId: string) => {
+  useEffect(() => {
+    if (visible && !wasVisibleRef.current) {
+      setSelectedIds(new Set(initialSelection));
+    }
+
+    wasVisibleRef.current = visible;
+  }, [initialSelection, visible]);
+
+  const hasChanges = !areSetsEqual(selectedIds, initialSelection);
+
+  const toggleSelection = (selectionId: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(artworkId)) {
-        next.delete(artworkId);
+      if (next.has(selectionId)) {
+        next.delete(selectionId);
       } else {
-        next.add(artworkId);
+        next.add(selectionId);
       }
       return next;
     });
   };
 
-  const handleAdd = async () => {
-    if (selectedIds.size === 0) return;
+  const handleSave = async () => {
+    if (!hasChanges) return;
     setIsSaving(true);
     try {
-      await onAdd(selectedIds);
-      setSelectedIds(new Set());
+      await onSave(new Set(selectedIds));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleClose = () => {
-    setSelectedIds(new Set());
+    setSelectedIds(new Set(initialSelection));
     onClose();
   };
 
@@ -88,11 +124,11 @@ export function AddArtworksModal({
         <View className="flex-row justify-between items-center mb-5 px-6">
           <View>
             <Text className="font-serif text-2xl font-medium text-stone-900">
-              Add Artworks
+              Manage Artworks
             </Text>
-            {availableScans.length > 0 && (
+            {artworks.length > 0 && (
               <Text className="text-stone-400 text-xs mt-1">
-                Select artworks from your scan history
+                Select the artworks you want to keep in this collection
               </Text>
             )}
           </View>
@@ -105,37 +141,25 @@ export function AddArtworksModal({
           </Pressable>
         </View>
 
-        {availableScans.length === 0 ? (
+        {artworks.length === 0 ? (
           <View className="py-12 items-center px-6">
             <Text className="text-stone-400 font-medium text-[15px] text-center mb-1">
-              No artworks to add
+              No artworks yet
             </Text>
             <Text className="text-stone-400 text-sm text-center leading-5 max-w-56">
-              Scan new artworks and they'll appear here
+              Scan or save artworks and they&apos;ll appear here
             </Text>
           </View>
         ) : (
           <>
             <ScrollView showsVerticalScrollIndicator={false} className="px-6">
               <View className="gap-2 pb-4">
-                {availableScans.map((scan) => {
-                  const artworkId = scan.artwork?.id;
-                  if (!artworkId) return null;
-                  const isSelected = selectedIds.has(artworkId);
-                  const title =
-                    scan.userCorrectedTitle ??
-                    scan.artwork?.title ??
-                    'Unknown Artwork';
-                  const artist =
-                    scan.userCorrectedArtist ??
-                    scan.artwork?.artist?.name ??
-                    'Unknown Artist';
-                  const imageUrl = scan.artwork?.imageUrl ?? scan.imageUrl;
-
+                {artworks.map((artwork) => {
+                  const isSelected = selectedIds.has(artwork.id);
                   return (
                     <Pressable
-                      key={scan.id}
-                      onPress={() => toggleSelection(artworkId)}
+                      key={artwork.id}
+                      onPress={() => toggleSelection(artwork.id)}
                       className={`flex-row items-center p-3 rounded-2xl border ${
                         isSelected
                           ? 'bg-stone-50 border-stone-300'
@@ -143,9 +167,9 @@ export function AddArtworksModal({
                       }`}
                     >
                       <View className="w-14 h-14 rounded-xl overflow-hidden bg-stone-100 mr-3">
-                        {imageUrl ? (
+                        {artwork.imageUrl ? (
                           <Image
-                            source={{ uri: imageUrl }}
+                            source={{ uri: artwork.imageUrl }}
                             className="w-full h-full"
                             contentFit="cover"
                             transition={200}
@@ -163,10 +187,10 @@ export function AddArtworksModal({
                           className="font-medium text-stone-900 text-[15px]"
                           numberOfLines={1}
                         >
-                          {title}
+                          {artwork.title}
                         </Text>
                         <Text className="text-stone-500 text-xs mt-1">
-                          {artist}
+                          {artwork.artist}
                         </Text>
                       </View>
                       <View
@@ -189,10 +213,10 @@ export function AddArtworksModal({
             {/* Confirm button */}
             <View className="px-6 pt-3 border-t border-stone-100">
               <Pressable
-                onPress={handleAdd}
-                disabled={selectedIds.size === 0 || isSaving}
+                onPress={handleSave}
+                disabled={!hasChanges || isSaving}
                 className={`py-4 rounded-2xl items-center ${
-                  selectedIds.size > 0
+                  hasChanges
                     ? 'bg-stone-900 active:bg-stone-800'
                     : 'bg-stone-200'
                 }`}
@@ -202,14 +226,10 @@ export function AddArtworksModal({
                 ) : (
                   <Text
                     className={`font-semibold text-[15px] ${
-                      selectedIds.size > 0 ? 'text-white' : 'text-stone-400'
+                      hasChanges ? 'text-white' : 'text-stone-400'
                     }`}
                   >
-                    {selectedIds.size === 0
-                      ? 'Select artworks'
-                      : selectedIds.size === 1
-                        ? 'Add 1 artwork'
-                        : `Add ${selectedIds.size} artworks`}
+                    {hasChanges ? 'Save changes' : 'No changes'}
                   </Text>
                 )}
               </Pressable>

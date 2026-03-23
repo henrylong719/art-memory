@@ -23,7 +23,7 @@ export class AuthRepository {
         ...data,
         collections: {
           create: {
-            name: 'My Collection',
+            name: 'Favorites',
             description: 'Default collection',
             isDefault: true,
           },
@@ -52,7 +52,7 @@ export class AuthRepository {
         ...data,
         collections: {
           create: {
-            name: 'My Collection',
+            name: 'Favorites',
             description: 'Default collection',
             isDefault: true,
           },
