@@ -284,7 +284,6 @@ The checked-in EAS config points development, preview, and production profiles a
 - Most backend routes return a common `ServiceResponse` wrapper.
 - Upload endpoints expect `multipart/form-data` and use S3 for image storage.
 - The frontend Axios client refreshes JWT access tokens automatically and keeps tokens in MMKV.
-- `frontend/cli` and `frontend/docs` are inherited Obytes starter packages and are not required for the main Art Memory app runtime.
 
 ## License
 
