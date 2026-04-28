@@ -287,4 +287,6 @@ The checked-in EAS config points development, preview, and production profiles a
 
 ## License
 
-The frontend and backend each include their own `LICENSE` file.
+This project is licensed under the MIT License. See `LICENSE` for details.
+
+Third-party starter notices are preserved in `THIRD_PARTY_NOTICES.md`.
