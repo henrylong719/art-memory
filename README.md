@@ -4,31 +4,38 @@ Art Memory is a full-stack mobile app for museum and gallery visits. The Expo ap
 
 ## App Preview
 
-<table align="center" cellspacing="0" cellpadding="4">
-  <tr>
-    <th align="center">Home</th>
-    <th align="center">Scan</th>
-    <th align="center">Story</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="./docs/screenshots/home.png" width="240" alt="Home screen" /></td>
-    <td align="center"><img src="./docs/screenshots/scan.png" width="240" alt="Artwork scan screen" /></td>
-    <td align="center"><img src="./docs/screenshots/generate_story.png" width="240" alt="Generate story screen" /></td>
-  </tr>
-</table>
+<p align="center">
+  <b>Home</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Scan</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Story</b>
+</p>
 
-<table align="center" cellspacing="0" cellpadding="4">
-  <tr>
-    <th align="center">Gallery</th>
-    <th align="center">Collections</th>
-    <th align="center">Profile</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="./docs/screenshots/artworks.png" width="240" alt="Artwork gallery screen" /></td>
-    <td align="center"><img src="./docs/screenshots/collections.png" width="240" alt="Collections screen" /></td>
-    <td align="center"><img src="./docs/screenshots/profile.png" width="240" alt="Profile screen" /></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/screenshots/home.png" width="240" alt="Home screen" />
+  &nbsp; &nbsp; &nbsp;
+  <img src="./docs/screenshots/scan.png" width="240" alt="Artwork scan screen" />
+  &nbsp; &nbsp; &nbsp;
+  <img src="./docs/screenshots/generate_story.png" width="240" alt="Generate story screen" />
+</p>
+
+<p align="center">
+   &nbsp;&nbsp;
+  <b>Gallery</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  &nbsp;
+  <b>Collections</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Profile</b>  &nbsp;&nbsp;&nbsp;  
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/artworks.png" width="240" alt="Artwork gallery screen" />
+   &nbsp; &nbsp; &nbsp;
+  <img src="./docs/screenshots/collections.png" width="240" alt="Collections screen" />
+   &nbsp; &nbsp; &nbsp;
+  <img src="./docs/screenshots/profile.png" width="240" alt="Profile screen" />
+</p>
 
 ## Repository Layout
 
