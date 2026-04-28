@@ -2,6 +2,38 @@
 
 Art Memory is a full-stack mobile app for museum and gallery visitors. It lets users scan artworks, identify them with AI, save them into personal collections, generate stories, and discover nearby museums.
 
+---
+
+## App Preview
+
+<p align="center">
+  <img src="./docs/screenshots/home.png" width="220" alt="Home screen" />
+  <img src="./docs/screenshots/scan.png" width="220" alt="Artwork scan screen" />
+  <img src="./docs/screenshots/artworks.png" width="220" alt="Artwork gallery screen" />
+</p>
+
+<p align="center">
+  <b>Home</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp;  &nbsp;
+  <b>Scan Artwork</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  
+  <b>Artwork Gallery</b>
+</p>
+
+
+<p align="center">
+  <img src="./docs/screenshots/collections.png" width="220" alt="Collections screen" />
+  <img src="./docs/screenshots/profile.png" width="220" alt="Profile screen" />
+</p>
+
+<p align="center">
+  <b>Collections</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp;  &nbsp;
+  <b>User Profile</b>
+</p>
+
+---
+
+## Repository Structure
+
+
 This repository contains:
 
 - `frontend/` — Expo + React Native mobile app
