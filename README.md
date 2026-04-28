@@ -7,25 +7,28 @@ Art Memory is a full-stack mobile app for museum and gallery visitors. It lets u
 ## App Preview
 
 <p align="center">
-  <img src="./docs/screenshots/home.png" width="220" alt="Home screen" />
-  <img src="./docs/screenshots/scan.png" width="220" alt="Artwork scan screen" />
-  <img src="./docs/screenshots/artworks.png" width="220" alt="Artwork gallery screen" />
+   <img src="./docs/screenshots/home.png" width="240" alt="Home screen" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/screenshots/scan.png" width="240" alt="Artwork scan screen" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/screenshots/artworks.png" width="240" alt="Artwork gallery screen" />
 </p>
 
 <p align="center">
   <b>Home</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp;  &nbsp;
-  <b>Scan Artwork</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  
+  <b>Scan Artwork</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  
   <b>Artwork Gallery</b>
 </p>
 
 
 <p align="center">
-  <img src="./docs/screenshots/collections.png" width="220" alt="Collections screen" />
-  <img src="./docs/screenshots/profile.png" width="220" alt="Profile screen" />
+  <img src="./docs/screenshots/collections.png" width="240" alt="Collections screen" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./docs/screenshots/profile.png" width="240" alt="Profile screen" />
 </p>
 
 <p align="center">
-  <b>Collections</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp;  &nbsp;
+  <b>Collections</b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
   <b>User Profile</b>
 </p>
 
